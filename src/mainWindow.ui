@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>100</x>
+    <y>100</y>
+    <width>350</width>
+    <height>250</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Mouse Control For DCS</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow {
+    background-color: #F0F0F0;
+    font-family: 'Segoe UI';
+    font-size: 9pt;
+}
+QWidget {
+    background-color: #F0F0F0;
+}
+QLabel {
+    color: #000000;
+}
+QPushButton {
+    background-color: #E1E1E1;
+    border: 1px solid #A0A0A0;
+    border-radius: 3px;
+    padding: 5px;
+    min-width: 80px;
+}
+QPushButton:hover {
+    background-color: #D0D0D0;
+}
+QPushButton:pressed {
+    background-color: #C0C0C0;
+    border: 1px solid #707070;
+}
+QSlider::groove:horizontal {
+    border: 1px solid #A0A0A0;
+    height: 6px;
+    background: #D0D0D0;
+    margin: 2px 0;
+}
+QSlider::handle:horizontal {
+    background: #E1E1E1;
+    border: 1px solid #707070;
+    width: 16px;
+    margin: -4px 0;
+    border-radius: 3px;
+}
+QSlider::handle:horizontal:hover {
+    background: #F0F0F0;
+}
+QSlider::add-page:horizontal {
+    background: #B0B0B0;
+}
+QSlider::sub-page:horizontal {
+    background: #0078D7;
+}
+QStatusBar {
+    background-color: #E1E1E1;
+    border-top: 1px solid #A0A0A0;
+    padding: 2px;
+}</string>
+  </property>
+  
+  <widget class="QWidget" name="centralWidget">
+   <property name="styleSheet">
+    <string notr="true">background-color: #F0F0F0;</string>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="leftMargin">
+     <number>15</number>
+    </property>
+    <property name="topMargin">
+     <number>15</number>
+    </property>
+    <property name="rightMargin">
+     <number>15</number>
+    </property>
+    <property name="bottomMargin">
+     <number>15</number>
+    </property>
+    <property name="spacing">
+     <number>10</number>
+    </property>
+    
+    <!-- 标题 -->
+    <item>
+     <widget class="QLabel" name="titleLabel">
+      <property name="text">
+       <string>配置</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">font-size: 14pt; font-weight: bold; margin: 10px 0; color: #000000;</string>
+      </property>
+     </widget>
+    </item>
+
+    <!-- 灵敏度标签 -->
+    <item>
+     <widget class="QLabel" name="speedLabel">
+      <property name="text">
+       <string>系统鼠标灵敏度:</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: #000000;</string>
+      </property>
+     </widget>
+    </item>
+
+    <!-- 灵敏度滑块 -->
+    <item>
+     <widget class="QSlider" name="mouseSpeedSlider">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>10</number>
+      </property>
+      <property name="value">
+       <number>5</number>
+      </property>
+      <property name="tickPosition">
+       <enum>QSlider::TicksBelow</enum>
+      </property>
+      <property name="tickInterval">
+       <number>1</number>
+      </property>
+     </widget>
+    </item>
+
+    <!-- 滑块值显示 -->
+    <item>
+     <widget class="QLabel" name="speedValueLabel">
+      <property name="text">
+       <string>当前值: Nan</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: #505050; font-size: 9pt;</string>
+      </property>
+     </widget>
+    </item>
+
+    <!-- 启动/停止按钮 -->
+    <item>
+     <widget class="QPushButton" name="startBtn">
+      <property name="text">
+       <string>启动</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">font-size: 10pt; 
+padding: 8px; 
+margin: 10px 0;
+background-color: #E1E1E1;</string>
+      </property>
+     </widget>
+    </item>
+
+    <!-- 状态显示 -->
+    <item>
+     <widget class="QLabel" name="statusLabel">
+      <property name="text">
+       <string>状态: 未运行</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: #505050; font-style: italic;</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusBar">
+   <property name="styleSheet">
+    <string notr="true">background-color: #E1E1E1; border-top: 1px solid #A0A0A0;</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+</ui>

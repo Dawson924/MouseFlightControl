@@ -1,0 +1,8 @@
+# Output
+build/
+dist/
+*.pyc
+*.ini
+
+# Test
+*.py.test
