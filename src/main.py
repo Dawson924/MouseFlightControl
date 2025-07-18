@@ -149,7 +149,6 @@ def get_mouse_speed():
 def main():
     global delta_x, delta_y, wheel_delta, enabled
     try:
-        set_mouse_position(screen_center_x, screen_center_y)
         prev_x, prev_y = screen_center_x, screen_center_y
 
         while not stop_thread:  # 用stop_thread控制退出
