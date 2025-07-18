@@ -234,6 +234,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 if config.has_option('Settings', 'language'):
                     lang = config.get('Settings', 'language')
+                    self.language = lang
                     translator = QtCore.QTranslator()
                     if translator.load(f"locales/{lang}.qm"):
                         QtWidgets.QApplication.instance().installTranslator(translator)
@@ -242,7 +243,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 if config.has_option('Settings', 'mouse_speed'):
                     speed = config.getint('Settings', 'mouse_speed')
                     self.ui.mouseSpeedSlider.setValue(speed)
-                    self.ui.speedValueLabel.setText(f'当前值: {speed}')
 
             except Exception as e:
                 print(f"加载配置时出错: {str(e)}")
