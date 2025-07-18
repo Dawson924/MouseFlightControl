@@ -25,23 +25,20 @@ MOUSE_SPEED_DEFAULT = 10  # Windows默认灵敏度(1-20)
 CONFIG_FILE = "config.ini"
 
 class vjoyAxis():
-    def __init__(self, x, y, z, th_l, th_r):
+    def __init__(self, x, y, z):
         self.x, self.y, self.z = x, y, z
-        self.th_l, self.th_r = th_l, th_r
 
 class vjoyState():
-    def __init__(self, stick, throttle, mouselock, vjoy_botton):
+    def __init__(self, stick):
         self.stick = stick
-        self.th = throttle
 
 class vjoySensitive():
-    def __init__(self, mou, x, y, th):
+    def __init__(self, mou, x, y):
         self.mou = mou
         self.x, self.y = x, y
-        self.th = th
 
 
-# 全局控制变量（用于线程通信）
+# 全局控制变量
 enabled = False
 stop_thread = False  # 控制子线程退出
 mouse_speed = 5  # 可通过UI设置的鼠标速度
@@ -53,9 +50,9 @@ axis_min = -axis_max
 center_axis_x = 0
 center_axis_y = 0
 
-Axis = vjoyAxis(0, 0, 0, axis_min, axis_max)
-State = vjoyState(False, False, False, False)
-Sens = vjoySensitive(15.0, 0.7, 0.9, 1.9)
+Axis = vjoyAxis(0, 0, 0)
+State = vjoyState(False)
+Sens = vjoySensitive(15.0, 0.7, 0.9)
 
 screen_width = win32api.GetSystemMetrics(0)
 screen_height = win32api.GetSystemMetrics(1)
@@ -152,6 +149,7 @@ def main():
         prev_x, prev_y = screen_center_x, screen_center_y
 
         while not stop_thread:  # 用stop_thread控制退出
+            # 状态从curr流向prev，在中间计算delta
             curr_x, curr_y = get_mouse_position()
             delta_x = curr_x - prev_x
             delta_y = curr_y - prev_y
@@ -175,8 +173,8 @@ def main():
 
                 Axis.x = check_overflow(Axis.x, axis_min, axis_max)
                 Axis.y = check_overflow(Axis.y, axis_min, axis_max)
-                Axis.th_l = check_overflow(Axis.th_l, axis_min, axis_max)
-                Axis.th_r = check_overflow(Axis.th_r, axis_min, axis_max)
+                # Axis.th_l = check_overflow(Axis.th_l, axis_min, axis_max)
+                # Axis.th_r = check_overflow(Axis.th_r, axis_min, axis_max)
 
                 def map_to_vjoy(val):
                     return int((val - axis_min) / (axis_max - axis_min) * 32767) + 1
