@@ -10,9 +10,6 @@
     <height>250</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>Mouse Control For DCS</string>
-  </property>
   <property name="styleSheet">
    <string notr="true">QMainWindow {
     background-color: #F0F0F0;
@@ -67,7 +64,7 @@ QStatusBar {
     padding: 2px;
 }</string>
   </property>
-  
+
   <widget class="QWidget" name="centralWidget">
    <property name="styleSheet">
     <string notr="true">background-color: #F0F0F0;</string>
@@ -77,7 +74,7 @@ QStatusBar {
      <number>15</number>
     </property>
     <property name="topMargin">
-     <number>15</number>
+     <number>0</number>
     </property>
     <property name="rightMargin">
      <number>15</number>
@@ -88,7 +85,7 @@ QStatusBar {
     <property name="spacing">
      <number>10</number>
     </property>
-    
+
     <!-- 标题 -->
     <item>
      <widget class="QLabel" name="titleLabel">
@@ -159,8 +156,8 @@ QStatusBar {
        <string>启动</string>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size: 10pt; 
-padding: 8px; 
+       <string notr="true">font-size: 10pt;
+padding: 8px;
 margin: 10px 0;
 background-color: #E1E1E1;</string>
       </property>
@@ -182,11 +179,6 @@ background-color: #E1E1E1;</string>
      </widget>
     </item>
    </layout>
-  </widget>
-  <widget class="QStatusBar" name="statusBar">
-   <property name="styleSheet">
-    <string notr="true">background-color: #E1E1E1; border-top: 1px solid #A0A0A0;</string>
-   </property>
   </widget>
  </widget>
  <resources/>

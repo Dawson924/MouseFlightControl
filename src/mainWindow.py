@@ -77,7 +77,7 @@ class Ui_MainWindow(object):
         self.verticalLayout = QVBoxLayout(self.centralWidget)
         self.verticalLayout.setSpacing(10)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(15, 15, 15, 15)
+        self.verticalLayout.setContentsMargins(15, 0, 15, 15)
         self.titleLabel = QLabel(self.centralWidget)
         self.titleLabel.setObjectName(u"titleLabel")
         self.titleLabel.setAlignment(Qt.AlignCenter)
@@ -125,10 +125,6 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.statusLabel)
 
         MainWindow.setCentralWidget(self.centralWidget)
-        self.statusBar = QStatusBar(MainWindow)
-        self.statusBar.setObjectName(u"statusBar")
-        self.statusBar.setStyleSheet(u"background-color: #E1E1E1; border-top: 1px solid #A0A0A0;")
-        MainWindow.setStatusBar(self.statusBar)
 
         self.retranslateUi(MainWindow)
 
@@ -136,11 +132,11 @@ class Ui_MainWindow(object):
     # setupUi
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Mouse Control For DCS", None))
         self.titleLabel.setText(QCoreApplication.translate("MainWindow", u"\u914d\u7f6e", None))
         self.speedLabel.setText(QCoreApplication.translate("MainWindow", u"\u7cfb\u7edf\u9f20\u6807\u7075\u654f\u5ea6:", None))
         self.speedValueLabel.setText(QCoreApplication.translate("MainWindow", u"\u5f53\u524d\u503c: Nan", None))
         self.startBtn.setText(QCoreApplication.translate("MainWindow", u"\u542f\u52a8", None))
         self.statusLabel.setText(QCoreApplication.translate("MainWindow", u"\u72b6\u6001: \u672a\u8fd0\u884c", None))
+        pass
     # retranslateUi
 

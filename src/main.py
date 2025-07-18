@@ -16,13 +16,26 @@ from app import App
 from mainWindow import Ui_MainWindow  # 确保这个UI文件已正确生成
 
 # 初始化vJoy设备
-vjoy_device = pyvjoy.VJoyDevice(1)
+vjoy_device = None
 # Windows API常量
 SPI_SETMOUSESPEED = 113
 SPI_GETMOUSESPEED = 112
 MOUSE_SPEED_DEFAULT = 10  # Windows默认灵敏度(1-20)
 # 全局配置文件名
 CONFIG_FILE = "config.ini"
+
+# 验证vJoy
+try:
+    vjoy_device = pyvjoy.VJoyDevice(1)
+except Exception as e:
+    app = QtWidgets.QApplication(sys.argv)
+    error_msg = QtWidgets.QMessageBox()
+    error_msg.setIcon(QtWidgets.QMessageBox.Critical)
+    error_msg.setText("Failed to initialize vJoy Device")
+    error_msg.setInformativeText("Please verify the installation of vJoy and make sure you enable it.\n" + str(e))
+    error_msg.setWindowTitle("DEVICE NOT FOUND")
+    error_msg.exec_()
+    sys.exit(1)
 
 class vjoyAxis():
     def __init__(self, x, y, z):
@@ -191,7 +204,6 @@ def main():
         pass
     finally:
         set_mouse_speed(original_mouse_speed)
-        # keyboard_listener.stop()
         vjoy_device.reset()
 
 
@@ -412,8 +424,15 @@ class MainWindow(QtWidgets.QMainWindow):
 if __name__ == "__main__":
     app = App(sys.argv)
 
+    # 检查本地化文件夹是否存在
     if not os.path.exists('locales'):
-        raise
+        error_msg = QtWidgets.QMessageBox()
+        error_msg.setIcon(QtWidgets.QMessageBox.Critical)
+        error_msg.setText("Missing locale files")
+        error_msg.setInformativeText("Cannot find 'locales' directory. Please verify the program's files are installed correctly.")
+        error_msg.setWindowTitle("PATH NOT FOUND")
+        error_msg.exec_()
+        sys.exit(1)
 
     translator = QtCore.QTranslator()
     if translator.load(f"locales/en_US.qm"):
