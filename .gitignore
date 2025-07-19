@@ -5,4 +5,4 @@ dist/
 *.ini
 
 # Test
-*.py.test
+*.test.py
