@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainWindow.ui'
+## Form generated from reading UI file 'MainWindow.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -110,8 +110,8 @@ class Ui_MainWindow(object):
 
         self.startBtn = QPushButton(self.centralWidget)
         self.startBtn.setObjectName(u"startBtn")
-        self.startBtn.setStyleSheet(u"font-size: 10pt; \n"
-"padding: 8px; \n"
+        self.startBtn.setStyleSheet(u"font-size: 10pt;\n"
+"padding: 8px;\n"
 "margin: 10px 0;\n"
 "background-color: #E1E1E1;")
 

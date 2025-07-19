@@ -13,7 +13,7 @@ from pynput.keyboard import Key, KeyCode
 
 from PySide2 import QtWidgets, QtCore
 from app import App
-from mainWindow import Ui_MainWindow  # 确保这个UI文件已正确生成
+from ui.MainWindow import Ui_MainWindow  # 确保这个UI文件已正确生成
 
 # 初始化vJoy设备
 vjoy_device = None

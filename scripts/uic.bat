@@ -1,2 +1,2 @@
 @echo off
-pyside2-uic ./src/mainWindow.ui -o ./src/mainWindow.py
+pyside2-uic ./src/ui/MainWindow.ui -o ./src/ui/MainWindow.py
