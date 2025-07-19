@@ -3,6 +3,7 @@ build/
 dist/
 *.pyc
 *.ini
+*.qm
 
 # Test
 *.test.py
