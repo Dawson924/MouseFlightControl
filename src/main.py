@@ -12,8 +12,13 @@ from pynput import keyboard
 from pynput.keyboard import Key, KeyCode
 
 from PySide2 import QtWidgets, QtCore
+from PySide2.QtGui import QPixmap, QCursor
+from PySide2.QtWidgets import QApplication
 from app import App
-from ui.MainWindow import Ui_MainWindow  # 确保这个UI文件已正确生成
+from input import InputStateMonitor
+from ui.MainWindow import Ui_MainWindow
+from ui.CursorOverhaul import CursorOverhaul
+from ui.InterfaceOverlay import InterfaceOverlay  # 确保这个UI文件已正确生成
 
 # 初始化vJoy设备
 vjoy_device = None
@@ -97,38 +102,6 @@ def check_overflow(a, min_val, max_val):
 def wheel_th(sens_mo, sens_th, wheel_delta):
     return wheel_delta * 20 * sens_mo * sens_th
 
-def get_mouse_state():
-    global mouse_buttons, wheel_delta
-    mouse_buttons["left"] = win32api.GetAsyncKeyState(win32con.VK_LBUTTON) < 0
-    mouse_buttons["right"] = win32api.GetAsyncKeyState(win32con.VK_RBUTTON) < 0
-    mouse_buttons["middle"] = win32api.GetAsyncKeyState(win32con.VK_MBUTTON) < 0
-    wheel_delta = 0
-
-def on_press(key):
-    global enabled
-    if key == KeyCode.from_char('`'):
-        flag = not enabled
-        instance.toggle_enabled(flag)
-        print(instance.running)
-        # if not flag:
-        #     instance.stop_main_thread()
-        # else:
-        #     instance.start_main_thread()
-
-    elif key in key_states:
-        key_states[key] = True
-
-def on_release(key):
-    if key in key_states:
-        key_states[key] = False
-
-# 启动键盘监听器
-keyboard_listener = keyboard.Listener(
-    on_press=on_press,
-    on_release=on_release
-)
-keyboard_listener.start()
-
 def get_mouse_position():
     try:
         return win32api.GetCursorPos()
@@ -155,60 +128,12 @@ def get_mouse_speed():
     ctypes.windll.user32.SystemParametersInfoW(SPI_GETMOUSESPEED, 0, ctypes.byref(speed), 0)
     return speed.value
 
-# 主逻辑函数（放在子线程中执行）
-def main():
-    global delta_x, delta_y, wheel_delta, enabled
-    try:
-        prev_x, prev_y = screen_center_x, screen_center_y
-
-        while not stop_thread:  # 用stop_thread控制退出
-            # 状态从curr流向prev，在中间计算delta
-            curr_x, curr_y = get_mouse_position()
-            delta_x = curr_x - prev_x
-            delta_y = curr_y - prev_y
-            prev_x, prev_y = curr_x, curr_y
-
-            get_mouse_state()
-
-            if enabled and mouse_buttons["right"]:
-                set_mouse_position(screen_center_x, screen_center_y)
-                # reset_axis_pos()
-
-            if enabled and State.stick:
-                Axis.x += delta_x * Sens.x * Sens.mou * 0.48
-                Axis.y += delta_y * Sens.y * Sens.mou
-
-                x_percent = (Axis.x / axis_max) * 100
-                y_percent = (Axis.y / axis_max) * 100
-                screen_x = screen_center_x + (x_percent / 100) * (screen_width / 2)
-                screen_y = screen_center_y + (y_percent / 100) * (screen_height / 2)
-                prev_x, prev_y = screen_x, screen_y
-
-                Axis.x = check_overflow(Axis.x, axis_min, axis_max)
-                Axis.y = check_overflow(Axis.y, axis_min, axis_max)
-                # Axis.th_l = check_overflow(Axis.th_l, axis_min, axis_max)
-                # Axis.th_r = check_overflow(Axis.th_r, axis_min, axis_max)
-
-                def map_to_vjoy(val):
-                    return int((val - axis_min) / (axis_max - axis_min) * 32767) + 1
-
-                vjoy_device.set_axis(pyvjoy.HID_USAGE_X, map_to_vjoy(Axis.x))
-                vjoy_device.set_axis(pyvjoy.HID_USAGE_Y, map_to_vjoy(Axis.y))
-                # vjoy_device.set_axis(pyvjoy.HID_USAGE_SL0, map_to_vjoy(Axis.th_l))
-                # vjoy_device.set_axis(pyvjoy.HID_USAGE_SL1, map_to_vjoy(Axis.th_r))
-
-            wheel_delta = 0
-            time.sleep(0.016)
-
-    except KeyboardInterrupt:
-        pass
-    finally:
-        set_mouse_speed(original_mouse_speed)
-        vjoy_device.reset()
-
 
 # 窗口类
 class MainWindow(QtWidgets.QMainWindow):
+    pointer_signal = QtCore.Signal(bool)
+    interface_signal = QtCore.Signal(str, int, str)
+
     def __init__(self):
         super().__init__()
 
@@ -219,18 +144,34 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_thread = None
         self.running = False
         self.language = 'en_US'
+        self.key_toggle_enabled = '`'
+        self.key_center = 'RB'
+        self.opt_cursor_overhaul = False
+        self.opt_interface_overlay = False
 
         self.ui.startBtn.clicked.connect(self.onButtonClick)
         self.ui.mouseSpeedSlider.valueChanged.connect(self.on_speed_changed)
         self.ui.mouseSpeedSlider.setRange(1, 10)
         self.ui.mouseSpeedSlider.setValue(5)
+        self.ui.toggleEnabledKey.textChanged.connect(lambda text: setattr(self, 'key_toggle_enabled', text))
+        self.ui.centerControlKey.textChanged.connect(lambda text: setattr(self, 'key_center', text))
+        self.ui.cursorOverhaulOption.stateChanged.connect(lambda state: setattr(self, 'opt_cursor_overhaul', bool(state)))
+        self.ui.interfaceOverlayOption.stateChanged.connect(lambda state: setattr(self, 'opt_interface_overlay', bool(state)))
 
         # 加载配置
         self.load_config()
+
         self.create_language_menu()
         self.retranslate_ui()
 
         self.show()
+
+        # 创建界面覆盖信号
+        self.interface = InterfaceOverlay()
+        self.interface_signal.connect(self.interface.show_message)
+        # 创建指针覆盖信号
+        self.pointer = CursorOverhaul('assets/cursor.png')
+        self.pointer_signal.connect(self.pointer.show_cursor)
 
     def load_default(self):
         self.ui.mouseSpeedSlider.setValue(5)
@@ -244,17 +185,35 @@ class MainWindow(QtWidgets.QMainWindow):
             try:
                 config.read(CONFIG_FILE)
 
-                if config.has_option('Settings', 'language'):
-                    lang = config.get('Settings', 'language')
+                if config.has_option('General', 'language'):
+                    lang = config.get('General', 'language')
                     self.language = lang
                     translator = QtCore.QTranslator()
                     if translator.load(f"locales/{lang}.qm"):
                         QtWidgets.QApplication.instance().installTranslator(translator)
                         QtWidgets.QApplication.instance().translators.append(translator)
 
-                if config.has_option('Settings', 'mouse_speed'):
-                    speed = config.getint('Settings', 'mouse_speed')
+                if config.has_option('Controls', 'mouse_speed'):
+                    speed = config.getint('Controls', 'mouse_speed')
                     self.ui.mouseSpeedSlider.setValue(speed)
+
+                if config.has_option('Controls', 'key_toggle_enabled'):
+                    key = config.get('Controls', 'key_toggle_enabled')
+                    if len(key) == 1:
+                        self.key_toggle_enabled = key
+
+                if config.has_option('Controls', 'key_center'):
+                    key = config.get('Controls', 'key_center')
+                    if len(key) == 1:
+                        self.key_center = key
+
+                if config.has_option('Controls', 'opt_cursor_overhaul'):
+                    key = config.getboolean('Controls', 'opt_cursor_overhaul')
+                    self.opt_cursor_overhaul = key
+
+                if config.has_option('Controls', 'opt_interface_overlay'):
+                    key = config.getboolean('Controls', 'opt_interface_overlay')
+                    self.opt_interface_overlay = key
 
             except Exception as e:
                 print(f"加载配置时出错: {str(e)}")
@@ -265,11 +224,18 @@ class MainWindow(QtWidgets.QMainWindow):
     def save_config(self):
         """保存配置到文件"""
         config = configparser.ConfigParser()
+        sections = ['General', 'Controls']
 
         # 添加设置部分
-        config.add_section('Settings')
-        config.set('Settings', 'language', self.language)
-        config.set('Settings', 'mouse_speed', str(self.ui.mouseSpeedSlider.value()))
+        config.add_section(sections[0])
+        config.set(sections[0], 'language', self.language)
+
+        config.add_section(sections[1])
+        config.set(sections[1], 'mouse_speed', str(self.ui.mouseSpeedSlider.value()))
+        config.set(sections[1], 'key_toggle_enabled', self.key_toggle_enabled)
+        config.set(sections[1], 'key_center', self.key_center)
+        config.set(sections[1], 'opt_cursor_overhaul', str(self.opt_cursor_overhaul))
+        config.set(sections[1], 'opt_interface_overlay', str(self.opt_interface_overlay))
 
         # 写入配置文件
         with open(CONFIG_FILE, 'w') as configfile:
@@ -326,6 +292,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.statusLabel.setText(self.tr("StatusStopped") if not self.running else self.tr("StatusWorking"))
         self.ui.speedLabel.setText(self.tr('Sensitive'))
         self.ui.speedValueLabel.setText(self.tr("CurrentValue") + f': {str(self.ui.mouseSpeedSlider.value())}')
+        self.ui.toggleEnabledLabel.setText(self.tr("ToggleEnabled"))
+        self.ui.toggleEnabledKey.setText(self.key_toggle_enabled)
+        self.ui.centerControlLabel.setText(self.tr("CenterControl"))
+        self.ui.centerControlKey.setText(self.key_center)
+        self.ui.cursorOverhaulLabel.setText(self.tr("CursorOverhaul"))
+        self.ui.cursorOverhaulOption.setChecked(self.opt_cursor_overhaul)
+        self.ui.interfaceOverlayLabel.setText(self.tr("InterfaceOverlay"))
+        self.ui.interfaceOverlayOption.setChecked(self.opt_interface_overlay)
 
     def on_speed_changed(self, value):
         """滑块值变化时, 更新状态与UI显示"""
@@ -364,8 +338,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.startBtn.setText(self.tr('Stop'))
         self.ui.statusLabel.setText(self.tr('StatusWorking'))
         self.ui.mouseSpeedSlider.setDisabled(True)
+        self.ui.toggleEnabledKey.setDisabled(True)
+        self.ui.centerControlKey.setDisabled(True)
+        self.ui.cursorOverhaulOption.setDisabled(True)
+        self.ui.interfaceOverlayOption.setDisabled(True)
+
         self.main_thread = threading.Thread(
-            target=main,
+            target=self.main,
             daemon=True
         )
         self.main_thread.start()
@@ -381,8 +360,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.startBtn.setText(self.tr('Start'))
         self.ui.statusLabel.setText(self.tr('StatusStopped'))
         self.ui.mouseSpeedSlider.setDisabled(False)
+        self.ui.toggleEnabledKey.setDisabled(False)
+        self.ui.centerControlKey.setDisabled(False)
+        self.ui.cursorOverhaulOption.setDisabled(False)
+        self.ui.interfaceOverlayOption.setDisabled(False)
         self.main_thread = None
         vjoy_device.reset()
+        self.pointer_signal.emit(False)
 
     def closeEvent(self, event):
         """停止子线程"""
@@ -413,9 +397,77 @@ class MainWindow(QtWidgets.QMainWindow):
             original_mouse_speed = get_mouse_speed()
             set_mouse_speed(mouse_speed)
             reset_axis_pos()
+            if self.opt_cursor_overhaul: self.pointer_signal.emit(True)
+            if self.opt_interface_overlay: self.interface_signal.emit("Controlled", 1000, 'green')
         else:
             # 恢复原始灵敏度
             set_mouse_speed(original_mouse_speed)
+            self.interface_signal.emit("No control", 1000, 'red')
+            self.pointer_signal.emit(False)
+
+    def main(self):
+        global delta_x, delta_y, wheel_delta, enabled
+        try:
+            input_state = InputStateMonitor()
+            # 初始/上一次的按键状态
+            toggle_key_prev = False
+            center_key_prev = False
+
+            prev_x, prev_y = screen_center_x, screen_center_y
+
+            while not stop_thread:  # 用stop_thread控制退出
+                input_state.update()
+                # 当前的按键状态
+                toggle_key_current = input_state.is_pressed(self.key_toggle_enabled)
+                center_key_current = input_state.is_pressed(self.key_center)
+
+                # 状态从curr流向prev，在中间计算delta
+                curr_x, curr_y = get_mouse_position()
+                delta_x = curr_x - prev_x
+                delta_y = curr_y - prev_y
+                prev_x, prev_y = curr_x, curr_y
+
+                if toggle_key_current and not toggle_key_prev:
+                    self.toggle_enabled(not enabled)
+
+                if enabled and center_key_current and not center_key_prev:
+                    set_mouse_position(screen_center_x, screen_center_y)
+
+                # 更新上一次的按键状态
+                toggle_key_prev = toggle_key_current
+                center_key_prev = center_key_current
+
+                if enabled and State.stick:
+                    Axis.x += delta_x * Sens.x * Sens.mou * 0.48
+                    Axis.y += delta_y * Sens.y * Sens.mou
+
+                    x_percent = (Axis.x / axis_max) * 100
+                    y_percent = (Axis.y / axis_max) * 100
+                    screen_x = screen_center_x + (x_percent / 100) * (screen_width / 2)
+                    screen_y = screen_center_y + (y_percent / 100) * (screen_height / 2)
+                    prev_x, prev_y = screen_x, screen_y
+
+                    Axis.x = check_overflow(Axis.x, axis_min, axis_max)
+                    Axis.y = check_overflow(Axis.y, axis_min, axis_max)
+                    # Axis.th_l = check_overflow(Axis.th_l, axis_min, axis_max)
+                    # Axis.th_r = check_overflow(Axis.th_r, axis_min, axis_max)
+
+                    def map_to_vjoy(val):
+                        return int((val - axis_min) / (axis_max - axis_min) * 32767) + 1
+
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_X, map_to_vjoy(Axis.x))
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_Y, map_to_vjoy(Axis.y))
+                    # vjoy_device.set_axis(pyvjoy.HID_USAGE_SL0, map_to_vjoy(Axis.th_l))
+                    # vjoy_device.set_axis(pyvjoy.HID_USAGE_SL1, map_to_vjoy(Axis.th_r))
+
+                wheel_delta = 0
+                time.sleep(0.016)
+
+        except KeyboardInterrupt:
+            pass
+        finally:
+            set_mouse_speed(original_mouse_speed)
+            vjoy_device.reset()
 
 
 if __name__ == "__main__":

@@ -1,185 +1,376 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
-   <rect>
-    <x>100</x>
-    <y>100</y>
-    <width>350</width>
-    <height>250</height>
-   </rect>
-  </property>
-  <property name="styleSheet">
-   <string notr="true">QMainWindow {
-    background-color: #F0F0F0;
-    font-family: 'Segoe UI';
-    font-size: 9pt;
-}
-QWidget {
-    background-color: #F0F0F0;
-}
-QLabel {
-    color: #000000;
-}
-QPushButton {
-    background-color: #E1E1E1;
-    border: 1px solid #A0A0A0;
-    border-radius: 3px;
-    padding: 5px;
-    min-width: 80px;
-}
-QPushButton:hover {
-    background-color: #D0D0D0;
-}
-QPushButton:pressed {
-    background-color: #C0C0C0;
-    border: 1px solid #707070;
-}
-QSlider::groove:horizontal {
-    border: 1px solid #A0A0A0;
-    height: 6px;
-    background: #D0D0D0;
-    margin: 2px 0;
-}
-QSlider::handle:horizontal {
-    background: #E1E1E1;
-    border: 1px solid #707070;
-    width: 16px;
-    margin: -4px 0;
-    border-radius: 3px;
-}
-QSlider::handle:horizontal:hover {
-    background: #F0F0F0;
-}
-QSlider::add-page:horizontal {
-    background: #B0B0B0;
-}
-QSlider::sub-page:horizontal {
-    background: #0078D7;
-}
-QStatusBar {
-    background-color: #E1E1E1;
-    border-top: 1px solid #A0A0A0;
-    padding: 2px;
-}</string>
-  </property>
+    <class>MainWindow</class>
+    <widget class="QMainWindow" name="MainWindow">
+        <property name="geometry">
+            <rect>
+                <x>100</x>
+                <y>100</y>
+                <width>350</width>
+                <height>350</height>
+            </rect>
+        </property>
+        <property name="styleSheet">
+            <string notr="true">
+                QMainWindow {
+                background-color: #F0F0F0;
+                font-family: 'Segoe UI';
+                font-size: 9pt;
+                }
+                QWidget {
+                background-color: #F0F0F0;
+                }
+                QLabel {
+                color: #000000;
+                }
+                QPushButton {
+                background-color: #E1E1E1;
+                border: 1px solid #A0A0A0;
+                border-radius: 3px;
+                padding: 5px;
+                min-width: 80px;
+                }
+                QPushButton:hover {
+                background-color: #D0D0D0;
+                }
+                QPushButton:pressed {
+                background-color: #C0C0C0;
+                border: 1px solid #707070;
+                }
+                QSlider::groove:horizontal {
+                border: 1px solid #A0A0A0;
+                height: 6px;
+                background: #D0D0D0;
+                margin: 2px 0;
+                }
+                QSlider::handle:horizontal {
+                background: #E1E1E1;
+                border: 1px solid #707070;
+                width: 16px;
+                margin: -4px 0;
+                border-radius: 3px;
+                }
+                QSlider::handle:horizontal:hover {
+                background: #F0F0F0;
+                }
+                QSlider::add-page:horizontal {
+                background: #B0B0B0;
+                }
+                QSlider::sub-page:horizontal {
+                background: #0078D7;
+                }
+                QLineEdit {
+                border: 1px solid #A0A0A0;
+                border-radius: 3px;
+                padding: 4px;
+                background: white;
+                min-width: 80px;
+                }
+            </string>
+        </property>
 
-  <widget class="QWidget" name="centralWidget">
-   <property name="styleSheet">
-    <string notr="true">background-color: #F0F0F0;</string>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <property name="leftMargin">
-     <number>15</number>
-    </property>
-    <property name="topMargin">
-     <number>0</number>
-    </property>
-    <property name="rightMargin">
-     <number>15</number>
-    </property>
-    <property name="bottomMargin">
-     <number>15</number>
-    </property>
-    <property name="spacing">
-     <number>10</number>
-    </property>
+        <widget class="QWidget" name="centralWidget">
+            <layout class="QVBoxLayout" name="verticalLayout">
+                <property name="leftMargin">
+                    <number>15</number>
+                </property>
+                <property name="topMargin">
+                    <number>0</number>
+                </property>
+                <property name="rightMargin">
+                    <number>15</number>
+                </property>
+                <property name="bottomMargin">
+                    <number>15</number>
+                </property>
+                <property name="spacing">
+                    <number>10</number>
+                </property>
 
-    <!-- 标题 -->
-    <item>
-     <widget class="QLabel" name="titleLabel">
-      <property name="text">
-       <string>配置</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">font-size: 14pt; font-weight: bold; margin: 10px 0; color: #000000;</string>
-      </property>
-     </widget>
-    </item>
+                <!-- 标题 -->
+                <item>
+                    <widget class="QLabel" name="titleLabel">
+                        <property name="text">
+                            <string></string>
+                        </property>
+                        <property name="alignment">
+                            <set>Qt::AlignCenter</set>
+                        </property>
+                        <property name="styleSheet">
+                            <string notr="true">font-size: 14pt; font-weight: bold; margin: 10px 0;
+                                color: #000000;</string>
+                        </property>
+                    </widget>
+                </item>
 
-    <!-- 灵敏度标签 -->
-    <item>
-     <widget class="QLabel" name="speedLabel">
-      <property name="text">
-       <string>系统鼠标灵敏度:</string>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">color: #000000;</string>
-      </property>
-     </widget>
-    </item>
+                <!-- 灵敏度设置行 -->
+                <item>
+                    <layout class="QVBoxLayout">
+                        <property name="spacing">
+                            <number>5</number>
+                        </property>
 
-    <!-- 灵敏度滑块 -->
-    <item>
-     <widget class="QSlider" name="mouseSpeedSlider">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="minimum">
-       <number>1</number>
-      </property>
-      <property name="maximum">
-       <number>10</number>
-      </property>
-      <property name="value">
-       <number>5</number>
-      </property>
-      <property name="tickPosition">
-       <enum>QSlider::TicksBelow</enum>
-      </property>
-      <property name="tickInterval">
-       <number>1</number>
-      </property>
-     </widget>
-    </item>
+                        <!-- 灵敏度标签 -->
+                        <item>
+                            <widget class="QLabel" name="speedLabel">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                                <property name="styleSheet">
+                                    <string notr="true">color: #000000;</string>
+                                </property>
+                            </widget>
+                        </item>
 
-    <!-- 滑块值显示 -->
-    <item>
-     <widget class="QLabel" name="speedValueLabel">
-      <property name="text">
-       <string>当前值: Nan</string>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">color: #505050; font-size: 9pt;</string>
-      </property>
-     </widget>
-    </item>
+                        <!-- 灵敏度滑块 -->
+                        <item>
+                            <widget class="QSlider" name="mouseSpeedSlider">
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="minimum">
+                                    <number>1</number>
+                                </property>
+                                <property name="maximum">
+                                    <number>10</number>
+                                </property>
+                                <property name="value">
+                                    <number>5</number>
+                                </property>
+                                <property name="tickPosition">
+                                    <enum>QSlider::TicksBelow</enum>
+                                </property>
+                                <property name="tickInterval">
+                                    <number>1</number>
+                                </property>
+                            </widget>
+                        </item>
 
-    <!-- 启动/停止按钮 -->
-    <item>
-     <widget class="QPushButton" name="startBtn">
-      <property name="text">
-       <string>启动</string>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">font-size: 10pt;
-padding: 8px;
-margin: 10px 0;
-background-color: #E1E1E1;</string>
-      </property>
-     </widget>
-    </item>
+                        <!-- 滑块值显示 -->
+                        <item>
+                            <widget class="QLabel" name="speedValueLabel">
+                                <property name="text">
+                                    <string>5</string>  <!-- 简化显示 -->
+                                </property>
+                                <property name="styleSheet">
+                                    <string notr="true">color: #505050; font-size: 9pt; min-width:
+                                        30px;</string>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
 
-    <!-- 状态显示 -->
-    <item>
-     <widget class="QLabel" name="statusLabel">
-      <property name="text">
-       <string>状态: 未运行</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">color: #505050; font-style: italic;</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
- </widget>
- <resources/>
+                <!-- 固定大小分隔符 -->
+                <item>
+                    <spacer name="fixedVerticalSpacer">
+                        <property name="orientation">
+                            <enum>Qt::Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>QSizePolicy::Fixed</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                            <size>
+                                <width>0</width>
+                                <height>10</height> <!-- 固定10像素高度 -->
+                            </size>
+                        </property>
+                    </spacer>
+                </item>
+
+                <!-- 设置区域 -->
+                <item>
+                    <layout class="QVBoxLayout">
+                        <!-- 修复：将spacing作为property元素 -->
+                        <property name="spacing">
+                            <number>8</number>
+                        </property>
+
+                        <!-- 指针图标 -->
+                        <item>
+                            <layout class="QHBoxLayout">
+                                <property name="spacing">
+                                    <number>10</number>
+                                </property>
+                                <item>
+                                    <widget class="QLabel" name="cursorOverhaulLabel">
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item>
+                                    <spacer>
+                                        <property name="orientation">
+                                            <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                            <size>
+                                                <width>40</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </item>
+                                <item>
+                                    <widget class="QCheckBox" name="cursorOverhaulOption">
+                                        <property name="checked">
+                                            <bool>false</bool>
+                                        </property>
+                                    </widget>
+                                </item>
+                            </layout>
+                        </item>
+
+                        <!-- 界面覆盖 -->
+                        <item>
+                            <layout class="QHBoxLayout">
+                                <property name="spacing">
+                                    <number>10</number>
+                                </property>
+                                <item>
+                                    <widget class="QLabel" name="interfaceOverlayLabel">
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item>
+                                    <spacer>
+                                        <property name="orientation">
+                                            <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                            <size>
+                                                <width>40</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </item>
+                                <item>
+                                    <widget class="QCheckBox" name="interfaceOverlayOption">
+                                        <property name="checked">
+                                            <bool>false</bool>
+                                        </property>
+                                    </widget>
+                                </item>
+                            </layout>
+                        </item>
+
+                        <!-- 切换控制 -->
+                        <item>
+                            <layout class="QHBoxLayout">
+                                <property name="spacing">
+                                    <number>10</number>
+                                </property>
+                                <item>
+                                    <widget class="QLabel" name="toggleEnabledLabel">
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item>
+                                    <spacer>
+                                        <property name="orientation">
+                                            <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                            <size>
+                                                <width>40</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </item>
+                                <item>
+                                    <widget class="QLineEdit" name="toggleEnabledKey">
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                    </widget>
+                                </item>
+                            </layout>
+                        </item>
+
+                        <!-- 控制回中 -->
+                        <item>
+                            <layout class="QHBoxLayout" name="centerControlLayout">
+                                <property name="spacing">
+                                    <number>10</number>
+                                </property>
+                                <item>
+                                    <widget class="QLabel" name="centerControlLabel">
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item>
+                                    <spacer>
+                                        <property name="orientation">
+                                            <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                            <size>
+                                                <width>40</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </item>
+                                <item>
+                                    <widget class="QLineEdit" name="centerControlKey">
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                    </widget>
+                                </item>
+                            </layout>
+                        </item>
+                    </layout>
+                </item>
+
+                <!-- 添加的垂直弹簧 -->
+                <item>
+                    <spacer name="verticalSpacer_sensitivity">
+                        <property name="orientation">
+                            <enum>Qt::Vertical</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                            <size>
+                                <width>20</width>
+                                <height>0</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </item>
+
+                <!-- 启动/停止按钮 -->
+                <item>
+                    <widget class="QPushButton" name="startBtn">
+                        <property name="text">
+                            <string></string>
+                        </property>
+                    </widget>
+                </item>
+
+                <!-- 状态显示 -->
+                <item>
+                    <widget class="QLabel" name="statusLabel">
+                        <property name="text">
+                            <string></string>
+                        </property>
+                        <property name="alignment">
+                            <set>Qt::AlignCenter</set>
+                        </property>
+                    </widget>
+                </item>
+
+            </layout>
+        </widget>
+    </widget>
+    <resources />
 </ui>
