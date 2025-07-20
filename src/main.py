@@ -384,9 +384,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_thread = None
         vjoy_device.reset()
 
-        if abs(Axis.x) > axis_max * 0.1 or abs(Axis.y) > axis_max * 0.1:
-            print("异常轴值: X={}, Y={}".format(Axis.x, Axis.y))
-
     def closeEvent(self, event):
         """停止子线程"""
         global stop_thread
