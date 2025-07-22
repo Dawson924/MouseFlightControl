@@ -9,8 +9,9 @@ a = Analysis(
     pathex=[],  # 额外搜索路径
     binaries=[],
     datas=[
-        ('locales', 'locales'),
-        ('assets', 'assets')
+        ('locales', 'Locales'),
+        ('assets', 'Assets'),
+        ('Platform', 'Platform')
     ],
     hiddenimports=[],
     hookspath=[],

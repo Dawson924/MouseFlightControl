@@ -6,19 +6,17 @@ import time
 import ctypes
 import pyvjoy
 import win32api
-import win32con
 import pywintypes
-from pynput import keyboard
-from pynput.keyboard import Key, KeyCode
 
 from PySide2 import QtWidgets, QtCore
-from PySide2.QtGui import QPixmap, QCursor
-from PySide2.QtWidgets import QApplication
 from app import App
+from controller.base import BaseController
+from controller.lockon.dcs import DCSController
+from enums.control import ControlMode
 from input import InputStateMonitor
 from ui.MainWindow import Ui_MainWindow
-from ui.CursorOverhaul import CursorOverhaul
-from ui.InterfaceOverlay import InterfaceOverlay  # 确保这个UI文件已正确生成
+from ui.overlay.CursorOverhaul import CursorOverhaul
+from ui.overlay.InterfaceOverlay import HintOverlay  # 确保这个UI文件已正确生成
 
 # 初始化vJoy设备
 vjoy_device = None
@@ -28,10 +26,16 @@ SPI_GETMOUSESPEED = 112
 MOUSE_SPEED_DEFAULT = 10  # Windows默认灵敏度(1-20)
 # 全局配置文件名
 CONFIG_FILE = "config.ini"
+# 平台控制模式
+CONTROL_MODE = {
+    ControlMode.Common: BaseController,
+    ControlMode.DCS: DCSController
+}
 
 # 验证vJoy
 try:
     vjoy_device = pyvjoy.VJoyDevice(1)
+    vjoy_device.set_axis(pyvjoy.HID_USAGE_RZ, 0x4000)
 except Exception as e:
     app = QtWidgets.QApplication(sys.argv)
     error_msg = QtWidgets.QMessageBox()
@@ -81,9 +85,6 @@ screen_center_y = screen_height / 2
 delta_x = 0
 delta_y = 0
 wheel_delta = 0
-mouse_buttons = {"left": False, "right": False, "middle": False}
-key_states = {Key.shift_r: False, Key.alt_r: False, Key.ctrl_r: False}
-
 
 def reset_axis_pos():
     global Axis
@@ -144,19 +145,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_thread = None
         self.running = False
         self.language = 'en_US'
-        self.key_toggle_enabled = '`'
+        self.controller = CONTROL_MODE[ControlMode.Common]
+        self.key_toggle = '`'
         self.key_center = 'RB'
-        self.opt_cursor_overhaul = False
-        self.opt_interface_overlay = False
+        self.opt_cursor = False
+        self.opt_hint = True
+        self.opt_button_mapping = True
+        self.opt_view_center_on_ctrl = True
+        self.opt_memorize_mouse_pos = True
 
         self.ui.startBtn.clicked.connect(self.onButtonClick)
+        self.ui.modeComboBox.currentTextChanged.connect(self.on_mode_change)
         self.ui.mouseSpeedSlider.valueChanged.connect(self.on_speed_changed)
-        self.ui.mouseSpeedSlider.setRange(1, 10)
+        self.ui.mouseSpeedSlider.setRange(1, 20)
         self.ui.mouseSpeedSlider.setValue(5)
-        self.ui.toggleEnabledKey.textChanged.connect(lambda text: setattr(self, 'key_toggle_enabled', text))
+        self.ui.toggleEnabledKey.textChanged.connect(lambda text: setattr(self, 'key_toggle', text))
         self.ui.centerControlKey.textChanged.connect(lambda text: setattr(self, 'key_center', text))
-        self.ui.cursorOverhaulOption.stateChanged.connect(lambda state: setattr(self, 'opt_cursor_overhaul', bool(state)))
-        self.ui.interfaceOverlayOption.stateChanged.connect(lambda state: setattr(self, 'opt_interface_overlay', bool(state)))
+        self.ui.cursorOverhaulOption.stateChanged.connect(lambda state: setattr(self, 'opt_cursor', bool(state)))
+        self.ui.hintOverlayOption.stateChanged.connect(lambda state: setattr(self, 'opt_hint', bool(state)))
+        self.ui.buttonMappingOption.stateChanged.connect(lambda state: setattr(self, 'opt_button_mapping', bool(state)))
+        self.ui.viewCenterOnCtrlOption.stateChanged.connect(lambda state: setattr(self, 'opt_view_center_on_ctrl', bool(state)))
+        self.ui.memorizeMousePosOption.stateChanged.connect(lambda state: setattr(self, 'opt_memorize_mouse_pos', bool(state)))
+
+        for mode in CONTROL_MODE.keys():
+            self.ui.modeComboBox.addItem(mode.value)
 
         # 加载配置
         self.load_config()
@@ -167,7 +179,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show()
 
         # 创建界面覆盖信号
-        self.interface = InterfaceOverlay()
+        self.interface = HintOverlay()
         self.interface_signal.connect(self.interface.show_message)
         # 创建指针覆盖信号
         self.pointer = CursorOverhaul('assets/cursor.png')
@@ -193,27 +205,44 @@ class MainWindow(QtWidgets.QMainWindow):
                         QtWidgets.QApplication.instance().installTranslator(translator)
                         QtWidgets.QApplication.instance().translators.append(translator)
 
+                if config.has_option('General', 'controller'):
+                    for ctrlr in CONTROL_MODE.values():
+                        if ctrlr.id == config.get('General', 'controller'):
+                            self.controller = ctrlr
+
                 if config.has_option('Controls', 'mouse_speed'):
                     speed = config.getint('Controls', 'mouse_speed')
                     self.ui.mouseSpeedSlider.setValue(speed)
 
-                if config.has_option('Controls', 'key_toggle_enabled'):
-                    key = config.get('Controls', 'key_toggle_enabled')
+                if config.has_option('Controls', 'key_toggle'):
+                    key = config.get('Controls', 'key_toggle')
                     if len(key) == 1:
-                        self.key_toggle_enabled = key
+                        self.key_toggle = key
 
                 if config.has_option('Controls', 'key_center'):
                     key = config.get('Controls', 'key_center')
                     if len(key) == 1:
                         self.key_center = key
 
-                if config.has_option('Controls', 'opt_cursor_overhaul'):
-                    key = config.getboolean('Controls', 'opt_cursor_overhaul')
-                    self.opt_cursor_overhaul = key
+                if config.has_option('Controls', 'cursor_overlay'):
+                    key = config.getboolean('Controls', 'cursor_overlay')
+                    self.opt_cursor = key
 
-                if config.has_option('Controls', 'opt_interface_overlay'):
-                    key = config.getboolean('Controls', 'opt_interface_overlay')
-                    self.opt_interface_overlay = key
+                if config.has_option('Controls', 'hint_overlay'):
+                    key = config.getboolean('Controls', 'hint_overlay')
+                    self.opt_hint = key
+
+                if config.has_option('Controls', 'button_mapping'):
+                    key = config.getboolean('Controls', 'button_mapping')
+                    self.opt_button_mapping = key
+
+                if config.has_option('Controls', 'view_center_on_ctrl'):
+                    key = config.getboolean('Controls', 'view_center_on_ctrl')
+                    self.opt_view_center_on_ctrl = key
+
+                if config.has_option('Controls', 'memorize_mouse_pos'):
+                    key = config.getboolean('Controls', 'memorize_mouse_pos')
+                    self.opt_memorize_mouse_pos = key
 
             except Exception as e:
                 print(f"加载配置时出错: {str(e)}")
@@ -229,13 +258,17 @@ class MainWindow(QtWidgets.QMainWindow):
         # 添加设置部分
         config.add_section(sections[0])
         config.set(sections[0], 'language', self.language)
+        config.set(sections[0], 'controller', self.controller.id)
 
         config.add_section(sections[1])
         config.set(sections[1], 'mouse_speed', str(self.ui.mouseSpeedSlider.value()))
-        config.set(sections[1], 'key_toggle_enabled', self.key_toggle_enabled)
+        config.set(sections[1], 'key_toggle', self.key_toggle)
         config.set(sections[1], 'key_center', self.key_center)
-        config.set(sections[1], 'opt_cursor_overhaul', str(self.opt_cursor_overhaul))
-        config.set(sections[1], 'opt_interface_overlay', str(self.opt_interface_overlay))
+        config.set(sections[1], 'cursor_overlay', str(self.opt_cursor))
+        config.set(sections[1], 'hint_overlay', str(self.opt_hint))
+        config.set(sections[1], 'button_mapping', str(self.opt_button_mapping))
+        config.set(sections[1], 'view_center_on_ctrl', str(self.opt_view_center_on_ctrl))
+        config.set(sections[1], 'memorize_mouse_pos', str(self.opt_memorize_mouse_pos))
 
         # 写入配置文件
         with open(CONFIG_FILE, 'w') as configfile:
@@ -287,19 +320,30 @@ class MainWindow(QtWidgets.QMainWindow):
         # 按钮文本
         self.ui.startBtn.setText(self.tr("Start") if not self.running else self.tr("Stop"))
 
+        # 设置选择
+        for mode, ctrlr in CONTROL_MODE.items():
+            if ctrlr.id == self.controller.id:
+                self.ui.modeComboBox.setCurrentText(mode.value)
+
         # 标签文本
         self.ui.titleLabel.setText(self.tr("Title"))
         self.ui.statusLabel.setText(self.tr("StatusStopped") if not self.running else self.tr("StatusWorking"))
         self.ui.speedLabel.setText(self.tr('Sensitive'))
         self.ui.speedValueLabel.setText(self.tr("CurrentValue") + f': {str(self.ui.mouseSpeedSlider.value())}')
         self.ui.toggleEnabledLabel.setText(self.tr("ToggleEnabled"))
-        self.ui.toggleEnabledKey.setText(self.key_toggle_enabled)
+        self.ui.toggleEnabledKey.setText(self.key_toggle)
         self.ui.centerControlLabel.setText(self.tr("CenterControl"))
         self.ui.centerControlKey.setText(self.key_center)
         self.ui.cursorOverhaulLabel.setText(self.tr("CursorOverhaul"))
-        self.ui.cursorOverhaulOption.setChecked(self.opt_cursor_overhaul)
-        self.ui.interfaceOverlayLabel.setText(self.tr("InterfaceOverlay"))
-        self.ui.interfaceOverlayOption.setChecked(self.opt_interface_overlay)
+        self.ui.cursorOverhaulOption.setChecked(self.opt_cursor)
+        self.ui.hintOverlayLabel.setText(self.tr("HintOverlay"))
+        self.ui.hintOverlayOption.setChecked(self.opt_hint)
+        self.ui.buttonMappingLabel.setText(self.tr("ButtonMapping"))
+        self.ui.buttonMappingOption.setChecked(self.opt_button_mapping)
+        self.ui.viewCenterOnCtrlLabel.setText(self.tr("ViewCenterOnCtrl"))
+        self.ui.viewCenterOnCtrlOption.setChecked(self.opt_view_center_on_ctrl)
+        self.ui.memorizeMousePosLabel.setText(self.tr("MemorizeMousePos"))
+        self.ui.memorizeMousePosOption.setChecked(self.opt_memorize_mouse_pos)
 
     def on_speed_changed(self, value):
         """滑块值变化时, 更新状态与UI显示"""
@@ -311,6 +355,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.speedValueLabel.setText(f'{self.tr("CurrentValue")}: {str(self.ui.mouseSpeedSlider.value())}')
         if self.running:
             set_mouse_speed(value)
+
+    def on_mode_change(self, text):
+        selected_mode = None
+        for mode in ControlMode:
+            if mode.value == text:
+                selected_mode = mode
+                break
+
+        if selected_mode is not None:
+            self.controller = CONTROL_MODE[selected_mode]
+        else:
+            self.controller = CONTROL_MODE[ControlMode.Common]
 
     def onButtonClick(self):
         """切换启用/禁用状态, 同步UI与子线程"""
@@ -341,7 +397,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.toggleEnabledKey.setDisabled(True)
         self.ui.centerControlKey.setDisabled(True)
         self.ui.cursorOverhaulOption.setDisabled(True)
-        self.ui.interfaceOverlayOption.setDisabled(True)
+        self.ui.hintOverlayOption.setDisabled(True)
+        self.ui.buttonMappingOption.setDisabled(True)
+        self.ui.viewCenterOnCtrlOption.setDisabled(True)
+        self.ui.memorizeMousePosOption.setDisabled(True)
 
         self.main_thread = threading.Thread(
             target=self.main,
@@ -363,7 +422,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.toggleEnabledKey.setDisabled(False)
         self.ui.centerControlKey.setDisabled(False)
         self.ui.cursorOverhaulOption.setDisabled(False)
-        self.ui.interfaceOverlayOption.setDisabled(False)
+        self.ui.hintOverlayOption.setDisabled(False)
+        self.ui.buttonMappingOption.setDisabled(False)
+        self.ui.viewCenterOnCtrlOption.setDisabled(False)
+        self.ui.memorizeMousePosOption.setDisabled(False)
+
         self.main_thread = None
         vjoy_device.reset()
         self.pointer_signal.emit(False)
@@ -388,22 +451,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
         enabled = flag
         State.stick = flag
-        State.th = flag
-        State.mouselock = flag
-        State.btn = flag
 
         if flag:
             # 保存原始灵敏度并设置为UI指定值
             original_mouse_speed = get_mouse_speed()
             set_mouse_speed(mouse_speed)
-            reset_axis_pos()
-            if self.opt_cursor_overhaul: self.pointer_signal.emit(True)
-            if self.opt_interface_overlay: self.interface_signal.emit("Controlled", 1000, 'green')
+            # reset_axis_pos()
+            if self.opt_cursor: self.pointer_signal.emit(True)
+            if self.opt_hint: self.interface_signal.emit("Controlled", 1000, 'green')
         else:
             # 恢复原始灵敏度
             set_mouse_speed(original_mouse_speed)
-            self.interface_signal.emit("No control", 1000, 'red')
             self.pointer_signal.emit(False)
+            if self.opt_hint: self.interface_signal.emit("No control", 1000, 'red')
 
     def main(self):
         global delta_x, delta_y, wheel_delta, enabled
@@ -414,28 +474,53 @@ class MainWindow(QtWidgets.QMainWindow):
             center_key_prev = False
 
             prev_x, prev_y = screen_center_x, screen_center_y
+            memo_x, memo_y = None, None
+
+            game_controller = self.controller(vjoy_device)
 
             while not stop_thread:  # 用stop_thread控制退出
                 input_state.update()
                 # 当前的按键状态
-                toggle_key_current = input_state.is_pressed(self.key_toggle_enabled)
+                toggle_key_current = input_state.is_pressed(self.key_toggle)
                 center_key_current = input_state.is_pressed(self.key_center)
 
-                # 状态从curr流向prev，在中间计算delta
-                curr_x, curr_y = get_mouse_position()
-                delta_x = curr_x - prev_x
-                delta_y = curr_y - prev_y
-                prev_x, prev_y = curr_x, curr_y
-
                 if toggle_key_current and not toggle_key_prev:
-                    self.toggle_enabled(not enabled)
+                    _flag = not enabled
+                    self.toggle_enabled(_flag)
+                    if _flag and self.opt_view_center_on_ctrl:
+                        game_controller.view_center()
+                    if self.opt_memorize_mouse_pos:
+                        if not _flag:
+                            memo_x, memo_y = get_mouse_position()
+                        elif memo_x is not None and memo_y is not None:
+                            prev_x, prev_y = memo_x, memo_y
+                            set_mouse_position(memo_x, memo_y)
+                            memo_x, memo_y = None, None
 
                 if enabled and center_key_current and not center_key_prev:
                     set_mouse_position(screen_center_x, screen_center_y)
 
-                # 更新上一次的按键状态
                 toggle_key_prev = toggle_key_current
                 center_key_prev = center_key_current
+
+                if enabled and self.opt_button_mapping:
+                    if input_state.is_pressed('LB'):
+                        vjoy_device.set_button(1, True)
+                    else:
+                        vjoy_device.set_button(1, False)
+                    if input_state.is_pressed('RB'):
+                        vjoy_device.set_button(2, True)
+                    else:
+                        vjoy_device.set_button(2, False)
+                    if input_state.is_pressed('MB'):
+                        vjoy_device.set_button(3, True)
+                    else:
+                        vjoy_device.set_button(3, False)
+
+                curr_x, curr_y = get_mouse_position()
+                delta_x = curr_x - prev_x
+                delta_y = curr_y - prev_y
+                prev_x, prev_y = curr_x, curr_y
 
                 if enabled and State.stick:
                     Axis.x += delta_x * Sens.x * Sens.mou * 0.48

@@ -74,6 +74,35 @@ class Ui_MainWindow(object):
 "                background: white;\n"
 "                min-width: 80px;\n"
 "                }\n"
+"                QComboBox {\n"
+"                border:"
+                        " 1px solid #A0A0A0;\n"
+"                border-radius: 3px;\n"
+"                padding: 4px;\n"
+"                background: white;\n"
+"                min-width: 120px;\n"
+"                }\n"
+"                QComboBox::drop-down {\n"
+"                subcontrol-origin: padding;\n"
+"                subcontrol-position: top right;\n"
+"                width: 20px;\n"
+"                border-left-width: 1px;\n"
+"                border-left-color: #A0A0A0;\n"
+"                border-left-style: solid;\n"
+"                border-top-right-radius: 3px;\n"
+"                border-bottom-right-radius: 3px;\n"
+"                }\n"
+"                QComboBox::down-arrow {\n"
+"                image: url(assets/down_arrow.svg);\n"
+"                width: 16px;\n"
+"                height: 16px;\n"
+"                }\n"
+"                QComboBox QAbstractItemView {\n"
+"                border: 1px solid #A0A0A0;\n"
+"                background: white;\n"
+"                selection-background-color: #E1E1E1;\n"
+"        "
+                        "        }\n"
 "            ")
         self.centralWidget = QWidget(MainWindow)
         self.centralWidget.setObjectName(u"centralWidget")
@@ -102,7 +131,7 @@ class Ui_MainWindow(object):
         self.mouseSpeedSlider.setObjectName(u"mouseSpeedSlider")
         self.mouseSpeedSlider.setOrientation(Qt.Horizontal)
         self.mouseSpeedSlider.setMinimum(1)
-        self.mouseSpeedSlider.setMaximum(10)
+        self.mouseSpeedSlider.setMaximum(20)
         self.mouseSpeedSlider.setValue(5)
         self.mouseSpeedSlider.setTickPosition(QSlider.TicksBelow)
         self.mouseSpeedSlider.setTickInterval(1)
@@ -150,20 +179,20 @@ class Ui_MainWindow(object):
         self.hboxLayout1 = QHBoxLayout()
         self.hboxLayout1.setSpacing(10)
         self.hboxLayout1.setObjectName(u"hboxLayout1")
-        self.interfaceOverlayLabel = QLabel(self.centralWidget)
-        self.interfaceOverlayLabel.setObjectName(u"interfaceOverlayLabel")
+        self.hintOverlayLabel = QLabel(self.centralWidget)
+        self.hintOverlayLabel.setObjectName(u"hintOverlayLabel")
 
-        self.hboxLayout1.addWidget(self.interfaceOverlayLabel)
+        self.hboxLayout1.addWidget(self.hintOverlayLabel)
 
         self.spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout1.addItem(self.spacerItem1)
 
-        self.interfaceOverlayOption = QCheckBox(self.centralWidget)
-        self.interfaceOverlayOption.setObjectName(u"interfaceOverlayOption")
-        self.interfaceOverlayOption.setChecked(False)
+        self.hintOverlayOption = QCheckBox(self.centralWidget)
+        self.hintOverlayOption.setObjectName(u"hintOverlayOption")
+        self.hintOverlayOption.setChecked(False)
 
-        self.hboxLayout1.addWidget(self.interfaceOverlayOption)
+        self.hboxLayout1.addWidget(self.hintOverlayOption)
 
 
         self.vboxLayout1.addLayout(self.hboxLayout1)
@@ -171,22 +200,85 @@ class Ui_MainWindow(object):
         self.hboxLayout2 = QHBoxLayout()
         self.hboxLayout2.setSpacing(10)
         self.hboxLayout2.setObjectName(u"hboxLayout2")
-        self.toggleEnabledLabel = QLabel(self.centralWidget)
-        self.toggleEnabledLabel.setObjectName(u"toggleEnabledLabel")
+        self.buttonMappingLabel = QLabel(self.centralWidget)
+        self.buttonMappingLabel.setObjectName(u"buttonMappingLabel")
 
-        self.hboxLayout2.addWidget(self.toggleEnabledLabel)
+        self.hboxLayout2.addWidget(self.buttonMappingLabel)
 
         self.spacerItem2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout2.addItem(self.spacerItem2)
 
-        self.toggleEnabledKey = QLineEdit(self.centralWidget)
-        self.toggleEnabledKey.setObjectName(u"toggleEnabledKey")
+        self.buttonMappingOption = QCheckBox(self.centralWidget)
+        self.buttonMappingOption.setObjectName(u"buttonMappingOption")
+        self.buttonMappingOption.setChecked(False)
 
-        self.hboxLayout2.addWidget(self.toggleEnabledKey)
+        self.hboxLayout2.addWidget(self.buttonMappingOption)
 
 
         self.vboxLayout1.addLayout(self.hboxLayout2)
+
+        self.hboxLayout3 = QHBoxLayout()
+        self.hboxLayout3.setSpacing(10)
+        self.hboxLayout3.setObjectName(u"hboxLayout3")
+        self.viewCenterOnCtrlLabel = QLabel(self.centralWidget)
+        self.viewCenterOnCtrlLabel.setObjectName(u"viewCenterOnCtrlLabel")
+
+        self.hboxLayout3.addWidget(self.viewCenterOnCtrlLabel)
+
+        self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout3.addItem(self.spacerItem3)
+
+        self.viewCenterOnCtrlOption = QCheckBox(self.centralWidget)
+        self.viewCenterOnCtrlOption.setObjectName(u"viewCenterOnCtrlOption")
+        self.viewCenterOnCtrlOption.setChecked(False)
+
+        self.hboxLayout3.addWidget(self.viewCenterOnCtrlOption)
+
+
+        self.vboxLayout1.addLayout(self.hboxLayout3)
+
+        self.hboxLayout4 = QHBoxLayout()
+        self.hboxLayout4.setSpacing(10)
+        self.hboxLayout4.setObjectName(u"hboxLayout4")
+        self.memorizeMousePosLabel = QLabel(self.centralWidget)
+        self.memorizeMousePosLabel.setObjectName(u"memorizeMousePosLabel")
+
+        self.hboxLayout4.addWidget(self.memorizeMousePosLabel)
+
+        self.spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout4.addItem(self.spacerItem4)
+
+        self.memorizeMousePosOption = QCheckBox(self.centralWidget)
+        self.memorizeMousePosOption.setObjectName(u"memorizeMousePosOption")
+        self.memorizeMousePosOption.setChecked(False)
+
+        self.hboxLayout4.addWidget(self.memorizeMousePosOption)
+
+
+        self.vboxLayout1.addLayout(self.hboxLayout4)
+
+        self.hboxLayout5 = QHBoxLayout()
+        self.hboxLayout5.setSpacing(10)
+        self.hboxLayout5.setObjectName(u"hboxLayout5")
+        self.toggleEnabledLabel = QLabel(self.centralWidget)
+        self.toggleEnabledLabel.setObjectName(u"toggleEnabledLabel")
+
+        self.hboxLayout5.addWidget(self.toggleEnabledLabel)
+
+        self.spacerItem5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout5.addItem(self.spacerItem5)
+
+        self.toggleEnabledKey = QLineEdit(self.centralWidget)
+        self.toggleEnabledKey.setObjectName(u"toggleEnabledKey")
+
+        self.hboxLayout5.addWidget(self.toggleEnabledKey)
+
+
+        self.vboxLayout1.addLayout(self.hboxLayout5)
 
         self.centerControlLayout = QHBoxLayout()
         self.centerControlLayout.setSpacing(10)
@@ -196,9 +288,9 @@ class Ui_MainWindow(object):
 
         self.centerControlLayout.addWidget(self.centerControlLabel)
 
-        self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.centerControlLayout.addItem(self.spacerItem3)
+        self.centerControlLayout.addItem(self.spacerItem6)
 
         self.centerControlKey = QLineEdit(self.centralWidget)
         self.centerControlKey.setObjectName(u"centerControlKey")
@@ -214,6 +306,11 @@ class Ui_MainWindow(object):
         self.verticalSpacer_sensitivity = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.verticalLayout.addItem(self.verticalSpacer_sensitivity)
+
+        self.modeComboBox = QComboBox(self.centralWidget)
+        self.modeComboBox.setObjectName(u"modeComboBox")
+
+        self.verticalLayout.addWidget(self.modeComboBox)
 
         self.startBtn = QPushButton(self.centralWidget)
         self.startBtn.setObjectName(u"startBtn")
@@ -238,7 +335,10 @@ class Ui_MainWindow(object):
         self.speedLabel.setText("")
         self.speedValueLabel.setText(QCoreApplication.translate("MainWindow", u"5", None))
         self.cursorOverhaulLabel.setText("")
-        self.interfaceOverlayLabel.setText("")
+        self.hintOverlayLabel.setText("")
+        self.buttonMappingLabel.setText("")
+        self.viewCenterOnCtrlLabel.setText("")
+        self.memorizeMousePosLabel.setText("")
         self.toggleEnabledLabel.setText("")
         self.toggleEnabledKey.setText("")
         self.centerControlLabel.setText("")

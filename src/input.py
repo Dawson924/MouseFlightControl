@@ -1,6 +1,5 @@
 import win32api
 import win32con
-import ctypes
 
 class InputStateMonitor:
     def __init__(self):

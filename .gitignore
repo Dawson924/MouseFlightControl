@@ -1,6 +1,10 @@
+# Environment
+.venv/
+
 # Output
 build/
 dist/
+*.egg-info/
 *.pyc
 *.ini
 *.qm
