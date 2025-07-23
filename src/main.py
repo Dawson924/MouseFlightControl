@@ -12,11 +12,10 @@ from PySide2 import QtWidgets, QtCore
 from app import App
 from controller.base import BaseController
 from controller.lockon.dcs import DCSController
-from enums.control import ControlMode
 from input import InputStateMonitor
 from ui.MainWindow import Ui_MainWindow
-from ui.overlay.CursorOverhaul import CursorOverhaul
-from ui.overlay.InterfaceOverlay import HintOverlay  # 确保这个UI文件已正确生成
+from ui.overlay.CursorGraph import CursorGraph
+from ui.overlay.HintLabel import HintLabel  # 确保这个UI文件已正确生成
 
 # 初始化vJoy设备
 vjoy_device = None
@@ -26,11 +25,6 @@ SPI_GETMOUSESPEED = 112
 MOUSE_SPEED_DEFAULT = 10  # Windows默认灵敏度(1-20)
 # 全局配置文件名
 CONFIG_FILE = "config.ini"
-# 平台控制模式
-CONTROL_MODE = {
-    ControlMode.Common: BaseController,
-    ControlMode.DCS: DCSController
-}
 
 # 验证vJoy
 try:
@@ -63,10 +57,8 @@ class vjoySensitive():
 # 全局控制变量
 enabled = False
 stop_thread = False  # 控制子线程退出
-mouse_speed = 5  # 可通过UI设置的鼠标速度
 
 # 全局变量初始化
-original_mouse_speed = MOUSE_SPEED_DEFAULT
 axis_max = 32767
 axis_min = -axis_max
 center_axis_x = 0
@@ -130,149 +122,159 @@ def get_mouse_speed():
     return speed.value
 
 
-# 窗口类
 class MainWindow(QtWidgets.QMainWindow):
+    CONFIG = {
+        'General': {
+            'language': (str),
+        },
+        'Controls': {
+            'controller': (str),
+            'mouse_speed': (int),
+            'key_toggle': (str),
+            'key_center': (str),
+        },
+        'Options': {
+            'show_cursor': (bool),
+            'show_hint': (bool),
+            'button_mapping': (bool),
+            'view_center_on_ctrl': (bool),
+            'memorize_mouse_pos': (bool),
+        }
+    }
+    CONTROLLERS = {
+        'None': BaseController,
+        'DCS World': DCSController,
+    }
+
     pointer_signal = QtCore.Signal(bool)
     interface_signal = QtCore.Signal(str, int, str)
 
     def __init__(self):
         super().__init__()
-
         self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
         self.setWindowTitle(self.tr("MouseFlightControl"))
+        self.setup_ui()
 
+        # 程序状态
         self.main_thread = None
         self.running = False
-        self.language = 'en_US'
-        self.controller = CONTROL_MODE[ControlMode.Common]
-        self.key_toggle = '`'
-        self.key_center = 'RB'
-        self.opt_cursor = False
-        self.opt_hint = True
-        self.opt_button_mapping = True
-        self.opt_view_center_on_ctrl = True
-        self.opt_memorize_mouse_pos = True
+        self.original_mouse_speed = get_mouse_speed()
 
-        self.ui.startBtn.clicked.connect(self.onButtonClick)
-        self.ui.modeComboBox.currentTextChanged.connect(self.on_mode_change)
+        # 配置选项默认值
+        self.language = 'en_US'
+        self.controller = 'None'
+        self.mouse_speed = 5
+        self.key_toggle = '`'
+        self.key_center = 'MB'
+        self.show_cursor = False
+        self.show_hint = True
+        self.button_mapping = True
+        self.view_center_on_ctrl = True
+        self.memorize_mouse_pos = True
+
+        # 加载所有配置
+        self.load_config()
+
+        # 用户页面操作
+        self.ui.startBtn.clicked.connect(self.on_button_click)
+        self.ui.modeComboBox.currentTextChanged.connect(lambda text: setattr(self, 'controller', text))
         self.ui.mouseSpeedSlider.valueChanged.connect(self.on_speed_changed)
         self.ui.mouseSpeedSlider.setRange(1, 20)
-        self.ui.mouseSpeedSlider.setValue(5)
+        self.ui.mouseSpeedSlider.setValue(self.mouse_speed)
         self.ui.toggleEnabledKey.textChanged.connect(lambda text: setattr(self, 'key_toggle', text))
         self.ui.centerControlKey.textChanged.connect(lambda text: setattr(self, 'key_center', text))
-        self.ui.cursorOverhaulOption.stateChanged.connect(lambda state: setattr(self, 'opt_cursor', bool(state)))
-        self.ui.hintOverlayOption.stateChanged.connect(lambda state: setattr(self, 'opt_hint', bool(state)))
-        self.ui.buttonMappingOption.stateChanged.connect(lambda state: setattr(self, 'opt_button_mapping', bool(state)))
-        self.ui.viewCenterOnCtrlOption.stateChanged.connect(lambda state: setattr(self, 'opt_view_center_on_ctrl', bool(state)))
-        self.ui.memorizeMousePosOption.stateChanged.connect(lambda state: setattr(self, 'opt_memorize_mouse_pos', bool(state)))
+        self.ui.cursorOverhaulOption.stateChanged.connect(lambda state: setattr(self, 'show_cursor', bool(state)))
+        self.ui.hintOverlayOption.stateChanged.connect(lambda state: setattr(self, 'show_hint', bool(state)))
+        self.ui.buttonMappingOption.stateChanged.connect(lambda state: setattr(self, 'button_mapping', bool(state)))
+        self.ui.viewCenterOnCtrlOption.stateChanged.connect(lambda state: setattr(self, 'view_center_on_ctrl', bool(state)))
+        self.ui.memorizeMousePosOption.stateChanged.connect(lambda state: setattr(self, 'memorize_mouse_pos', bool(state)))
 
-        for mode in CONTROL_MODE.keys():
-            self.ui.modeComboBox.addItem(mode.value)
-
-        # 加载配置
-        self.load_config()
+        # 加载配置的语言
+        translator = QtCore.QTranslator()
+        if translator.load(f"locales/{self.language}.qm"):
+            QtWidgets.QApplication.instance().installTranslator(translator)
+            QtWidgets.QApplication.instance().translators.append(translator)
 
         self.create_language_menu()
         self.retranslate_ui()
 
-        self.show()
-
-        # 创建界面覆盖信号
-        self.interface = HintOverlay()
+        # 创建界面绘制信号
+        self.interface = HintLabel()
         self.interface_signal.connect(self.interface.show_message)
-        # 创建指针覆盖信号
-        self.pointer = CursorOverhaul('assets/cursor.png')
+        self.pointer = CursorGraph('assets/cursor.png')
         self.pointer_signal.connect(self.pointer.show_cursor)
 
-    def load_default(self):
-        self.ui.mouseSpeedSlider.setValue(5)
+        self.show()
+
+    def setup_ui(self):
+        self.ui.setupUi(self)
+        for name in self.CONTROLLERS.keys():
+            self.ui.modeComboBox.addItem(name)
 
     def load_config(self):
         """从配置文件加载设置"""
         config = configparser.ConfigParser()
 
-        # 如果配置文件存在，则加载
         if os.path.exists(CONFIG_FILE):
             try:
                 config.read(CONFIG_FILE)
+                for section, options in self.CONFIG.items():
+                    if config.has_section(section):
+                        for option, (type) in options.items():
+                            if config.has_option(section, option):
+                                if type is bool:
+                                    value = config.getboolean(section, option)
+                                elif type is int:
+                                    value = config.getint(section, option)
+                                elif type is float:
+                                    value = config.getfloat(section, option)
+                                else:
+                                    value = config.get(section, option)
 
-                if config.has_option('General', 'language'):
-                    lang = config.get('General', 'language')
-                    self.language = lang
-                    translator = QtCore.QTranslator()
-                    if translator.load(f"locales/{lang}.qm"):
-                        QtWidgets.QApplication.instance().installTranslator(translator)
-                        QtWidgets.QApplication.instance().translators.append(translator)
-
-                if config.has_option('General', 'controller'):
-                    for ctrlr in CONTROL_MODE.values():
-                        if ctrlr.id == config.get('General', 'controller'):
-                            self.controller = ctrlr
-
-                if config.has_option('Controls', 'mouse_speed'):
-                    speed = config.getint('Controls', 'mouse_speed')
-                    self.ui.mouseSpeedSlider.setValue(speed)
-
-                if config.has_option('Controls', 'key_toggle'):
-                    key = config.get('Controls', 'key_toggle')
-                    if len(key) == 1:
-                        self.key_toggle = key
-
-                if config.has_option('Controls', 'key_center'):
-                    key = config.get('Controls', 'key_center')
-                    if len(key) == 1:
-                        self.key_center = key
-
-                if config.has_option('Controls', 'cursor_overlay'):
-                    key = config.getboolean('Controls', 'cursor_overlay')
-                    self.opt_cursor = key
-
-                if config.has_option('Controls', 'hint_overlay'):
-                    key = config.getboolean('Controls', 'hint_overlay')
-                    self.opt_hint = key
-
-                if config.has_option('Controls', 'button_mapping'):
-                    key = config.getboolean('Controls', 'button_mapping')
-                    self.opt_button_mapping = key
-
-                if config.has_option('Controls', 'view_center_on_ctrl'):
-                    key = config.getboolean('Controls', 'view_center_on_ctrl')
-                    self.opt_view_center_on_ctrl = key
-
-                if config.has_option('Controls', 'memorize_mouse_pos'):
-                    key = config.getboolean('Controls', 'memorize_mouse_pos')
-                    self.opt_memorize_mouse_pos = key
-
+                                self._set_attr_value(option, value)
+                return True
             except Exception as e:
-                print(f"加载配置时出错: {str(e)}")
-                self.load_default()
-        else:
-            self.load_default()
+                print(f"加载配置文件失败: {e}")
+        return False
 
     def save_config(self):
         """保存配置到文件"""
         config = configparser.ConfigParser()
-        sections = ['General', 'Controls']
 
-        # 添加设置部分
-        config.add_section(sections[0])
-        config.set(sections[0], 'language', self.language)
-        config.set(sections[0], 'controller', self.controller.id)
+        for section, options in self.CONFIG.items():
+            config.add_section(section)
+            for option in options.keys():
+                value = self._get_attr_value(option)
+                config.set(section, option, str(value))
 
-        config.add_section(sections[1])
-        config.set(sections[1], 'mouse_speed', str(self.ui.mouseSpeedSlider.value()))
-        config.set(sections[1], 'key_toggle', self.key_toggle)
-        config.set(sections[1], 'key_center', self.key_center)
-        config.set(sections[1], 'cursor_overlay', str(self.opt_cursor))
-        config.set(sections[1], 'hint_overlay', str(self.opt_hint))
-        config.set(sections[1], 'button_mapping', str(self.opt_button_mapping))
-        config.set(sections[1], 'view_center_on_ctrl', str(self.opt_view_center_on_ctrl))
-        config.set(sections[1], 'memorize_mouse_pos', str(self.opt_memorize_mouse_pos))
+        try:
+            with open(CONFIG_FILE, 'w') as configfile:
+                config.write(configfile)
+            print("配置文件保存成功")
+        except Exception as e:
+            print(f"保存配置文件失败: {e}")
 
-        # 写入配置文件
-        with open(CONFIG_FILE, 'w') as configfile:
-            config.write(configfile)
+    def _get_attr_value(self, attr_path):
+        parts = attr_path.split('.')
+        obj = self
+        for part in parts:
+            if hasattr(obj, part):
+                obj = getattr(obj, part)
+            else:
+                return None
+        return obj
+
+    def _set_attr_value(self, attr_path, value):
+        parts = attr_path.split('.')
+        obj = self
+        for part in parts[:-1]:
+            if hasattr(obj, part):
+                obj = getattr(obj, part)
+            else:
+                return
+        last_part = parts[-1]
+        if hasattr(obj, last_part):
+            setattr(obj, last_part, value)
 
     def create_language_menu(self):
         """创建语言选择菜单"""
@@ -307,8 +309,6 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QApplication.instance().translators.append(translator)
 
         self.language = language_code
-
-        # 重新翻译UI
         self.retranslate_ui()
 
     def retranslate_ui(self):
@@ -321,13 +321,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.startBtn.setText(self.tr("Start") if not self.running else self.tr("Stop"))
 
         # 设置选择
-        for mode, ctrlr in CONTROL_MODE.items():
-            if ctrlr.id == self.controller.id:
-                self.ui.modeComboBox.setCurrentText(mode.value)
+        self.ui.modeComboBox.setCurrentText(self.controller)
 
         # 标签文本
         self.ui.titleLabel.setText(self.tr("Title"))
-        self.ui.statusLabel.setText(self.tr("StatusStopped") if not self.running else self.tr("StatusWorking"))
+        self.ui.statusLabel.setText(self.tr("StatusStopped") if not enabled else self.tr("StatusWorking"))
         self.ui.speedLabel.setText(self.tr('Sensitive'))
         self.ui.speedValueLabel.setText(self.tr("CurrentValue") + f': {str(self.ui.mouseSpeedSlider.value())}')
         self.ui.toggleEnabledLabel.setText(self.tr("ToggleEnabled"))
@@ -335,40 +333,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.centerControlLabel.setText(self.tr("CenterControl"))
         self.ui.centerControlKey.setText(self.key_center)
         self.ui.cursorOverhaulLabel.setText(self.tr("CursorOverhaul"))
-        self.ui.cursorOverhaulOption.setChecked(self.opt_cursor)
+        self.ui.cursorOverhaulOption.setChecked(self.show_cursor)
         self.ui.hintOverlayLabel.setText(self.tr("HintOverlay"))
-        self.ui.hintOverlayOption.setChecked(self.opt_hint)
+        self.ui.hintOverlayOption.setChecked(self.show_hint)
         self.ui.buttonMappingLabel.setText(self.tr("ButtonMapping"))
-        self.ui.buttonMappingOption.setChecked(self.opt_button_mapping)
+        self.ui.buttonMappingOption.setChecked(self.button_mapping)
         self.ui.viewCenterOnCtrlLabel.setText(self.tr("ViewCenterOnCtrl"))
-        self.ui.viewCenterOnCtrlOption.setChecked(self.opt_view_center_on_ctrl)
+        self.ui.viewCenterOnCtrlOption.setChecked(self.view_center_on_ctrl)
         self.ui.memorizeMousePosLabel.setText(self.tr("MemorizeMousePos"))
-        self.ui.memorizeMousePosOption.setChecked(self.opt_memorize_mouse_pos)
+        self.ui.memorizeMousePosOption.setChecked(self.memorize_mouse_pos)
 
     def on_speed_changed(self, value):
-        """滑块值变化时, 更新状态与UI显示"""
-        if self.running:
-            return
-
-        global mouse_speed
-        mouse_speed = value
+        self.mouse_speed = value
         self.ui.speedValueLabel.setText(f'{self.tr("CurrentValue")}: {str(self.ui.mouseSpeedSlider.value())}')
         if self.running:
             set_mouse_speed(value)
 
-    def on_mode_change(self, text):
-        selected_mode = None
-        for mode in ControlMode:
-            if mode.value == text:
-                selected_mode = mode
-                break
-
-        if selected_mode is not None:
-            self.controller = CONTROL_MODE[selected_mode]
-        else:
-            self.controller = CONTROL_MODE[ControlMode.Common]
-
-    def onButtonClick(self):
+    def on_button_click(self):
         """切换启用/禁用状态, 同步UI与子线程"""
         global enabled, stop_thread
 
@@ -449,27 +430,25 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.running:
             return
 
-        global enabled, original_mouse_speed, State
-
+        global enabled, State
         enabled = flag
         State.stick = flag
 
         if flag:
-            # 保存原始灵敏度并设置为UI指定值
-            original_mouse_speed = get_mouse_speed()
-            set_mouse_speed(mouse_speed)
-            # reset_axis_pos()
-            if self.opt_cursor: self.pointer_signal.emit(True)
-            if self.opt_hint: self.interface_signal.emit("Controlled", 1000, 'green')
+            set_mouse_speed(self.mouse_speed)
+            if self.show_cursor: self.pointer_signal.emit(True)
+            if self.show_hint: self.interface_signal.emit("Controlled", 1000, 'green')
         else:
-            # 恢复原始灵敏度
-            set_mouse_speed(original_mouse_speed)
+            set_mouse_speed(self.original_mouse_speed)
             self.pointer_signal.emit(False)
-            if self.opt_hint: self.interface_signal.emit("No control", 1000, 'red')
+            if self.show_hint: self.interface_signal.emit("No control", 1000, 'red')
+
+        self.retranslate_ui()
 
     def main(self):
         global delta_x, delta_y, wheel_delta, enabled
         try:
+            controller = self.CONTROLLERS[self.controller](vjoy_device)
             input_state = InputStateMonitor()
             # 初始/上一次的按键状态
             toggle_key_prev = False
@@ -477,8 +456,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
             prev_x, prev_y = screen_center_x, screen_center_y
             memo_x, memo_y = None, None
-
-            game_controller = self.controller(vjoy_device)
 
             while not stop_thread:  # 用stop_thread控制退出
                 input_state.update()
@@ -489,9 +466,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 if toggle_key_current and not toggle_key_prev:
                     _flag = not enabled
                     self.toggle_enabled(_flag)
-                    if _flag and self.opt_view_center_on_ctrl:
-                        game_controller.view_center()
-                    if self.opt_memorize_mouse_pos:
+                    if _flag and self.view_center_on_ctrl:
+                        controller.view_center()
+                    if self.memorize_mouse_pos:
                         if not _flag:
                             memo_x, memo_y = get_mouse_position()
                         elif memo_x is not None and memo_y is not None:
@@ -505,7 +482,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 toggle_key_prev = toggle_key_current
                 center_key_prev = center_key_current
 
-                if enabled and self.opt_button_mapping:
+                if enabled and self.button_mapping:
                     if input_state.is_pressed('LB'):
                         vjoy_device.set_button(1, True)
                     else:
@@ -553,7 +530,7 @@ class MainWindow(QtWidgets.QMainWindow):
         except KeyboardInterrupt:
             pass
         finally:
-            set_mouse_speed(original_mouse_speed)
+            set_mouse_speed(self.original_mouse_speed)
             vjoy_device.reset()
 
 
@@ -576,8 +553,5 @@ if __name__ == "__main__":
         app.translators.append(translator)
 
     window = MainWindow()
-
-    global instance
-    instance = window
 
     sys.exit(app.exec_())

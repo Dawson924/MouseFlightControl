@@ -13,74 +13,74 @@
         <translation>Mouse Flight Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="419"/>
+        <location filename="main.py" line="401"/>
         <source>Start</source>
         <translation>Start</translation>
     </message>
     <message>
-        <location filename="main.py" line="329"/>
+        <location filename="main.py" line="327"/>
         <source>Title</source>
         <translation>Config</translation>
     </message>
     <message>
-        <location filename="main.py" line="420"/>
+        <location filename="main.py" line="403"/>
         <source>StatusStopped</source>
         <translation>Status:stopped</translation>
     </message>
     <message>
-        <location filename="main.py" line="395"/>
+        <location filename="main.py" line="377"/>
         <source>StatusWorking</source>
         <translation>Status:working</translation>
     </message>
     <message>
-        <location filename="main.py" line="332"/>
+        <location filename="main.py" line="330"/>
         <source>CurrentValue</source>
         <translation>Current value</translation>
     </message>
     <message>
-        <location filename="main.py" line="394"/>
+        <location filename="main.py" line="375"/>
         <source>Stop</source>
         <translation>Stop</translation>
     </message>
     <message>
-        <location filename="main.py" line="331"/>
+        <location filename="main.py" line="329"/>
         <source>Sensitive</source>
         <translation>Sensitive</translation>
     </message>
     <message>
-        <location filename="main.py" line="333"/>
+        <location filename="main.py" line="331"/>
         <source>ToggleEnabled</source>
         <translation>Toggle Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="335"/>
+        <location filename="main.py" line="333"/>
         <source>CenterControl</source>
         <translation>Center Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="337"/>
+        <location filename="main.py" line="335"/>
         <source>CursorOverhaul</source>
         <translation>Cursor Overhaul</translation>
     </message>
     <message>
-        <location filename="main.py" line="339"/>
+        <location filename="main.py" line="337"/>
         <source>HintOverlay</source>
         <translation>Hint Overlay</translation>
     </message>
     <message>
-        <location filename="main.py" line="341"/>
+        <location filename="main.py" line="339"/>
         <source>ButtonMapping</source>
         <translation>Mouse Button Mapping</translation>
     </message>
     <message>
-        <location filename="main.py" line="343"/>
+        <location filename="main.py" line="341"/>
         <source>ViewCenterOnCtrl</source>
         <translation>View Center On Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="345"/>
+        <location filename="main.py" line="343"/>
         <source>MemorizeMousePos</source>
-        <translation>Memorize Mouse Position</translation>
+        <translation>Use Last Position On Control</translation>
     </message>
 </context>
 </TS>

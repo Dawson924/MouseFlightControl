@@ -2,7 +2,7 @@ from PySide2.QtWidgets import QWidget, QApplication
 from PySide2.QtGui import QPixmap, QPainter, QCursor, QBitmap
 from PySide2.QtCore import Qt, QTimer
 
-class CursorOverhaul(QWidget):
+class CursorGraph(QWidget):
     def __init__(self, cursor_path, size=(32, 32), parent=None):
         super().__init__(parent)
         # 初始隐藏

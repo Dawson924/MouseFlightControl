@@ -2,7 +2,7 @@ from PySide2.QtWidgets import QApplication, QLabel
 from PySide2.QtCore import Qt, QTimer
 from PySide2.QtGui import QFont
 
-class HintOverlay(QLabel):
+class HintLabel(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
         # 1. 定义基础样式（固定不变的部分）

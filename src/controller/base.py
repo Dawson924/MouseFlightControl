@@ -1,8 +1,9 @@
-class BaseController(object):
-    id = 'none'
-
+class BaseController():
     def __init__(self, vjoy):
         self.vjoy = vjoy
 
+    def __str__(self):
+        return self.name
+
     def view_center(self):
-        pass
+        return

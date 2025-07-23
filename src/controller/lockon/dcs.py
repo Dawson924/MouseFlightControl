@@ -2,8 +2,6 @@ import socket
 from controller.base import BaseController
 
 class DCSController(BaseController):
-    id = 'dcs_world'
-
     def __init__(self, vjoy):
         super().__init__(vjoy)
         self.ip = '127.0.0.1'
