@@ -392,6 +392,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         self.ui.startBtn.setText(self.tr('Stop'))
+        self.ui.modeComboBox.setDisabled(True)
         self.ui.statusLabel.setText(self.tr('StatusWorking'))
         self.ui.mouseSpeedSlider.setDisabled(True)
         self.ui.toggleEnabledKey.setDisabled(True)
@@ -417,6 +418,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.main_thread.join(timeout=1)
 
         self.ui.startBtn.setText(self.tr('Start'))
+        self.ui.modeComboBox.setDisabled(False)
         self.ui.statusLabel.setText(self.tr('StatusStopped'))
         self.ui.mouseSpeedSlider.setDisabled(False)
         self.ui.toggleEnabledKey.setDisabled(False)
