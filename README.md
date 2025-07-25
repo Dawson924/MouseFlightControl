@@ -1,5 +1,7 @@
 # Mouse Flight Control
 
+[English](README.md) [简体中文](README-CN.md)
+
 Mouse Flight Control is designed to provide a intuitive way to control flight in Game. It emulates a joystick's functionality through the mouse.
 
 ## Features
@@ -13,7 +15,7 @@ Mouse Flight Control is designed to provide a intuitive way to control flight in
 - **vJoy Device Driver**: You need to install the vJoy device driver (recommended version >= 2.1.8). You can download it from [https://github.com/shauleiz/vJoy](https://github.com/shauleiz/vJoy).
 
 ### Steps
-1. **Download the Software**: 📥 Download the software package from [Releases](https://github.com/Dawson924/MouseFlightControl).
+1. **Download the Software**: 📥 Download the software package from [Releases](https://github.com/Dawson924/MouseFlightControl/releases).
 2. **Install vJoy**: Follow the instructions to install the vJoy device driver.
 3. **Run the Program**
 4. **Setup Controller**: For DCS, drop the MouseFlightControl folder and Export.lua from ./Platform/DCS/ into C:/.../DCS.openbeta/Scripts. In case you already have Export.lua, then add this line of code at the bottom.

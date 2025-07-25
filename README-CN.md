@@ -16,7 +16,7 @@
 
 
 ### 安装步骤
-1. **下载软件**：📥 从 [Releases](https://github.com/Dawson924/MouseFlightControl) 下载软件包。
+1. **下载软件**：📥 从 [这里](https://github.com/Dawson924/MouseFlightControl/releases) 下载软件包。
 2. **安装 vJoy**：按照说明安装 vJoy 设备驱动。
 3. **运行程序**
 4. **控制器设置**：对于 DCS，将 ./Platform/DCS/ 目录下的 MouseFlightControl 文件夹和 Export.lua 文件复制到 C:/.../DCS.openbeta/Scripts 目录中。如果已存在 Export.lua 文件，请在文件底部添加以下代码：
