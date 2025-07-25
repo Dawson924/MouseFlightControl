@@ -97,6 +97,8 @@ class InputStateMonitor:
         self.mouse_buttons["LB"] = win32api.GetAsyncKeyState(win32con.VK_LBUTTON) < 0
         self.mouse_buttons["RB"] = win32api.GetAsyncKeyState(win32con.VK_RBUTTON) < 0
         self.mouse_buttons["MB"] = win32api.GetAsyncKeyState(win32con.VK_MBUTTON) < 0
+        self.mouse_buttons["XB1"] = win32api.GetAsyncKeyState(win32con.VK_XBUTTON1) < 0
+        self.mouse_buttons["XB2"] = win32api.GetAsyncKeyState(win32con.VK_XBUTTON2) < 0
 
     def _update_keyboard_state(self):
         """更新键盘按键状态"""

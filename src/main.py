@@ -495,6 +495,14 @@ class MainWindow(QtWidgets.QMainWindow):
                         vjoy_device.set_button(3, True)
                     else:
                         vjoy_device.set_button(3, False)
+                    if input_state.is_pressed('XB1'):
+                        vjoy_device.set_button(4, True)
+                    else:
+                        vjoy_device.set_button(4, False)
+                    if input_state.is_pressed('XB2'):
+                        vjoy_device.set_button(5, True)
+                    else:
+                        vjoy_device.set_button(5, False)
 
                 curr_x, curr_y = get_mouse_position()
                 delta_x = curr_x - prev_x
