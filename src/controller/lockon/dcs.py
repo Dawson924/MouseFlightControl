@@ -29,3 +29,4 @@ class DCSController(BaseController):
 
     def view_center(self):
         self.send("LoSetCommand", 36)
+        self.send("LoSetCommand", 177)
