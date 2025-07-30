@@ -1,15 +1,18 @@
+from pynput import mouse
 import win32api
 import win32con
+import threading
+import time
 
 class InputStateMonitor:
     def __init__(self):
         # 初始化鼠标状态
         self.mouse_buttons = {
-            "left": False,
-            "right": False,
-            "middle": False,
-            "xbutton1": False,
-            "xbutton2": False
+            "LB": False,  # 左键
+            "RB": False,  # 右键
+            "MB": False,  # 中键
+            "XB1": False, # 侧键1
+            "XB2": False  # 侧键2
         }
 
         # 初始化键盘状态
@@ -21,8 +24,12 @@ class InputStateMonitor:
 
         # 鼠标滚轮状态
         self.wheel_delta = 0
+        self.wheel_lock = threading.Lock()
 
-        # 设置虚拟键码映射 - 使用实际数值替代常量
+        # 滚轮监听器
+        self.mouse_listener = None
+
+        # 设置虚拟键码映射
         self.VK_MAP = {
             win32con.VK_LBUTTON: "left",
             win32con.VK_RBUTTON: "right",
@@ -69,8 +76,7 @@ class InputStateMonitor:
         for i in range(ord('0'), ord('9') + 1):
             self.VK_MAP[i] = chr(i)
 
-        # 添加特殊字符 - 使用实际数值
-        # 这些是Windows虚拟键码的十六进制值
+        # 添加特殊字符
         special_chars = {
             0xBA: ';',  # VK_OEM_1
             0xBB: '=',  # VK_OEM_PLUS
@@ -86,6 +92,36 @@ class InputStateMonitor:
         }
         self.VK_MAP.update(special_chars)
 
+        # 启动滚轮监听
+        self.start_wheel_listener()
+
+    def _on_scroll(self, x, y, dx, dy):
+        """pynput滚轮事件回调函数"""
+        # pynput的dy通常为1（向上）或-1（向下），乘以120匹配Windows的delta值习惯
+        with self.wheel_lock:
+            self.wheel_delta += dy * 120
+
+    def start_wheel_listener(self):
+        """启动pynput滚轮监听器"""
+        if self.mouse_listener is None or not self.mouse_listener.is_alive():
+            # 创建鼠标监听器，只关注滚轮事件
+            self.mouse_listener = mouse.Listener(
+                on_scroll=self._on_scroll,
+                # 禁用其他事件监听以提高性能
+                on_move=None,
+                on_click=None
+            )
+            # 启动监听器（后台线程）
+            self.mouse_listener.start()
+
+    def stop_wheel_listener(self):
+        """停止pynput滚轮监听器"""
+        if self.mouse_listener and self.mouse_listener.is_alive():
+            self.mouse_listener.stop()
+            # 等待监听器线程结束
+            self.mouse_listener.join(timeout=1.0)
+            self.mouse_listener = None
+
     def update(self):
         """更新所有输入状态"""
         self._update_mouse_state()
@@ -97,15 +133,13 @@ class InputStateMonitor:
         self.mouse_buttons["LB"] = win32api.GetAsyncKeyState(win32con.VK_LBUTTON) < 0
         self.mouse_buttons["RB"] = win32api.GetAsyncKeyState(win32con.VK_RBUTTON) < 0
         self.mouse_buttons["MB"] = win32api.GetAsyncKeyState(win32con.VK_MBUTTON) < 0
-        self.mouse_buttons["XB1"] = win32api.GetAsyncKeyState(win32con.VK_XBUTTON1) < 0
-        self.mouse_buttons["XB2"] = win32api.GetAsyncKeyState(win32con.VK_XBUTTON2) < 0
+        self.mouse_buttons["XB1"] = win32api.GetAsyncKeyState(0x05) < 0  # VK_XBUTTON1
+        self.mouse_buttons["XB2"] = win32api.GetAsyncKeyState(0x06) < 0  # VK_XBUTTON2
 
     def _update_keyboard_state(self):
         """更新键盘按键状态"""
-        # 只更新映射表中存在的键
         for vk_code, key_name in self.VK_MAP.items():
             state = win32api.GetAsyncKeyState(vk_code)
-            # 高位为1表示当前按下，低位为1表示上次调用后按过
             self.key_states[key_name] = (state & 0x8000) != 0
 
     def _update_mouse_position(self):
@@ -113,7 +147,6 @@ class InputStateMonitor:
         try:
             self.mouse_x, self.mouse_y = win32api.GetCursorPos()
         except:
-            # 处理可能的异常
             pass
 
     def is_mouse_pressed(self, button_name):
@@ -123,16 +156,12 @@ class InputStateMonitor:
 
     def is_key_pressed(self, key_name):
         """检查键盘按键是否按下"""
-        # 处理字符串输入
         if isinstance(key_name, str):
             return self.key_states.get(key_name.lower(), False)
-
-        # 处理虚拟键码
         if isinstance(key_name, int):
             key_name = self.VK_MAP.get(key_name, None)
             if key_name:
                 return self.key_states.get(key_name, False)
-
         return False
 
     def is_pressed(self, name):
@@ -154,14 +183,13 @@ class InputStateMonitor:
         """计算鼠标移动增量"""
         return self.mouse_x - prev_x, self.mouse_y - prev_y
 
-    def reset_wheel(self):
-        """重置滚轮状态"""
-        self.wheel_delta = 0
-
     def get_wheel_delta(self):
-        """获取滚轮增量（需外部设置）"""
-        return self.wheel_delta
+        """获取并重置滚轮增量值"""
+        with self.wheel_lock:
+            delta = self.wheel_delta
+            self.wheel_delta = 0
+        return delta
 
-    def set_wheel_delta(self, delta):
-        """设置滚轮增量（通常由外部事件触发）"""
-        self.wheel_delta = delta
+    def __del__(self):
+        """析构函数，确保监听器被正确停止"""
+        self.stop_wheel_listener()

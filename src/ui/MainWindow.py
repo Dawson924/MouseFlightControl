@@ -21,7 +21,6 @@ class Ui_MainWindow(object):
         MainWindow.setStyleSheet(u"\n"
 "                QMainWindow {\n"
 "                background-color: #F0F0F0;\n"
-"                font-family: 'Segoe UI';\n"
 "                font-size: 9pt;\n"
 "                }\n"
 "                QWidget {\n"
@@ -46,10 +45,10 @@ class Ui_MainWindow(object):
 "                }\n"
 "                QSlider::groove:horizontal {\n"
 "                border: 1px solid #A0A0A0;\n"
-"                height: 6p"
-                        "x;\n"
+"                height: 6px;\n"
 "                background: #D0D0D0;\n"
-"                margin: 2px 0;\n"
+""
+                        "                margin: 2px 0;\n"
 "                }\n"
 "                QSlider::handle:horizontal {\n"
 "                background: #E1E1E1;\n"
@@ -72,17 +71,18 @@ class Ui_MainWindow(object):
 "                border-radius: 3px;\n"
 "                padding: 4px;\n"
 "                background: white;\n"
-"                min-width: 80px;\n"
+"                min-width: 120px;\n"
+"                max-width: 240px;\n"
 "                }\n"
-"                QComboBox {\n"
-"                border:"
-                        " 1px solid #A0A0A0;\n"
+"                #controllerComboBox {\n"
+"                border"
+                        ": 1px solid #A0A0A0;\n"
 "                border-radius: 3px;\n"
 "                padding: 4px;\n"
 "                background: white;\n"
 "                min-width: 120px;\n"
 "                }\n"
-"                QComboBox::drop-down {\n"
+"                #controllerComboBox::drop-down {\n"
 "                subcontrol-origin: padding;\n"
 "                subcontrol-position: top right;\n"
 "                width: 20px;\n"
@@ -92,31 +92,31 @@ class Ui_MainWindow(object):
 "                border-top-right-radius: 3px;\n"
 "                border-bottom-right-radius: 3px;\n"
 "                }\n"
-"                QComboBox::down-arrow {\n"
+"                #controllerComboBox::down-arrow {\n"
 "                image: url(assets/down_arrow.svg);\n"
 "                width: 16px;\n"
 "                height: 16px;\n"
 "                }\n"
-"                QComboBox QAbstractItemView {\n"
+"                #controllerComboBox QAbstractItemView {\n"
 "                border: 1px solid #A0A0A0;\n"
 "                background: white;\n"
-"                selection-background-color: #E1E1E1;\n"
-"        "
-                        "        }\n"
+"                selection-backgrou"
+                        "nd-color: #E1E1E1;\n"
+"                }\n"
 "            ")
         self.centralWidget = QWidget(MainWindow)
         self.centralWidget.setObjectName(u"centralWidget")
         self.verticalLayout = QVBoxLayout(self.centralWidget)
         self.verticalLayout.setSpacing(10)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(15, 0, 15, 15)
-        self.titleLabel = QLabel(self.centralWidget)
-        self.titleLabel.setObjectName(u"titleLabel")
-        self.titleLabel.setAlignment(Qt.AlignCenter)
-        self.titleLabel.setStyleSheet(u"font-size: 14pt; font-weight: bold; margin: 10px 0;\n"
+        self.verticalLayout.setContentsMargins(15, 10, 15, 15)
+        self.controlsTitleLabel = QLabel(self.centralWidget)
+        self.controlsTitleLabel.setObjectName(u"controlsTitleLabel")
+        self.controlsTitleLabel.setAlignment(Qt.AlignCenter)
+        self.controlsTitleLabel.setStyleSheet(u"font-size: 14pt; font-weight: bold;\n"
 "                                color: #000000;")
 
-        self.verticalLayout.addWidget(self.titleLabel)
+        self.verticalLayout.addWidget(self.controlsTitleLabel)
 
         self.vboxLayout = QVBoxLayout()
         self.vboxLayout.setSpacing(5)
@@ -148,137 +148,25 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.vboxLayout)
 
-        self.fixedVerticalSpacer = QSpacerItem(0, 10, QSizePolicy.Minimum, QSizePolicy.Fixed)
-
-        self.verticalLayout.addItem(self.fixedVerticalSpacer)
-
-        self.vboxLayout1 = QVBoxLayout()
-        self.vboxLayout1.setSpacing(8)
-        self.vboxLayout1.setObjectName(u"vboxLayout1")
         self.hboxLayout = QHBoxLayout()
         self.hboxLayout.setSpacing(10)
         self.hboxLayout.setObjectName(u"hboxLayout")
-        self.cursorOverhaulLabel = QLabel(self.centralWidget)
-        self.cursorOverhaulLabel.setObjectName(u"cursorOverhaulLabel")
+        self.toggleEnabledLabel = QLabel(self.centralWidget)
+        self.toggleEnabledLabel.setObjectName(u"toggleEnabledLabel")
 
-        self.hboxLayout.addWidget(self.cursorOverhaulLabel)
+        self.hboxLayout.addWidget(self.toggleEnabledLabel)
 
         self.spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout.addItem(self.spacerItem)
 
-        self.cursorOverhaulOption = QCheckBox(self.centralWidget)
-        self.cursorOverhaulOption.setObjectName(u"cursorOverhaulOption")
-        self.cursorOverhaulOption.setChecked(False)
-
-        self.hboxLayout.addWidget(self.cursorOverhaulOption)
-
-
-        self.vboxLayout1.addLayout(self.hboxLayout)
-
-        self.hboxLayout1 = QHBoxLayout()
-        self.hboxLayout1.setSpacing(10)
-        self.hboxLayout1.setObjectName(u"hboxLayout1")
-        self.hintOverlayLabel = QLabel(self.centralWidget)
-        self.hintOverlayLabel.setObjectName(u"hintOverlayLabel")
-
-        self.hboxLayout1.addWidget(self.hintOverlayLabel)
-
-        self.spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.hboxLayout1.addItem(self.spacerItem1)
-
-        self.hintOverlayOption = QCheckBox(self.centralWidget)
-        self.hintOverlayOption.setObjectName(u"hintOverlayOption")
-        self.hintOverlayOption.setChecked(False)
-
-        self.hboxLayout1.addWidget(self.hintOverlayOption)
-
-
-        self.vboxLayout1.addLayout(self.hboxLayout1)
-
-        self.hboxLayout2 = QHBoxLayout()
-        self.hboxLayout2.setSpacing(10)
-        self.hboxLayout2.setObjectName(u"hboxLayout2")
-        self.buttonMappingLabel = QLabel(self.centralWidget)
-        self.buttonMappingLabel.setObjectName(u"buttonMappingLabel")
-
-        self.hboxLayout2.addWidget(self.buttonMappingLabel)
-
-        self.spacerItem2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.hboxLayout2.addItem(self.spacerItem2)
-
-        self.buttonMappingOption = QCheckBox(self.centralWidget)
-        self.buttonMappingOption.setObjectName(u"buttonMappingOption")
-        self.buttonMappingOption.setChecked(False)
-
-        self.hboxLayout2.addWidget(self.buttonMappingOption)
-
-
-        self.vboxLayout1.addLayout(self.hboxLayout2)
-
-        self.hboxLayout3 = QHBoxLayout()
-        self.hboxLayout3.setSpacing(10)
-        self.hboxLayout3.setObjectName(u"hboxLayout3")
-        self.viewCenterOnCtrlLabel = QLabel(self.centralWidget)
-        self.viewCenterOnCtrlLabel.setObjectName(u"viewCenterOnCtrlLabel")
-
-        self.hboxLayout3.addWidget(self.viewCenterOnCtrlLabel)
-
-        self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.hboxLayout3.addItem(self.spacerItem3)
-
-        self.viewCenterOnCtrlOption = QCheckBox(self.centralWidget)
-        self.viewCenterOnCtrlOption.setObjectName(u"viewCenterOnCtrlOption")
-        self.viewCenterOnCtrlOption.setChecked(False)
-
-        self.hboxLayout3.addWidget(self.viewCenterOnCtrlOption)
-
-
-        self.vboxLayout1.addLayout(self.hboxLayout3)
-
-        self.hboxLayout4 = QHBoxLayout()
-        self.hboxLayout4.setSpacing(10)
-        self.hboxLayout4.setObjectName(u"hboxLayout4")
-        self.memorizeMousePosLabel = QLabel(self.centralWidget)
-        self.memorizeMousePosLabel.setObjectName(u"memorizeMousePosLabel")
-
-        self.hboxLayout4.addWidget(self.memorizeMousePosLabel)
-
-        self.spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.hboxLayout4.addItem(self.spacerItem4)
-
-        self.memorizeMousePosOption = QCheckBox(self.centralWidget)
-        self.memorizeMousePosOption.setObjectName(u"memorizeMousePosOption")
-        self.memorizeMousePosOption.setChecked(False)
-
-        self.hboxLayout4.addWidget(self.memorizeMousePosOption)
-
-
-        self.vboxLayout1.addLayout(self.hboxLayout4)
-
-        self.hboxLayout5 = QHBoxLayout()
-        self.hboxLayout5.setSpacing(10)
-        self.hboxLayout5.setObjectName(u"hboxLayout5")
-        self.toggleEnabledLabel = QLabel(self.centralWidget)
-        self.toggleEnabledLabel.setObjectName(u"toggleEnabledLabel")
-
-        self.hboxLayout5.addWidget(self.toggleEnabledLabel)
-
-        self.spacerItem5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.hboxLayout5.addItem(self.spacerItem5)
-
         self.toggleEnabledKey = QLineEdit(self.centralWidget)
         self.toggleEnabledKey.setObjectName(u"toggleEnabledKey")
 
-        self.hboxLayout5.addWidget(self.toggleEnabledKey)
+        self.hboxLayout.addWidget(self.toggleEnabledKey)
 
 
-        self.vboxLayout1.addLayout(self.hboxLayout5)
+        self.verticalLayout.addLayout(self.hboxLayout)
 
         self.centerControlLayout = QHBoxLayout()
         self.centerControlLayout.setSpacing(10)
@@ -288,9 +176,9 @@ class Ui_MainWindow(object):
 
         self.centerControlLayout.addWidget(self.centerControlLabel)
 
-        self.spacerItem6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.centerControlLayout.addItem(self.spacerItem6)
+        self.centerControlLayout.addItem(self.spacerItem1)
 
         self.centerControlKey = QLineEdit(self.centralWidget)
         self.centerControlKey.setObjectName(u"centerControlKey")
@@ -298,19 +186,210 @@ class Ui_MainWindow(object):
         self.centerControlLayout.addWidget(self.centerControlKey)
 
 
-        self.vboxLayout1.addLayout(self.centerControlLayout)
+        self.verticalLayout.addLayout(self.centerControlLayout)
+
+        self.vboxLayout1 = QVBoxLayout()
+        self.vboxLayout1.setSpacing(5)
+        self.vboxLayout1.setObjectName(u"vboxLayout1")
+        self.controllerLayout = QVBoxLayout()
+        self.controllerLayout.setSpacing(15)
+        self.controllerLayout.setObjectName(u"controllerLayout")
+        self.controllerLabel = QLabel(self.centralWidget)
+        self.controllerLabel.setObjectName(u"controllerLabel")
+
+        self.controllerLayout.addWidget(self.controllerLabel)
+
+        self.controllerComboBox = QComboBox(self.centralWidget)
+        self.controllerComboBox.setObjectName(u"controllerComboBox")
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.controllerComboBox.sizePolicy().hasHeightForWidth())
+        self.controllerComboBox.setSizePolicy(sizePolicy)
+
+        self.controllerLayout.addWidget(self.controllerComboBox)
+
+
+        self.vboxLayout1.addLayout(self.controllerLayout)
+
+        self.controllerHint = QLabel(self.centralWidget)
+        self.controllerHint.setObjectName(u"controllerHint")
+        self.controllerHint.setStyleSheet(u"color: #505050; font-size: 9pt; min-width:\n"
+"                                        30px;")
+
+        self.vboxLayout1.addWidget(self.controllerHint)
 
 
         self.verticalLayout.addLayout(self.vboxLayout1)
+
+        self.hboxLayout1 = QHBoxLayout()
+        self.hboxLayout1.setSpacing(10)
+        self.hboxLayout1.setObjectName(u"hboxLayout1")
+        self.viewCenterOnCtrlLabel = QLabel(self.centralWidget)
+        self.viewCenterOnCtrlLabel.setObjectName(u"viewCenterOnCtrlLabel")
+
+        self.hboxLayout1.addWidget(self.viewCenterOnCtrlLabel)
+
+        self.spacerItem2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout1.addItem(self.spacerItem2)
+
+        self.viewCenterOnCtrlOption = QCheckBox(self.centralWidget)
+        self.viewCenterOnCtrlOption.setObjectName(u"viewCenterOnCtrlOption")
+        self.viewCenterOnCtrlOption.setChecked(False)
+
+        self.hboxLayout1.addWidget(self.viewCenterOnCtrlOption)
+
+
+        self.verticalLayout.addLayout(self.hboxLayout1)
+
+        self.hboxLayout2 = QHBoxLayout()
+        self.hboxLayout2.setSpacing(10)
+        self.hboxLayout2.setObjectName(u"hboxLayout2")
+        self.zoomNormalOnCtrlLabel = QLabel(self.centralWidget)
+        self.zoomNormalOnCtrlLabel.setObjectName(u"zoomNormalOnCtrlLabel")
+
+        self.hboxLayout2.addWidget(self.zoomNormalOnCtrlLabel)
+
+        self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout2.addItem(self.spacerItem3)
+
+        self.zoomNormalOnCtrlOption = QCheckBox(self.centralWidget)
+        self.zoomNormalOnCtrlOption.setObjectName(u"zoomNormalOnCtrlOption")
+        self.zoomNormalOnCtrlOption.setChecked(False)
+
+        self.hboxLayout2.addWidget(self.zoomNormalOnCtrlOption)
+
+
+        self.verticalLayout.addLayout(self.hboxLayout2)
+
+        self.optionsTitleLabel = QLabel(self.centralWidget)
+        self.optionsTitleLabel.setObjectName(u"optionsTitleLabel")
+        self.optionsTitleLabel.setAlignment(Qt.AlignCenter)
+        self.optionsTitleLabel.setStyleSheet(u"font-size: 14pt; font-weight: bold;\n"
+"                                color: #000000;")
+
+        self.verticalLayout.addWidget(self.optionsTitleLabel)
+
+        self.vboxLayout2 = QVBoxLayout()
+        self.vboxLayout2.setSpacing(8)
+        self.vboxLayout2.setObjectName(u"vboxLayout2")
+        self.hboxLayout3 = QHBoxLayout()
+        self.hboxLayout3.setSpacing(10)
+        self.hboxLayout3.setObjectName(u"hboxLayout3")
+        self.showCursorLabel = QLabel(self.centralWidget)
+        self.showCursorLabel.setObjectName(u"showCursorLabel")
+
+        self.hboxLayout3.addWidget(self.showCursorLabel)
+
+        self.spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout3.addItem(self.spacerItem4)
+
+        self.showCursorOption = QCheckBox(self.centralWidget)
+        self.showCursorOption.setObjectName(u"showCursorOption")
+        self.showCursorOption.setChecked(False)
+
+        self.hboxLayout3.addWidget(self.showCursorOption)
+
+
+        self.vboxLayout2.addLayout(self.hboxLayout3)
+
+        self.hboxLayout4 = QHBoxLayout()
+        self.hboxLayout4.setSpacing(10)
+        self.hboxLayout4.setObjectName(u"hboxLayout4")
+        self.hintOverlayLabel = QLabel(self.centralWidget)
+        self.hintOverlayLabel.setObjectName(u"hintOverlayLabel")
+
+        self.hboxLayout4.addWidget(self.hintOverlayLabel)
+
+        self.spacerItem5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout4.addItem(self.spacerItem5)
+
+        self.hintOverlayOption = QCheckBox(self.centralWidget)
+        self.hintOverlayOption.setObjectName(u"hintOverlayOption")
+        self.hintOverlayOption.setChecked(False)
+
+        self.hboxLayout4.addWidget(self.hintOverlayOption)
+
+
+        self.vboxLayout2.addLayout(self.hboxLayout4)
+
+        self.hboxLayout5 = QHBoxLayout()
+        self.hboxLayout5.setSpacing(10)
+        self.hboxLayout5.setObjectName(u"hboxLayout5")
+        self.buttonMappingLabel = QLabel(self.centralWidget)
+        self.buttonMappingLabel.setObjectName(u"buttonMappingLabel")
+
+        self.hboxLayout5.addWidget(self.buttonMappingLabel)
+
+        self.spacerItem6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout5.addItem(self.spacerItem6)
+
+        self.buttonMappingOption = QCheckBox(self.centralWidget)
+        self.buttonMappingOption.setObjectName(u"buttonMappingOption")
+        self.buttonMappingOption.setChecked(False)
+
+        self.hboxLayout5.addWidget(self.buttonMappingOption)
+
+
+        self.vboxLayout2.addLayout(self.hboxLayout5)
+
+        self.hboxLayout6 = QHBoxLayout()
+        self.hboxLayout6.setSpacing(10)
+        self.hboxLayout6.setObjectName(u"hboxLayout6")
+        self.memorizeAxisPosLabel = QLabel(self.centralWidget)
+        self.memorizeAxisPosLabel.setObjectName(u"memorizeAxisPosLabel")
+
+        self.hboxLayout6.addWidget(self.memorizeAxisPosLabel)
+
+        self.spacerItem7 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout6.addItem(self.spacerItem7)
+
+        self.memorizeAxisPosOption = QCheckBox(self.centralWidget)
+        self.memorizeAxisPosOption.setObjectName(u"memorizeAxisPosOption")
+        self.memorizeAxisPosOption.setChecked(False)
+
+        self.hboxLayout6.addWidget(self.memorizeAxisPosOption)
+
+
+        self.vboxLayout2.addLayout(self.hboxLayout6)
+
+        self.hboxLayout7 = QHBoxLayout()
+        self.hboxLayout7.setSpacing(10)
+        self.hboxLayout7.setObjectName(u"hboxLayout7")
+        self.wheelAxisModeLabel = QLabel(self.centralWidget)
+        self.wheelAxisModeLabel.setObjectName(u"wheelAxisModeLabel")
+
+        self.hboxLayout7.addWidget(self.wheelAxisModeLabel)
+
+        self.spacerItem8 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout7.addItem(self.spacerItem8)
+
+        self.wheelAxisModeOption = QCheckBox(self.centralWidget)
+        self.wheelAxisModeOption.setObjectName(u"wheelAxisModeOption")
+        self.wheelAxisModeOption.setChecked(False)
+
+        self.hboxLayout7.addWidget(self.wheelAxisModeOption)
+
+
+        self.vboxLayout2.addLayout(self.hboxLayout7)
+
+
+        self.verticalLayout.addLayout(self.vboxLayout2)
 
         self.verticalSpacer_sensitivity = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.verticalLayout.addItem(self.verticalSpacer_sensitivity)
 
-        self.modeComboBox = QComboBox(self.centralWidget)
-        self.modeComboBox.setObjectName(u"modeComboBox")
+        self.spacerItem9 = QSpacerItem(0, 15, QSizePolicy.Minimum, QSizePolicy.Fixed)
 
-        self.verticalLayout.addWidget(self.modeComboBox)
+        self.verticalLayout.addItem(self.spacerItem9)
 
         self.startBtn = QPushButton(self.centralWidget)
         self.startBtn.setObjectName(u"startBtn")
@@ -331,18 +410,23 @@ class Ui_MainWindow(object):
     # setupUi
 
     def retranslateUi(self, MainWindow):
-        self.titleLabel.setText("")
+        self.controlsTitleLabel.setText("")
         self.speedLabel.setText("")
         self.speedValueLabel.setText(QCoreApplication.translate("MainWindow", u"5", None))
-        self.cursorOverhaulLabel.setText("")
-        self.hintOverlayLabel.setText("")
-        self.buttonMappingLabel.setText("")
-        self.viewCenterOnCtrlLabel.setText("")
-        self.memorizeMousePosLabel.setText("")
         self.toggleEnabledLabel.setText("")
         self.toggleEnabledKey.setText("")
         self.centerControlLabel.setText("")
         self.centerControlKey.setText("")
+        self.controllerLabel.setText("")
+        self.controllerHint.setText(QCoreApplication.translate("MainWindow", u"\u4ee5\u4e0b\u7684\u9009\u9879\u4f9d\u8d56\u6b63\u786e\u7684\u63a7\u5236\u5668", None))
+        self.viewCenterOnCtrlLabel.setText("")
+        self.zoomNormalOnCtrlLabel.setText("")
+        self.optionsTitleLabel.setText("")
+        self.showCursorLabel.setText("")
+        self.hintOverlayLabel.setText("")
+        self.buttonMappingLabel.setText("")
+        self.memorizeAxisPosLabel.setText("")
+        self.wheelAxisModeLabel.setText("")
         self.startBtn.setText("")
         self.statusLabel.setText("")
         pass

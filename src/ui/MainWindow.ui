@@ -14,7 +14,6 @@
             <string notr="true">
                 QMainWindow {
                 background-color: #F0F0F0;
-                font-family: 'Segoe UI';
                 font-size: 9pt;
                 }
                 QWidget {
@@ -64,16 +63,17 @@
                 border-radius: 3px;
                 padding: 4px;
                 background: white;
-                min-width: 80px;
+                min-width: 120px;
+                max-width: 240px;
                 }
-                QComboBox {
+                #controllerComboBox {
                 border: 1px solid #A0A0A0;
                 border-radius: 3px;
                 padding: 4px;
                 background: white;
                 min-width: 120px;
                 }
-                QComboBox::drop-down {
+                #controllerComboBox::drop-down {
                 subcontrol-origin: padding;
                 subcontrol-position: top right;
                 width: 20px;
@@ -83,12 +83,12 @@
                 border-top-right-radius: 3px;
                 border-bottom-right-radius: 3px;
                 }
-                QComboBox::down-arrow {
+                #controllerComboBox::down-arrow {
                 image: url(assets/down_arrow.svg);
                 width: 16px;
                 height: 16px;
                 }
-                QComboBox QAbstractItemView {
+                #controllerComboBox QAbstractItemView {
                 border: 1px solid #A0A0A0;
                 background: white;
                 selection-background-color: #E1E1E1;
@@ -102,7 +102,7 @@
                     <number>15</number>
                 </property>
                 <property name="topMargin">
-                    <number>0</number>
+                    <number>10</number>
                 </property>
                 <property name="rightMargin">
                     <number>15</number>
@@ -114,9 +114,9 @@
                     <number>10</number>
                 </property>
 
-                <!-- 标题 -->
+                <!-- 控制标题 -->
                 <item>
-                    <widget class="QLabel" name="titleLabel">
+                    <widget class="QLabel" name="controlsTitleLabel">
                         <property name="text">
                             <string></string>
                         </property>
@@ -124,7 +124,7 @@
                             <set>Qt::AlignCenter</set>
                         </property>
                         <property name="styleSheet">
-                            <string notr="true">font-size: 14pt; font-weight: bold; margin: 10px 0;
+                            <string notr="true">font-size: 14pt; font-weight: bold;
                                 color: #000000;</string>
                         </property>
                     </widget>
@@ -177,7 +177,7 @@
                         <item>
                             <widget class="QLabel" name="speedValueLabel">
                                 <property name="text">
-                                    <string>5</string>  <!-- 简化显示 -->
+                                    <string>5</string>
                                 </property>
                                 <property name="styleSheet">
                                     <string notr="true">color: #505050; font-size: 9pt; min-width:
@@ -188,25 +188,214 @@
                     </layout>
                 </item>
 
-                <!-- 固定大小分隔符 -->
+                <!-- 切换控制 -->
                 <item>
-                    <spacer name="fixedVerticalSpacer">
-                        <property name="orientation">
-                            <enum>Qt::Vertical</enum>
+                    <layout class="QHBoxLayout">
+                        <property name="spacing">
+                            <number>10</number>
                         </property>
-                        <property name="sizeType">
-                            <enum>QSizePolicy::Fixed</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                            <size>
-                                <width>0</width>
-                                <height>10</height> <!-- 固定10像素高度 -->
-                            </size>
-                        </property>
-                    </spacer>
+                        <item>
+                            <widget class="QLabel" name="toggleEnabledLabel">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <spacer>
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                    <size>
+                                        <width>40</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </item>
+                        <item>
+                            <widget class="QLineEdit" name="toggleEnabledKey">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
                 </item>
 
-                <!-- 设置区域 -->
+                <!-- 控制回中 -->
+                <item>
+                    <layout class="QHBoxLayout" name="centerControlLayout">
+                        <property name="spacing">
+                            <number>10</number>
+                        </property>
+                        <item>
+                            <widget class="QLabel" name="centerControlLabel">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <spacer>
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                    <size>
+                                        <width>40</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </item>
+                        <item>
+                            <widget class="QLineEdit" name="centerControlKey">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+
+                <!-- 控制器选择 -->
+                <item>
+                    <layout class="QVBoxLayout">
+                        <property name="spacing">
+                            <number>5</number>
+                        </property>
+
+                        <item>
+                            <layout class="QVBoxLayout" name="controllerLayout">
+                                <property name="spacing">
+                                    <number>15</number>
+                                </property>
+                                <item>
+                                    <widget class="QLabel" name="controllerLabel">
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item>
+                                    <widget class="QComboBox" name="controllerComboBox">
+                                        <property name="sizePolicy">
+                                            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                                                <horstretch>0</horstretch>
+                                                <verstretch>0</verstretch>
+                                            </sizepolicy>
+                                        </property>
+                                    </widget>
+                                </item>
+                            </layout>
+                        </item>
+
+                        <!-- 控制器选择提示文本 -->
+                        <item>
+                            <widget class="QLabel" name="controllerHint">
+                                <property name="text">
+                                    <string>以下的选项依赖正确的控制器</string>
+                                </property>
+                                <property name="styleSheet">
+                                    <string notr="true">color: #505050; font-size: 9pt; min-width:
+                                        30px;</string>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+
+                <!-- 控制时视角回中 -->
+                <item>
+                    <layout class="QHBoxLayout">
+                        <property name="spacing">
+                            <number>10</number>
+                        </property>
+                        <item>
+                            <widget class="QLabel" name="viewCenterOnCtrlLabel">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <spacer>
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                    <size>
+                                        <width>40</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </item>
+                        <item>
+                            <widget class="QCheckBox" name="viewCenterOnCtrlOption">
+                                <property name="checked">
+                                    <bool>false</bool>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+
+                <!-- 控制时视场正常 -->
+                <item>
+                    <layout class="QHBoxLayout">
+                        <property name="spacing">
+                            <number>10</number>
+                        </property>
+                        <item>
+                            <widget class="QLabel" name="zoomNormalOnCtrlLabel">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <spacer>
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                    <size>
+                                        <width>40</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </item>
+                        <item>
+                            <widget class="QCheckBox" name="zoomNormalOnCtrlOption">
+                                <property name="checked">
+                                    <bool>false</bool>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+
+                <!-- 选项标题 -->
+                <item>
+                    <widget class="QLabel" name="optionsTitleLabel">
+                        <property name="text">
+                            <string></string>
+                        </property>
+                        <property name="alignment">
+                            <set>Qt::AlignCenter</set>
+                        </property>
+                        <property name="styleSheet">
+                            <string notr="true">font-size: 14pt; font-weight: bold;
+                                color: #000000;</string>
+                        </property>
+                    </widget>
+                </item>
+
+                <!-- 选项区域 -->
                 <item>
                     <layout class="QVBoxLayout">
                         <!-- 修复：将spacing作为property元素 -->
@@ -221,7 +410,7 @@
                                     <number>10</number>
                                 </property>
                                 <item>
-                                    <widget class="QLabel" name="cursorOverhaulLabel">
+                                    <widget class="QLabel" name="showCursorLabel">
                                         <property name="text">
                                             <string></string>
                                         </property>
@@ -241,7 +430,7 @@
                                     </spacer>
                                 </item>
                                 <item>
-                                    <widget class="QCheckBox" name="cursorOverhaulOption">
+                                    <widget class="QCheckBox" name="showCursorOption">
                                         <property name="checked">
                                             <bool>false</bool>
                                         </property>
@@ -322,42 +511,6 @@
                             </layout>
                         </item>
 
-                        <!-- 控制时视角回中 -->
-                        <item>
-                            <layout class="QHBoxLayout">
-                                <property name="spacing">
-                                    <number>10</number>
-                                </property>
-                                <item>
-                                    <widget class="QLabel" name="viewCenterOnCtrlLabel">
-                                        <property name="text">
-                                            <string></string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item>
-                                    <spacer>
-                                        <property name="orientation">
-                                            <enum>Qt::Horizontal</enum>
-                                        </property>
-                                        <property name="sizeHint" stdset="0">
-                                            <size>
-                                                <width>40</width>
-                                                <height>20</height>
-                                            </size>
-                                        </property>
-                                    </spacer>
-                                </item>
-                                <item>
-                                    <widget class="QCheckBox" name="viewCenterOnCtrlOption">
-                                        <property name="checked">
-                                            <bool>false</bool>
-                                        </property>
-                                    </widget>
-                                </item>
-                            </layout>
-                        </item>
-
                         <!-- 鼠标位置记忆 -->
                         <item>
                             <layout class="QHBoxLayout">
@@ -365,7 +518,7 @@
                                     <number>10</number>
                                 </property>
                                 <item>
-                                    <widget class="QLabel" name="memorizeMousePosLabel">
+                                    <widget class="QLabel" name="memorizeAxisPosLabel">
                                         <property name="text">
                                             <string></string>
                                         </property>
@@ -385,7 +538,7 @@
                                     </spacer>
                                 </item>
                                 <item>
-                                    <widget class="QCheckBox" name="memorizeMousePosOption">
+                                    <widget class="QCheckBox" name="memorizeAxisPosOption">
                                         <property name="checked">
                                             <bool>false</bool>
                                         </property>
@@ -394,14 +547,14 @@
                             </layout>
                         </item>
 
-                        <!-- 切换控制 -->
+                        <!-- 鼠标滚轮轴 -->
                         <item>
                             <layout class="QHBoxLayout">
                                 <property name="spacing">
                                     <number>10</number>
                                 </property>
                                 <item>
-                                    <widget class="QLabel" name="toggleEnabledLabel">
+                                    <widget class="QLabel" name="wheelAxisModeLabel">
                                         <property name="text">
                                             <string></string>
                                         </property>
@@ -421,45 +574,9 @@
                                     </spacer>
                                 </item>
                                 <item>
-                                    <widget class="QLineEdit" name="toggleEnabledKey">
-                                        <property name="text">
-                                            <string></string>
-                                        </property>
-                                    </widget>
-                                </item>
-                            </layout>
-                        </item>
-
-                        <!-- 控制回中 -->
-                        <item>
-                            <layout class="QHBoxLayout" name="centerControlLayout">
-                                <property name="spacing">
-                                    <number>10</number>
-                                </property>
-                                <item>
-                                    <widget class="QLabel" name="centerControlLabel">
-                                        <property name="text">
-                                            <string></string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item>
-                                    <spacer>
-                                        <property name="orientation">
-                                            <enum>Qt::Horizontal</enum>
-                                        </property>
-                                        <property name="sizeHint" stdset="0">
-                                            <size>
-                                                <width>40</width>
-                                                <height>20</height>
-                                            </size>
-                                        </property>
-                                    </spacer>
-                                </item>
-                                <item>
-                                    <widget class="QLineEdit" name="centerControlKey">
-                                        <property name="text">
-                                            <string></string>
+                                    <widget class="QCheckBox" name="wheelAxisModeOption">
+                                        <property name="checked">
+                                            <bool>false</bool>
                                         </property>
                                     </widget>
                                 </item>
@@ -468,7 +585,7 @@
                     </layout>
                 </item>
 
-                <!-- 添加的垂直弹簧 -->
+                <!-- 垂直弹簧 -->
                 <item>
                     <spacer name="verticalSpacer_sensitivity">
                         <property name="orientation">
@@ -483,9 +600,22 @@
                     </spacer>
                 </item>
 
+                <!-- 固定大小分隔符 -->
                 <item>
-                    <widget class="QComboBox" name="modeComboBox">
-                    </widget>
+                    <spacer>
+                        <property name="orientation">
+                            <enum>Qt::Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>QSizePolicy::Fixed</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                            <size>
+                                <width>0</width>
+                                <height>15</height>
+                            </size>
+                        </property>
+                    </spacer>
                 </item>
 
                 <!-- 启动/停止按钮 -->

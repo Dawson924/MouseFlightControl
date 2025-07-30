@@ -1,4 +1,4 @@
-class BaseController():
+class BaseController:
     def __init__(self, vjoy):
         self.vjoy = vjoy
 
@@ -6,4 +6,7 @@ class BaseController():
         return self.name
 
     def view_center(self):
+        return
+
+    def zoom_normal(self):
         return

@@ -6,9 +6,10 @@ import time
 import ctypes
 import pyvjoy
 import win32api
-import pywintypes
 
 from PySide2 import QtWidgets, QtCore
+from PySide2.QtCore import Qt
+from PySide2.QtGui import QFont
 from app import App
 from controller.base import BaseController
 from controller.lockon.dcs import DCSController
@@ -29,6 +30,7 @@ CONFIG_FILE = "config.ini"
 # 验证vJoy
 try:
     vjoy_device = pyvjoy.VJoyDevice(1)
+    vjoy_device.set_axis(pyvjoy.HID_USAGE_Z, 0x8000)
     vjoy_device.set_axis(pyvjoy.HID_USAGE_RZ, 0x4000)
 except Exception as e:
     app = QtWidgets.QApplication(sys.argv)
@@ -41,17 +43,19 @@ except Exception as e:
     sys.exit(1)
 
 class vjoyAxis():
-    def __init__(self, x, y, z):
-        self.x, self.y, self.z = x, y, z
+    def __init__(self, x, y, th):
+        self.x, self.y, self.th = x, y, th
 
 class vjoyState():
-    def __init__(self, stick):
+    def __init__(self, stick, th):
         self.stick = stick
+        self.th = th
 
 class vjoySensitive():
-    def __init__(self, mou, x, y):
+    def __init__(self, mou, x, y, th):
         self.mou = mou
         self.x, self.y = x, y
+        self.th = th
 
 
 # 全局控制变量
@@ -64,9 +68,9 @@ axis_min = -axis_max
 center_axis_x = 0
 center_axis_y = 0
 
-Axis = vjoyAxis(0, 0, 0)
-State = vjoyState(False)
-Sens = vjoySensitive(15.0, 0.7, 0.9)
+Axis = vjoyAxis(0, 0, axis_max)
+State = vjoyState(False, False)
+Sens = vjoySensitive(15.0, 0.7, 0.9, 1.9)
 
 screen_width = win32api.GetSystemMetrics(0)
 screen_height = win32api.GetSystemMetrics(1)
@@ -76,14 +80,6 @@ screen_center_y = screen_height / 2
 # 输入状态跟踪
 delta_x = 0
 delta_y = 0
-wheel_delta = 0
-
-def reset_axis_pos():
-    global Axis
-    if Axis.x != center_axis_y:
-        Axis.x = 0
-    if Axis.y != center_axis_y:
-        Axis.y = 0
 
 def check_overflow(a, min_val, max_val):
     if a < min_val:
@@ -93,25 +89,7 @@ def check_overflow(a, min_val, max_val):
     return a
 
 def wheel_th(sens_mo, sens_th, wheel_delta):
-    return wheel_delta * 20 * sens_mo * sens_th
-
-def get_mouse_position():
-    try:
-        return win32api.GetCursorPos()
-    except pywintypes.error as e:
-        # 处理访问被拒绝的情况
-        if e.winerror == 5:  # Access is denied
-            # 返回上次已知位置
-            return (screen_center_x, screen_center_y)
-        else:
-            raise  # 重新抛出其他异常
-
-def set_mouse_position(x, y):
-    try:
-        win32api.SetCursorPos((int(x), int(y)))
-    except pywintypes.error as e:
-        # 忽略设置光标位置时的错误
-        pass
+    return wheel_delta * 0.75 * sens_mo * sens_th
 
 def set_mouse_speed(speed):
     ctypes.windll.user32.SystemParametersInfoW(SPI_SETMOUSESPEED, 0, speed, 0)
@@ -128,17 +106,19 @@ class MainWindow(QtWidgets.QMainWindow):
             'language': (str),
         },
         'Controls': {
-            'controller': (str),
             'mouse_speed': (int),
+            'controller': (str),
             'key_toggle': (str),
             'key_center': (str),
+            'view_center_on_ctrl': (bool),
+            'zoom_normal_on_ctrl': (bool),
         },
         'Options': {
             'show_cursor': (bool),
-            'show_hint': (bool),
+            'hint_overlay': (bool),
             'button_mapping': (bool),
-            'view_center_on_ctrl': (bool),
-            'memorize_mouse_pos': (bool),
+            'memorize_axis_pos': (bool),
+            'wheel_axis_mode': (bool),
         }
     }
     CONTROLLERS = {
@@ -160,34 +140,38 @@ class MainWindow(QtWidgets.QMainWindow):
         self.running = False
         self.original_mouse_speed = get_mouse_speed()
 
-        # 配置选项默认值
+        # 配置默认值
         self.language = 'en_US'
-        self.controller = 'None'
         self.mouse_speed = 5
         self.key_toggle = '`'
         self.key_center = 'MB'
-        self.show_cursor = False
-        self.show_hint = True
-        self.button_mapping = True
+        self.controller = 'None'
         self.view_center_on_ctrl = True
-        self.memorize_mouse_pos = True
+        self.zoom_normal_on_ctrl = True
+        self.show_cursor = False
+        self.hint_overlay = True
+        self.button_mapping = True
+        self.memorize_axis_pos = True
+        self.wheel_axis_mode = False
 
         # 加载所有配置
         self.load_config()
 
         # 用户页面操作
         self.ui.startBtn.clicked.connect(self.on_button_click)
-        self.ui.modeComboBox.currentTextChanged.connect(lambda text: setattr(self, 'controller', text))
         self.ui.mouseSpeedSlider.valueChanged.connect(self.on_speed_changed)
         self.ui.mouseSpeedSlider.setRange(1, 20)
         self.ui.mouseSpeedSlider.setValue(self.mouse_speed)
         self.ui.toggleEnabledKey.textChanged.connect(lambda text: setattr(self, 'key_toggle', text))
         self.ui.centerControlKey.textChanged.connect(lambda text: setattr(self, 'key_center', text))
-        self.ui.cursorOverhaulOption.stateChanged.connect(lambda state: setattr(self, 'show_cursor', bool(state)))
-        self.ui.hintOverlayOption.stateChanged.connect(lambda state: setattr(self, 'show_hint', bool(state)))
-        self.ui.buttonMappingOption.stateChanged.connect(lambda state: setattr(self, 'button_mapping', bool(state)))
+        self.ui.controllerComboBox.currentTextChanged.connect(self.on_controller_changed)
         self.ui.viewCenterOnCtrlOption.stateChanged.connect(lambda state: setattr(self, 'view_center_on_ctrl', bool(state)))
-        self.ui.memorizeMousePosOption.stateChanged.connect(lambda state: setattr(self, 'memorize_mouse_pos', bool(state)))
+        self.ui.zoomNormalOnCtrlOption.stateChanged.connect(lambda state: setattr(self, 'zoom_normal_on_ctrl', bool(state)))
+        self.ui.showCursorOption.stateChanged.connect(lambda state: setattr(self, 'show_cursor', bool(state)))
+        self.ui.hintOverlayOption.stateChanged.connect(lambda state: setattr(self, 'hint_overlay', bool(state)))
+        self.ui.buttonMappingOption.stateChanged.connect(lambda state: setattr(self, 'button_mapping', bool(state)))
+        self.ui.memorizeAxisPosOption.stateChanged.connect(lambda state: setattr(self, 'memorize_axis_pos', bool(state)))
+        self.ui.wheelAxisModeOption.stateChanged.connect(lambda state: setattr(self, 'wheel_axis_mode', bool(state)))
 
         # 加载配置的语言
         translator = QtCore.QTranslator()
@@ -197,6 +181,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.create_language_menu()
         self.retranslate_ui()
+        self.update_ui_state()
 
         # 创建界面绘制信号
         self.interface = HintLabel()
@@ -208,8 +193,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def setup_ui(self):
         self.ui.setupUi(self)
+        self.setWindowFlags(self.windowFlags() &
+                            ~Qt.WindowMaximizeButtonHint)
+        self.setMinimumWidth(300)
+        self.setMaximumWidth(500)
         for name in self.CONTROLLERS.keys():
-            self.ui.modeComboBox.addItem(name)
+            self.ui.controllerComboBox.addItem(name)
 
     def load_config(self):
         """从配置文件加载设置"""
@@ -320,11 +309,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # 按钮文本
         self.ui.startBtn.setText(self.tr("Start") if not self.running else self.tr("Stop"))
 
-        # 设置选择
-        self.ui.modeComboBox.setCurrentText(self.controller)
-
         # 标签文本
-        self.ui.titleLabel.setText(self.tr("Title"))
+        self.ui.controlsTitleLabel.setText(self.tr("ControlsTitle"))
         self.ui.statusLabel.setText(self.tr("StatusStopped") if not enabled else self.tr("StatusWorking"))
         self.ui.speedLabel.setText(self.tr('Sensitive'))
         self.ui.speedValueLabel.setText(self.tr("CurrentValue") + f': {str(self.ui.mouseSpeedSlider.value())}')
@@ -332,16 +318,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.toggleEnabledKey.setText(self.key_toggle)
         self.ui.centerControlLabel.setText(self.tr("CenterControl"))
         self.ui.centerControlKey.setText(self.key_center)
-        self.ui.cursorOverhaulLabel.setText(self.tr("CursorOverhaul"))
-        self.ui.cursorOverhaulOption.setChecked(self.show_cursor)
-        self.ui.hintOverlayLabel.setText(self.tr("HintOverlay"))
-        self.ui.hintOverlayOption.setChecked(self.show_hint)
-        self.ui.buttonMappingLabel.setText(self.tr("ButtonMapping"))
-        self.ui.buttonMappingOption.setChecked(self.button_mapping)
+        self.ui.controllerLabel.setText(self.tr("Controller"))
+        self.ui.controllerComboBox.setCurrentText(self.controller)
+        self.ui.controllerHint.setText(self.tr("ControllerHint"))
         self.ui.viewCenterOnCtrlLabel.setText(self.tr("ViewCenterOnCtrl"))
         self.ui.viewCenterOnCtrlOption.setChecked(self.view_center_on_ctrl)
-        self.ui.memorizeMousePosLabel.setText(self.tr("MemorizeMousePos"))
-        self.ui.memorizeMousePosOption.setChecked(self.memorize_mouse_pos)
+        self.ui.zoomNormalOnCtrlLabel.setText(self.tr("ZoomNormalOnCtrl"))
+        self.ui.zoomNormalOnCtrlOption.setChecked(self.zoom_normal_on_ctrl)
+        self.ui.optionsTitleLabel.setText(self.tr("OptionsTitle"))
+        self.ui.showCursorLabel.setText(self.tr("ShowCursor"))
+        self.ui.showCursorOption.setChecked(self.show_cursor)
+        self.ui.hintOverlayLabel.setText(self.tr("HintOverlay"))
+        self.ui.hintOverlayOption.setChecked(self.hint_overlay)
+        self.ui.buttonMappingLabel.setText(self.tr("ButtonMapping"))
+        self.ui.buttonMappingOption.setChecked(self.button_mapping)
+        self.ui.memorizeAxisPosLabel.setText(self.tr("MemorizeAxisPos"))
+        self.ui.memorizeAxisPosOption.setChecked(self.memorize_axis_pos)
+        self.ui.wheelAxisModeLabel.setText(self.tr("WheelAxisMode"))
+        self.ui.wheelAxisModeOption.setChecked(self.wheel_axis_mode)
 
     def on_speed_changed(self, value):
         self.mouse_speed = value
@@ -349,10 +343,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.running:
             set_mouse_speed(value)
 
+    def on_controller_changed(self, value):
+        self.controller = value
+        self.update_ui_state()
+
     def on_button_click(self):
         """切换启用/禁用状态, 同步UI与子线程"""
-        global enabled, stop_thread
-
         if not self.running:
             # 启动逻辑
             self.running = True
@@ -364,6 +360,23 @@ class MainWindow(QtWidgets.QMainWindow):
             self.toggle_enabled(False)
             self.stop_main_thread()
 
+    def update_ui_state(self):
+        disabled = self.running
+        self.ui.startBtn.setText(self.tr('Start') if not self.running else self.tr('Stop'))
+        self.ui.statusLabel.setText(self.tr('StatusWorking') if disabled else self.tr('StatusStopped'))
+        self.ui.mouseSpeedSlider.setDisabled(disabled)
+        self.ui.toggleEnabledKey.setDisabled(disabled)
+        self.ui.centerControlKey.setDisabled(disabled)
+        self.ui.controllerComboBox.setDisabled(disabled)
+        self.ui.controllerHint.setHidden(self.controller != 'None')
+        self.ui.viewCenterOnCtrlOption.setDisabled(disabled or self.controller == 'None')
+        self.ui.zoomNormalOnCtrlOption.setDisabled(disabled or self.controller == 'None')
+        self.ui.showCursorOption.setDisabled(disabled)
+        self.ui.hintOverlayOption.setDisabled(disabled)
+        self.ui.buttonMappingOption.setDisabled(disabled)
+        self.ui.memorizeAxisPosOption.setDisabled(disabled)
+        self.ui.wheelAxisModeOption.setDisabled(disabled)
+
     def start_main_thread(self):
         """启动子线程"""
         global stop_thread
@@ -372,17 +385,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.main_thread and self.main_thread.is_alive():
             return
 
-        self.ui.startBtn.setText(self.tr('Stop'))
-        self.ui.modeComboBox.setDisabled(True)
-        self.ui.statusLabel.setText(self.tr('StatusWorking'))
-        self.ui.mouseSpeedSlider.setDisabled(True)
-        self.ui.toggleEnabledKey.setDisabled(True)
-        self.ui.centerControlKey.setDisabled(True)
-        self.ui.cursorOverhaulOption.setDisabled(True)
-        self.ui.hintOverlayOption.setDisabled(True)
-        self.ui.buttonMappingOption.setDisabled(True)
-        self.ui.viewCenterOnCtrlOption.setDisabled(True)
-        self.ui.memorizeMousePosOption.setDisabled(True)
+        self.update_ui_state()
 
         self.main_thread = threading.Thread(
             target=self.main,
@@ -398,17 +401,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.main_thread and self.main_thread.is_alive():
             self.main_thread.join(timeout=1)
 
-        self.ui.startBtn.setText(self.tr('Start'))
-        self.ui.modeComboBox.setDisabled(False)
-        self.ui.statusLabel.setText(self.tr('StatusStopped'))
-        self.ui.mouseSpeedSlider.setDisabled(False)
-        self.ui.toggleEnabledKey.setDisabled(False)
-        self.ui.centerControlKey.setDisabled(False)
-        self.ui.cursorOverhaulOption.setDisabled(False)
-        self.ui.hintOverlayOption.setDisabled(False)
-        self.ui.buttonMappingOption.setDisabled(False)
-        self.ui.viewCenterOnCtrlOption.setDisabled(False)
-        self.ui.memorizeMousePosOption.setDisabled(False)
+        self.update_ui_state()
 
         self.main_thread = None
         vjoy_device.reset()
@@ -433,22 +426,26 @@ class MainWindow(QtWidgets.QMainWindow):
         global enabled, State
         enabled = flag
         State.stick = flag
+        if self.wheel_axis_mode:
+            State.th = flag
+        else:
+            State.th = False
 
         if flag:
             set_mouse_speed(self.mouse_speed)
             if self.show_cursor: self.pointer_signal.emit(True)
-            if self.show_hint: self.interface_signal.emit("Controlled", 1000, 'green')
+            if self.hint_overlay: self.interface_signal.emit("Controlled", 1000, 'green')
         else:
             set_mouse_speed(self.original_mouse_speed)
             self.pointer_signal.emit(False)
-            if self.show_hint: self.interface_signal.emit("No control", 1000, 'red')
+            if self.hint_overlay: self.interface_signal.emit("No control", 1000, 'red')
 
         self.retranslate_ui()
 
     def main(self):
-        global delta_x, delta_y, wheel_delta, enabled
+        global delta_x, delta_y, enabled
         try:
-            controller = self.CONTROLLERS[self.controller](vjoy_device)
+            controller: BaseController = self.CONTROLLERS[self.controller](vjoy_device)
             input_state = InputStateMonitor()
             # 初始/上一次的按键状态
             toggle_key_prev = False
@@ -468,16 +465,18 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.toggle_enabled(_flag)
                     if _flag and self.view_center_on_ctrl:
                         controller.view_center()
-                    if self.memorize_mouse_pos:
+                    if _flag and self.zoom_normal_on_ctrl:
+                        controller.zoom_normal()
+                    if self.memorize_axis_pos:
                         if not _flag:
-                            memo_x, memo_y = get_mouse_position()
+                            memo_x, memo_y = input_state.get_mouse_position()
                         elif memo_x is not None and memo_y is not None:
                             prev_x, prev_y = memo_x, memo_y
-                            set_mouse_position(memo_x, memo_y)
+                            input_state.set_mouse_position(memo_x, memo_y)
                             memo_x, memo_y = None, None
 
                 if enabled and center_key_current and not center_key_prev:
-                    set_mouse_position(screen_center_x, screen_center_y)
+                    input_state.set_mouse_position(screen_center_x, screen_center_y)
 
                 toggle_key_prev = toggle_key_current
                 center_key_prev = center_key_current
@@ -504,7 +503,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     else:
                         vjoy_device.set_button(5, False)
 
-                curr_x, curr_y = get_mouse_position()
+                curr_x, curr_y = input_state.get_mouse_position()
                 delta_x = curr_x - prev_x
                 delta_y = curr_y - prev_y
                 prev_x, prev_y = curr_x, curr_y
@@ -521,18 +520,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
                     Axis.x = check_overflow(Axis.x, axis_min, axis_max)
                     Axis.y = check_overflow(Axis.y, axis_min, axis_max)
-                    # Axis.th_l = check_overflow(Axis.th_l, axis_min, axis_max)
-                    # Axis.th_r = check_overflow(Axis.th_r, axis_min, axis_max)
 
                     def map_to_vjoy(val):
                         return int((val - axis_min) / (axis_max - axis_min) * 32767) + 1
 
                     vjoy_device.set_axis(pyvjoy.HID_USAGE_X, map_to_vjoy(Axis.x))
                     vjoy_device.set_axis(pyvjoy.HID_USAGE_Y, map_to_vjoy(Axis.y))
-                    # vjoy_device.set_axis(pyvjoy.HID_USAGE_SL0, map_to_vjoy(Axis.th_l))
-                    # vjoy_device.set_axis(pyvjoy.HID_USAGE_SL1, map_to_vjoy(Axis.th_r))
 
-                wheel_delta = 0
+                if enabled and State.th:
+                    Axis.th += wheel_th(Sens.mou, Sens.th, -input_state.get_wheel_delta())
+                    Axis.th = check_overflow(Axis.th, axis_min, axis_max)
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_Z, map_to_vjoy(Axis.th))
+
                 time.sleep(0.016)
 
         except KeyboardInterrupt:
@@ -559,6 +558,9 @@ if __name__ == "__main__":
     if translator.load(f"locales/en_US.qm"):
         app.installTranslator(translator)
         app.translators.append(translator)
+
+    font = QFont("Arial", 9)
+    app.setFont(font)
 
     window = MainWindow()
 
