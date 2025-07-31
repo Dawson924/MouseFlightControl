@@ -1,12 +1,9 @@
-class BaseController:
+from abc import ABC, abstractmethod
+
+class BaseController(ABC):
     def __init__(self, vjoy):
         self.vjoy = vjoy
 
-    def __str__(self):
-        return self.name
-
-    def view_center(self):
-        return
-
-    def zoom_normal(self):
+    @abstractmethod
+    def update(self, state, context):
         return

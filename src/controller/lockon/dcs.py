@@ -11,7 +11,8 @@ class DCSController(BaseController):
         self.sock.settimeout(1.0)  # 设置1秒超时
 
         # 验证连接状态
-        if self._validate_connection():
+        self.connected = self._validate_connection()
+        if self.connected:
             print(f"✅ 已连接到DCS: {self.ip}:{self.port}")
         else:
             print(f"⚠️ 无法连接到DCS: {self.ip}:{self.port} - 请确保DCS正在运行且导出设置正确")
@@ -56,3 +57,10 @@ class DCSController(BaseController):
 
     def zoom_normal(self):
         self.send("LoSetCommand", 177)
+
+    def update(self, state, context):
+        if state.input.is_pressed(context.key_toggle):
+            if state.enabled and state.options.view_center_on_ctrl:
+                self.view_center()
+            if state.enabled and state.options.zoom_normal_on_ctrl:
+                self.zoom_normal()

@@ -2,21 +2,22 @@ from pynput import mouse
 import win32api
 import win32con
 import threading
-import time
 
 class InputStateMonitor:
     def __init__(self):
         # 初始化鼠标状态
         self.mouse_buttons = {
-            "LB": False,  # 左键
-            "RB": False,  # 右键
-            "MB": False,  # 中键
-            "XB1": False, # 侧键1
-            "XB2": False  # 侧键2
+            "LMB": False,  # 左键
+            "RMB": False,  # 右键
+            "MMB": False,  # 中键
+            "XMB1": False, # 侧键1
+            "XMB2": False  # 侧键2
         }
+        self.prev_mouse_buttons = self.mouse_buttons.copy()
 
         # 初始化键盘状态
         self.key_states = {}
+        self.prev_key_states = {}
 
         # 鼠标位置
         self.mouse_x = 0
@@ -97,44 +98,44 @@ class InputStateMonitor:
 
     def _on_scroll(self, x, y, dx, dy):
         """pynput滚轮事件回调函数"""
-        # pynput的dy通常为1（向上）或-1（向下），乘以120匹配Windows的delta值习惯
         with self.wheel_lock:
             self.wheel_delta += dy * 120
 
     def start_wheel_listener(self):
         """启动pynput滚轮监听器"""
         if self.mouse_listener is None or not self.mouse_listener.is_alive():
-            # 创建鼠标监听器，只关注滚轮事件
             self.mouse_listener = mouse.Listener(
                 on_scroll=self._on_scroll,
-                # 禁用其他事件监听以提高性能
                 on_move=None,
                 on_click=None
             )
-            # 启动监听器（后台线程）
             self.mouse_listener.start()
 
     def stop_wheel_listener(self):
         """停止pynput滚轮监听器"""
         if self.mouse_listener and self.mouse_listener.is_alive():
             self.mouse_listener.stop()
-            # 等待监听器线程结束
             self.mouse_listener.join(timeout=1.0)
             self.mouse_listener = None
 
     def update(self):
-        """更新所有输入状态"""
+        """更新所有输入状态并保存上一帧状态"""
+        # 保存当前状态到上一帧状态
+        self.prev_mouse_buttons = self.mouse_buttons.copy()
+        self.prev_key_states = self.key_states.copy()
+
+        # 更新当前状态
         self._update_mouse_state()
         self._update_keyboard_state()
         self._update_mouse_position()
 
     def _update_mouse_state(self):
         """更新鼠标按钮状态"""
-        self.mouse_buttons["LB"] = win32api.GetAsyncKeyState(win32con.VK_LBUTTON) < 0
-        self.mouse_buttons["RB"] = win32api.GetAsyncKeyState(win32con.VK_RBUTTON) < 0
-        self.mouse_buttons["MB"] = win32api.GetAsyncKeyState(win32con.VK_MBUTTON) < 0
-        self.mouse_buttons["XB1"] = win32api.GetAsyncKeyState(0x05) < 0  # VK_XBUTTON1
-        self.mouse_buttons["XB2"] = win32api.GetAsyncKeyState(0x06) < 0  # VK_XBUTTON2
+        self.mouse_buttons["LMB"] = win32api.GetAsyncKeyState(win32con.VK_LBUTTON) < 0
+        self.mouse_buttons["RMB"] = win32api.GetAsyncKeyState(win32con.VK_RBUTTON) < 0
+        self.mouse_buttons["MMB"] = win32api.GetAsyncKeyState(win32con.VK_MBUTTON) < 0
+        self.mouse_buttons["XMB1"] = win32api.GetAsyncKeyState(0x05) < 0  # VK_XBUTTON1
+        self.mouse_buttons["XMB2"] = win32api.GetAsyncKeyState(0x06) < 0  # VK_XBUTTON2
 
     def _update_keyboard_state(self):
         """更新键盘按键状态"""
@@ -149,13 +150,32 @@ class InputStateMonitor:
         except:
             pass
 
-    def is_mouse_pressed(self, button_name):
-        """检查鼠标按钮是否按下"""
+    # ===== 状态检测方法 =====
+    def is_mouse_pressing(self, button_name):
+        """检测鼠标按钮当前是否按下（当前帧按下）"""
         if isinstance(button_name, str):
-            return self.mouse_buttons.get(button_name.upper(), False)
+            button = button_name.upper()
+            return self.mouse_buttons.get(button, False)
+        return False
 
-    def is_key_pressed(self, key_name):
-        """检查键盘按键是否按下"""
+    def is_mouse_pressed(self, button_name):
+        """检测鼠标按钮是否刚刚按下（上一帧未按下，当前帧按下）"""
+        if isinstance(button_name, str):
+            button = button_name.upper()
+            return self.mouse_buttons.get(button, False) and \
+                   not self.prev_mouse_buttons.get(button, False)
+        return False
+
+    def is_mouse_released(self, button_name):
+        """检测鼠标按钮是否刚刚释放（上一帧按下，当前帧未按下）"""
+        if isinstance(button_name, str):
+            button = button_name.upper()
+            return not self.mouse_buttons.get(button, False) and \
+                   self.prev_mouse_buttons.get(button, False)
+        return False
+
+    def is_key_presssing(self, key_name):
+        """检测键盘按键当前是否按下（当前帧按下）"""
         if isinstance(key_name, str):
             return self.key_states.get(key_name.lower(), False)
         if isinstance(key_name, int):
@@ -164,15 +184,55 @@ class InputStateMonitor:
                 return self.key_states.get(key_name, False)
         return False
 
-    def is_pressed(self, name):
-        return self.is_key_pressed(name) or self.is_mouse_pressed(name)
+    def is_key_pressed(self, key_name):
+        """检测键盘按键是否刚刚按下（上一帧未按下，当前帧按下）"""
+        if isinstance(key_name, str):
+            key = key_name.lower()
+            return self.key_states.get(key, False) and \
+                   not self.prev_key_states.get(key, False)
+        if isinstance(key_name, int):
+            key_name = self.VK_MAP.get(key_name, None)
+            if key_name:
+                key = key_name.lower()
+                return self.key_states.get(key, False) and \
+                       not self.prev_key_states.get(key, False)
+        return False
 
+    def is_key_released(self, key_name):
+        """检测键盘按键是否刚刚释放（上一帧按下，当前帧未按下）"""
+        if isinstance(key_name, str):
+            key = key_name.lower()
+            return not self.key_states.get(key, False) and \
+                   self.prev_key_states.get(key, False)
+        if isinstance(key_name, int):
+            key_name = self.VK_MAP.get(key_name, None)
+            if key_name:
+                key = key_name.lower()
+                return not self.key_states.get(key, False) and \
+                       self.prev_key_states.get(key, False)
+        return False
+
+    # ===== 组合方法 =====
+    def is_pressed(self, name):
+        if self.is_key_pressed(name) or self.is_mouse_pressed(name):
+            return True
+        return False
+
+    def is_pressing(self, name):
+        if self.is_key_presssing(name) or self.is_mouse_pressing(name):
+            return True
+        return False
+
+    def is_released(self, name):
+        if self.is_key_released(name) or self.is_mouse_released(name):
+            return True
+        return False
+
+    # ===== 其他方法 =====
     def get_mouse_position(self):
-        """获取当前鼠标位置"""
         return self.mouse_x, self.mouse_y
 
     def set_mouse_position(self, x, y):
-        """设置鼠标位置"""
         try:
             win32api.SetCursorPos((int(x), int(y)))
             self.mouse_x, self.mouse_y = x, y
@@ -180,16 +240,17 @@ class InputStateMonitor:
             pass
 
     def get_mouse_delta(self, prev_x, prev_y):
-        """计算鼠标移动增量"""
         return self.mouse_x - prev_x, self.mouse_y - prev_y
 
     def get_wheel_delta(self):
-        """获取并重置滚轮增量值"""
         with self.wheel_lock:
             delta = self.wheel_delta
             self.wheel_delta = 0
         return delta
 
+    def reset_wheel_delta(self):
+        with self.wheel_lock:
+            self.wheel_delta = 0
+
     def __del__(self):
-        """析构函数，确保监听器被正确停止"""
         self.stop_wheel_listener()

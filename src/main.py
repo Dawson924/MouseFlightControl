@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 import ctypes
+from types import SimpleNamespace
 import pyvjoy
 import win32api
 
@@ -13,21 +14,15 @@ from PySide2.QtGui import QFont
 from app import App
 from controller.base import BaseController
 from controller.lockon.dcs import DCSController
+from controller.manager import ControllerManager
+from enums.widget import OptionWidget
 from input import InputStateMonitor
 from ui.MainWindow import Ui_MainWindow
 from ui.overlay.CursorGraph import CursorGraph
-from ui.overlay.HintLabel import HintLabel  # 确保这个UI文件已正确生成
+from ui.overlay.HintLabel import HintLabel
 
 # 初始化vJoy设备
 vjoy_device = None
-# Windows API常量
-SPI_SETMOUSESPEED = 113
-SPI_GETMOUSESPEED = 112
-MOUSE_SPEED_DEFAULT = 10  # Windows默认灵敏度(1-20)
-# 全局配置文件名
-CONFIG_FILE = "config.ini"
-
-# 验证vJoy
 try:
     vjoy_device = pyvjoy.VJoyDevice(1)
     vjoy_device.set_axis(pyvjoy.HID_USAGE_Z, 0x8000)
@@ -41,6 +36,53 @@ except Exception as e:
     error_msg.setWindowTitle("DEVICE NOT FOUND")
     error_msg.exec_()
     sys.exit(1)
+
+# Windows API常量
+SPI_SETMOUSESPEED = 113
+SPI_GETMOUSESPEED = 112
+MOUSE_SPEED_DEFAULT = 10  # Windows默认灵敏度(1-20)
+
+# 配置选项存储
+CONFIG_FILE = "config.ini"
+CONFIG = {
+    'General': {
+        'language': (str),
+    },
+    'Controls': {
+        'mouse_speed': (int),
+        'controller': (str),
+        'key_toggle': (str),
+        'key_center': (str),
+    },
+    'Options': {
+        'show_cursor': (bool),
+        'hint_overlay': (bool),
+        'button_mapping': (bool),
+        'memorize_axis_pos': (bool),
+        'wheel_axis_mode': (bool),
+    },
+    'External': {}
+}
+
+# 控制器管理
+controllers = ControllerManager()
+controllers.register('None', None)
+controllers.register('DCS World', DCSController, {
+    'options': [
+        ('view_center_on_ctrl', OptionWidget.CheckBox, True),
+        ('zoom_normal_on_ctrl', OptionWidget.CheckBox, True),
+    ],
+    'i18n': {
+        'en_US': {
+            'view_center_on_ctrl': 'View Center On Control',
+            'zoom_normal_on_ctrl': 'Zoom Normal On Control'
+        },
+        'zh_CN': {
+            'view_center_on_ctrl': '控制时视角回中',
+            'zoom_normal_on_ctrl': '控制时视场正常'
+        }
+    }
+})
 
 class vjoyAxis():
     def __init__(self, x, y, th):
@@ -101,31 +143,7 @@ def get_mouse_speed():
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    CONFIG = {
-        'General': {
-            'language': (str),
-        },
-        'Controls': {
-            'mouse_speed': (int),
-            'controller': (str),
-            'key_toggle': (str),
-            'key_center': (str),
-            'view_center_on_ctrl': (bool),
-            'zoom_normal_on_ctrl': (bool),
-        },
-        'Options': {
-            'show_cursor': (bool),
-            'hint_overlay': (bool),
-            'button_mapping': (bool),
-            'memorize_axis_pos': (bool),
-            'wheel_axis_mode': (bool),
-        }
-    }
-    CONTROLLERS = {
-        'None': BaseController,
-        'DCS World': DCSController,
-    }
-
+    dynamic_widgets = {}
     pointer_signal = QtCore.Signal(bool)
     interface_signal = QtCore.Signal(str, int, str)
 
@@ -144,15 +162,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.language = 'en_US'
         self.mouse_speed = 5
         self.key_toggle = '`'
-        self.key_center = 'MB'
+        self.key_center = 'MMB'
         self.controller = 'None'
-        self.view_center_on_ctrl = True
-        self.zoom_normal_on_ctrl = True
         self.show_cursor = False
         self.hint_overlay = True
         self.button_mapping = True
         self.memorize_axis_pos = True
         self.wheel_axis_mode = False
+        self.__external__ = SimpleNamespace()
 
         # 加载所有配置
         self.load_config()
@@ -165,8 +182,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.toggleEnabledKey.textChanged.connect(lambda text: setattr(self, 'key_toggle', text))
         self.ui.centerControlKey.textChanged.connect(lambda text: setattr(self, 'key_center', text))
         self.ui.controllerComboBox.currentTextChanged.connect(self.on_controller_changed)
-        self.ui.viewCenterOnCtrlOption.stateChanged.connect(lambda state: setattr(self, 'view_center_on_ctrl', bool(state)))
-        self.ui.zoomNormalOnCtrlOption.stateChanged.connect(lambda state: setattr(self, 'zoom_normal_on_ctrl', bool(state)))
         self.ui.showCursorOption.stateChanged.connect(lambda state: setattr(self, 'show_cursor', bool(state)))
         self.ui.hintOverlayOption.stateChanged.connect(lambda state: setattr(self, 'hint_overlay', bool(state)))
         self.ui.buttonMappingOption.stateChanged.connect(lambda state: setattr(self, 'button_mapping', bool(state)))
@@ -197,8 +212,102 @@ class MainWindow(QtWidgets.QMainWindow):
                             ~Qt.WindowMaximizeButtonHint)
         self.setMinimumWidth(300)
         self.setMaximumWidth(500)
-        for name in self.CONTROLLERS.keys():
+
+        for name in controllers.names():
             self.ui.controllerComboBox.addItem(name)
+
+    def create_controller_widgets(self, controller_name):
+        """根据控制器元数据创建动态控件"""
+        # 清除现有的动态控件
+        self.clear_controller_widgets()
+
+        # 获取控制器元数据
+        metadata = controllers.get_metadata(controller_name)
+        if not metadata or 'options' not in metadata:
+            return
+
+        # 为每个选项创建控件
+        for (option, widget, default) in metadata['options']:
+            # 创建水平布局
+            h_layout = QtWidgets.QHBoxLayout()
+            h_layout.setSpacing(10)  # 设置间距为10
+            h_layout.setContentsMargins(0, 0, 0, 0)
+
+            # 创建标签
+            text = metadata['i18n'][self.language][option]
+            label = QtWidgets.QLabel(text)
+            label.setObjectName(f"{option}Label")
+            label.setMinimumWidth(150)
+            h_layout.addWidget(label)
+
+            # 添加水平弹簧
+            spacer = QtWidgets.QSpacerItem(40, 20,
+                                        QtWidgets.QSizePolicy.Expanding,
+                                        QtWidgets.QSizePolicy.Minimum)
+            h_layout.addItem(spacer)
+
+            if widget == OptionWidget.CheckBox:
+                # 创建复选框
+                checkbox = QtWidgets.QCheckBox()
+                checkbox.setObjectName(f"{option}Option")
+                if hasattr(self.__external__, option):
+                    value = getattr(self.__external__, option)
+                    if isinstance(value, str):
+                        if value.lower() == 'true':
+                            value = True
+                        elif value.lower() == 'false':
+                            value = False
+                        else:
+                            value = False
+                    checkbox.setChecked(bool(value))
+                else:
+                    setattr(self.__external__, option, default)
+                    checkbox.setChecked(default)
+
+                checkbox.stateChanged.connect(
+                    lambda state, opt=option: setattr(self.__external__, opt, bool(state))
+                )
+                h_layout.addWidget(checkbox)
+
+                self.dynamic_widgets[option] = {
+                    'label': label,
+                    'checkbox': checkbox,
+                    'layout': h_layout
+                }
+
+            elif widget == OptionWidget.LineEdit:
+                # 创建文本输入
+                # TODO 支持字符串、整数类型的选项
+                pass
+
+            # 添加到布局
+            self.ui.ControllerVerticalLayout.addLayout(h_layout)
+
+    def clear_controller_widgets(self):
+        """清除所有动态控件"""
+        while self.ui.ControllerVerticalLayout.count():
+            item = self.ui.ControllerVerticalLayout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+            elif item.layout():
+                self.delete_layout(item.layout())
+
+        self.dynamic_widgets = {}
+
+    def delete_layout(self, layout):
+        """递归删除布局中的所有控件"""
+        if layout is None:
+            return
+
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+            elif item.layout():
+                self.delete_layout(item.layout())
+
+        # 删除布局本身
+        layout.deleteLater()
 
     def load_config(self):
         """从配置文件加载设置"""
@@ -207,20 +316,29 @@ class MainWindow(QtWidgets.QMainWindow):
         if os.path.exists(CONFIG_FILE):
             try:
                 config.read(CONFIG_FILE)
-                for section, options in self.CONFIG.items():
+                for section, options in CONFIG.items():
                     if config.has_section(section):
-                        for option, (type) in options.items():
-                            if config.has_option(section, option):
-                                if type is bool:
-                                    value = config.getboolean(section, option)
-                                elif type is int:
-                                    value = config.getint(section, option)
-                                elif type is float:
-                                    value = config.getfloat(section, option)
+                        if section == 'External':
+                            for k, v in config.items('External'):
+                                if v.lower() == 'true':
+                                    setattr(self.__external__, k, True)
+                                elif v.lower() == 'false':
+                                    setattr(self.__external__, k, False)
                                 else:
-                                    value = config.get(section, option)
+                                    setattr(self.__external__, k, v)
+                        else:
+                            for option, (converter) in options.items():
+                                if config.has_option(section, option):
+                                    if converter is bool:
+                                        value = config.getboolean(section, option)
+                                    elif converter is int:
+                                        value = config.getint(section, option)
+                                    elif converter is float:
+                                        value = config.getfloat(section, option)
+                                    else:
+                                        value = config.get(section, option)
 
-                                self._set_attr_value(option, value)
+                                    self._set_attr_value(option, value)
                 return True
             except Exception as e:
                 print(f"加载配置文件失败: {e}")
@@ -230,11 +348,16 @@ class MainWindow(QtWidgets.QMainWindow):
         """保存配置到文件"""
         config = configparser.ConfigParser()
 
-        for section, options in self.CONFIG.items():
+        for section, options in CONFIG.items():
             config.add_section(section)
-            for option in options.keys():
-                value = self._get_attr_value(option)
-                config.set(section, option, str(value))
+
+            if section == 'External':
+                for k, v in self.__external__.__dict__.items():
+                    config.set(section, k, str(v))
+            else:
+                for option in options.keys():
+                    value = self._get_attr_value(option)
+                    config.set(section, option, str(value))
 
         try:
             with open(CONFIG_FILE, 'w') as configfile:
@@ -299,6 +422,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.language = language_code
         self.retranslate_ui()
+        self.create_controller_widgets(self.controller)
 
     def retranslate_ui(self):
         """重新翻译UI文本"""
@@ -321,10 +445,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.controllerLabel.setText(self.tr("Controller"))
         self.ui.controllerComboBox.setCurrentText(self.controller)
         self.ui.controllerHint.setText(self.tr("ControllerHint"))
-        self.ui.viewCenterOnCtrlLabel.setText(self.tr("ViewCenterOnCtrl"))
-        self.ui.viewCenterOnCtrlOption.setChecked(self.view_center_on_ctrl)
-        self.ui.zoomNormalOnCtrlLabel.setText(self.tr("ZoomNormalOnCtrl"))
-        self.ui.zoomNormalOnCtrlOption.setChecked(self.zoom_normal_on_ctrl)
         self.ui.optionsTitleLabel.setText(self.tr("OptionsTitle"))
         self.ui.showCursorLabel.setText(self.tr("ShowCursor"))
         self.ui.showCursorOption.setChecked(self.show_cursor)
@@ -345,6 +465,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def on_controller_changed(self, value):
         self.controller = value
+        self.create_controller_widgets(value)
         self.update_ui_state()
 
     def on_button_click(self):
@@ -362,6 +483,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def update_ui_state(self):
         disabled = self.running
+
         self.ui.startBtn.setText(self.tr('Start') if not self.running else self.tr('Stop'))
         self.ui.statusLabel.setText(self.tr('StatusWorking') if disabled else self.tr('StatusStopped'))
         self.ui.mouseSpeedSlider.setDisabled(disabled)
@@ -369,8 +491,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.centerControlKey.setDisabled(disabled)
         self.ui.controllerComboBox.setDisabled(disabled)
         self.ui.controllerHint.setHidden(self.controller != 'None')
-        self.ui.viewCenterOnCtrlOption.setDisabled(disabled or self.controller == 'None')
-        self.ui.zoomNormalOnCtrlOption.setDisabled(disabled or self.controller == 'None')
+        for option, controls in self.dynamic_widgets.items():
+            controls['checkbox'].setDisabled(disabled)
+            controls['label'].setDisabled(disabled)
         self.ui.showCursorOption.setDisabled(disabled)
         self.ui.hintOverlayOption.setDisabled(disabled)
         self.ui.buttonMappingOption.setDisabled(disabled)
@@ -404,7 +527,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_ui_state()
 
         self.main_thread = None
-        vjoy_device.reset()
         self.pointer_signal.emit(False)
 
     def closeEvent(self, event):
@@ -445,65 +567,59 @@ class MainWindow(QtWidgets.QMainWindow):
     def main(self):
         global delta_x, delta_y, enabled
         try:
-            controller: BaseController = self.CONTROLLERS[self.controller](vjoy_device)
-            input_state = InputStateMonitor()
-            # 初始/上一次的按键状态
-            toggle_key_prev = False
-            center_key_prev = False
+            print(self.__external__)
+            controller_class = controllers.get_class(self.controller)
+            if controller_class:
+                controller = controller_class(vjoy_device)
+            else:
+                controller = None
+
+            input = InputStateMonitor()
+            input.set_mouse_position(screen_center_x, screen_center_y)
 
             prev_x, prev_y = screen_center_x, screen_center_y
             memo_x, memo_y = None, None
 
             while not stop_thread:  # 用stop_thread控制退出
-                input_state.update()
-                # 当前的按键状态
-                toggle_key_current = input_state.is_pressed(self.key_toggle)
-                center_key_current = input_state.is_pressed(self.key_center)
+                input.update()
 
-                if toggle_key_current and not toggle_key_prev:
+                if input.is_pressed(self.key_toggle):
                     _flag = not enabled
                     self.toggle_enabled(_flag)
-                    if _flag and self.view_center_on_ctrl:
-                        controller.view_center()
-                    if _flag and self.zoom_normal_on_ctrl:
-                        controller.zoom_normal()
                     if self.memorize_axis_pos:
                         if not _flag:
-                            memo_x, memo_y = input_state.get_mouse_position()
+                            memo_x, memo_y = input.get_mouse_position()
                         elif memo_x is not None and memo_y is not None:
                             prev_x, prev_y = memo_x, memo_y
-                            input_state.set_mouse_position(memo_x, memo_y)
+                            input.set_mouse_position(memo_x, memo_y)
                             memo_x, memo_y = None, None
 
-                if enabled and center_key_current and not center_key_prev:
-                    input_state.set_mouse_position(screen_center_x, screen_center_y)
-
-                toggle_key_prev = toggle_key_current
-                center_key_prev = center_key_current
+                if enabled and input.is_pressed(self.key_center):
+                    input.set_mouse_position(screen_center_x, screen_center_y)
 
                 if enabled and self.button_mapping:
-                    if input_state.is_pressed('LB'):
+                    if input.is_pressing('LMB'):
                         vjoy_device.set_button(1, True)
                     else:
                         vjoy_device.set_button(1, False)
-                    if input_state.is_pressed('RB'):
+                    if input.is_pressing('RMB'):
                         vjoy_device.set_button(2, True)
                     else:
                         vjoy_device.set_button(2, False)
-                    if input_state.is_pressed('MB'):
+                    if input.is_pressing('MMB'):
                         vjoy_device.set_button(3, True)
                     else:
                         vjoy_device.set_button(3, False)
-                    if input_state.is_pressed('XB1'):
+                    if input.is_pressing('XMB1'):
                         vjoy_device.set_button(4, True)
                     else:
                         vjoy_device.set_button(4, False)
-                    if input_state.is_pressed('XB2'):
+                    if input.is_pressing('XMB2'):
                         vjoy_device.set_button(5, True)
                     else:
                         vjoy_device.set_button(5, False)
 
-                curr_x, curr_y = input_state.get_mouse_position()
+                curr_x, curr_y = input.get_mouse_position()
                 delta_x = curr_x - prev_x
                 delta_y = curr_y - prev_y
                 prev_x, prev_y = curr_x, curr_y
@@ -528,9 +644,20 @@ class MainWindow(QtWidgets.QMainWindow):
                     vjoy_device.set_axis(pyvjoy.HID_USAGE_Y, map_to_vjoy(Axis.y))
 
                 if enabled and State.th:
-                    Axis.th += wheel_th(Sens.mou, Sens.th, -input_state.get_wheel_delta())
+                    Axis.th += wheel_th(Sens.mou, Sens.th, -input.get_wheel_delta())
                     Axis.th = check_overflow(Axis.th, axis_min, axis_max)
                     vjoy_device.set_axis(pyvjoy.HID_USAGE_Z, map_to_vjoy(Axis.th))
+
+                if controller is not None and isinstance(controller, BaseController):
+                    controller.update(SimpleNamespace(
+                        axis=Axis,
+                        vjoy=vjoy_device,
+                        input=input,
+                        options=self.__external__,
+                        enabled=enabled,
+                    ), self)
+
+                input.reset_wheel_delta()
 
                 time.sleep(0.016)
 
