@@ -78,16 +78,6 @@
         <translation>维持摇杆位置</translation>
     </message>
     <message>
-        <location filename="main.py" line="410"/>
-        <source>ViewCenterOnCtrl</source>
-        <translation type="obsolete">控制时视角回中</translation>
-    </message>
-    <message>
-        <location filename="main.py" line="412"/>
-        <source>ZoomNormalOnCtrl</source>
-        <translation type="obsolete">控制时视场正常</translation>
-    </message>
-    <message>
         <location filename="main.py" line="437"/>
         <source>ControlsTitle</source>
         <translation>控制</translation>
@@ -105,7 +95,7 @@
     <message>
         <location filename="main.py" line="447"/>
         <source>ControllerHint</source>
-        <translation>以下选项依赖特定的控制器才能工作</translation>
+        <translation type="unfinished">部分功能实现依赖特定的控制器</translation>
     </message>
     <message>
         <location filename="main.py" line="457"/>

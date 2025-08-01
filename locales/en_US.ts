@@ -5,7 +5,7 @@
     <message>
         <location filename="main.py" line="431"/>
         <source>Language</source>
-        <translation>Locale</translation>
+        <translation>Language</translation>
     </message>
     <message>
         <location filename="main.py" line="430"/>
@@ -78,16 +78,6 @@
         <translation>Keep Axis Position</translation>
     </message>
     <message>
-        <location filename="main.py" line="410"/>
-        <source>ViewCenterOnCtrl</source>
-        <translation type="obsolete">View Center On Control</translation>
-    </message>
-    <message>
-        <location filename="main.py" line="412"/>
-        <source>ZoomNormalOnCtrl</source>
-        <translation type="obsolete">Zoom Normal On Control</translation>
-    </message>
-    <message>
         <location filename="main.py" line="437"/>
         <source>ControlsTitle</source>
         <translation>Controls</translation>
@@ -105,7 +95,7 @@
     <message>
         <location filename="main.py" line="447"/>
         <source>ControllerHint</source>
-        <translation>The options below required specific controller to work</translation>
+        <translation type="unfinished">Some options may require specific controllers to work</translation>
     </message>
     <message>
         <location filename="main.py" line="457"/>
