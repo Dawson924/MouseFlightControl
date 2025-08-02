@@ -53,13 +53,15 @@ CONFIG = {
         'controller': (str),
         'key_toggle': (str),
         'key_center': (str),
+        'fixed_wing_mode': (bool),
+        'helicopter_mode': (bool),
+        'helicopter_mode_step': (int),
     },
     'Options': {
         'show_cursor': (bool),
         'hint_overlay': (bool),
         'button_mapping': (bool),
         'memorize_axis_pos': (bool),
-        'wheel_axis_mode': (bool),
     },
     'External': {}
 }
@@ -85,8 +87,8 @@ controllers.register('DCS World', DCSController, {
 })
 
 class vjoyAxis():
-    def __init__(self, x, y, th):
-        self.x, self.y, self.th = x, y, th
+    def __init__(self, x, y, th, rd):
+        self.x, self.y, self.th, self.rd = x, y, th, rd
 
 class vjoyState():
     def __init__(self, stick, th):
@@ -102,6 +104,7 @@ class vjoySensitive():
 
 # 全局控制变量
 enabled = False
+taxi_mode = False
 stop_thread = False  # 控制子线程退出
 
 # 全局变量初始化
@@ -110,8 +113,7 @@ axis_min = -axis_max
 center_axis_x = 0
 center_axis_y = 0
 
-Axis = vjoyAxis(0, 0, axis_max)
-State = vjoyState(False, False)
+Axis = vjoyAxis(0, 0, axis_max, 0)
 Sens = vjoySensitive(15.0, 0.7, 0.9, 1.9)
 
 screen_width = win32api.GetSystemMetrics(0)
@@ -163,12 +165,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mouse_speed = 5
         self.key_toggle = '`'
         self.key_center = 'MMB'
+        self.fixed_wing_mode = False
+        self.helicopter_mode = False
+        self.helicopter_mode_step = 500
         self.controller = 'None'
         self.show_cursor = False
         self.hint_overlay = True
         self.button_mapping = True
         self.memorize_axis_pos = True
-        self.wheel_axis_mode = False
         self.__external__ = SimpleNamespace()
 
         # 加载所有配置
@@ -179,14 +183,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.mouseSpeedSlider.valueChanged.connect(self.on_speed_changed)
         self.ui.mouseSpeedSlider.setRange(1, 20)
         self.ui.mouseSpeedSlider.setValue(self.mouse_speed)
-        self.ui.toggleEnabledKey.textChanged.connect(lambda text: setattr(self, 'key_toggle', text))
-        self.ui.centerControlKey.textChanged.connect(lambda text: setattr(self, 'key_center', text))
+        self.ui.toggleEnabledKey.textChanged.connect(lambda text: self.update('key_toggle', text))
+        self.ui.centerControlKey.textChanged.connect(lambda text: self.update('key_center', text))
+        self.ui.fixedWingModeOption.stateChanged.connect(lambda state: self.update('fixed_wing_mode', bool(state)))
+        self.ui.helicopterModeOption.stateChanged.connect(lambda state: self.update('helicopter_mode', bool(state)))
+        self.ui.helicopterModeSpinBox.valueChanged.connect(lambda value: self.update('helicopter_mode_step', value))
         self.ui.controllerComboBox.currentTextChanged.connect(self.on_controller_changed)
-        self.ui.showCursorOption.stateChanged.connect(lambda state: setattr(self, 'show_cursor', bool(state)))
-        self.ui.hintOverlayOption.stateChanged.connect(lambda state: setattr(self, 'hint_overlay', bool(state)))
-        self.ui.buttonMappingOption.stateChanged.connect(lambda state: setattr(self, 'button_mapping', bool(state)))
-        self.ui.memorizeAxisPosOption.stateChanged.connect(lambda state: setattr(self, 'memorize_axis_pos', bool(state)))
-        self.ui.wheelAxisModeOption.stateChanged.connect(lambda state: setattr(self, 'wheel_axis_mode', bool(state)))
+        self.ui.showCursorOption.stateChanged.connect(lambda state: self.update('show_cursor', bool(state)))
+        self.ui.hintOverlayOption.stateChanged.connect(lambda state: self.update('hint_overlay', bool(state)))
+        self.ui.buttonMappingOption.stateChanged.connect(lambda state: self.update('button_mapping', bool(state)))
+        self.ui.memorizeAxisPosOption.stateChanged.connect(lambda state: self.update('memorize_axis_pos', bool(state)))
 
         # 加载配置的语言
         translator = QtCore.QTranslator()
@@ -471,6 +477,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.toggleEnabledKey.setText(self.key_toggle)
         self.ui.centerControlLabel.setText(self.tr("CenterControl"))
         self.ui.centerControlKey.setText(self.key_center)
+        self.ui.fixedWingModeLabel.setText(self.tr("FixedWingMode"))
+        self.ui.fixedWingModeOption.setChecked(self.fixed_wing_mode)
+        self.ui.helicopterModeLabel.setText(self.tr("HelicopterMode"))
+        self.ui.helicopterModeOption.setChecked(self.helicopter_mode)
+        self.ui.helicopterModeSpinBox.setValue(self.helicopter_mode_step)
         self.ui.controllerLabel.setText(self.tr("Controller"))
         self.ui.controllerComboBox.setCurrentText(self.controller)
         self.ui.controllerHint.setText(self.tr("ControllerHint"))
@@ -483,8 +494,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.buttonMappingOption.setChecked(self.button_mapping)
         self.ui.memorizeAxisPosLabel.setText(self.tr("MemorizeAxisPos"))
         self.ui.memorizeAxisPosOption.setChecked(self.memorize_axis_pos)
-        self.ui.wheelAxisModeLabel.setText(self.tr("WheelAxisMode"))
-        self.ui.wheelAxisModeOption.setChecked(self.wheel_axis_mode)
 
     def on_speed_changed(self, value):
         self.mouse_speed = value
@@ -510,6 +519,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.toggle_enabled(False)
             self.stop_main_thread()
 
+    def update(self, attr: str, value):
+        self._set_attr_value(attr, value)
+        self.update_ui_state()
+
     def update_ui_state(self):
         disabled = self.running
 
@@ -529,7 +542,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.hintOverlayOption.setDisabled(disabled)
         self.ui.buttonMappingOption.setDisabled(disabled)
         self.ui.memorizeAxisPosOption.setDisabled(disabled)
-        self.ui.wheelAxisModeOption.setDisabled(disabled)
+        not_equal = self.helicopter_mode != self.fixed_wing_mode
+        self.ui.fixedWingModeOption.setDisabled(disabled or self.helicopter_mode and not_equal)
+        self.ui.helicopterModeOption.setDisabled(disabled or self.fixed_wing_mode and not_equal)
+        self.ui.helicopterModeSpinBox.setDisabled(disabled or self.fixed_wing_mode and not_equal)
 
     def start_main_thread(self):
         """启动子线程"""
@@ -576,13 +592,9 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.running:
             return
 
-        global enabled, State
+        global enabled, taxi_mode
         enabled = flag
-        State.stick = flag
-        if self.wheel_axis_mode:
-            State.th = flag
-        else:
-            State.th = False
+        taxi_mode = False
 
         if flag:
             set_mouse_speed(self.mouse_speed)
@@ -596,7 +608,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.retranslate_ui()
 
     def main(self):
-        global delta_x, delta_y, enabled
+        global delta_x, delta_y, enabled, taxi_mode
         try:
             controller_class = controllers.get_class(self.controller)
             if controller_class:
@@ -613,7 +625,7 @@ class MainWindow(QtWidgets.QMainWindow):
             while not stop_thread:  # 用stop_thread控制退出
                 input.update()
 
-                if input.is_pressed(self.key_toggle):
+                if input.alt_ctrl_shift() and input.is_pressed(self.key_toggle):
                     _flag = not enabled
                     self.toggle_enabled(_flag)
                     if self.memorize_axis_pos:
@@ -623,6 +635,15 @@ class MainWindow(QtWidgets.QMainWindow):
                             prev_x, prev_y = memo_x, memo_y
                             input.set_mouse_position(memo_x, memo_y)
                             memo_x, memo_y = None, None
+
+                if input.alt_ctrl_shift(alt=True) and input.is_pressed(self.key_toggle):
+                    taxi_mode = not taxi_mode
+                    input.set_mouse_position(screen_center_x, screen_center_y)
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RZ, 0x4000)
+                    if taxi_mode:
+                        if self.hint_overlay: self.interface_signal.emit("Ground mode: On", 1000, 'green')
+                    else:
+                        if self.hint_overlay: self.interface_signal.emit("Ground mode: Off", 1000, 'red')
 
                 if enabled and input.is_pressed(self.key_center):
                     input.set_mouse_position(screen_center_x, screen_center_y)
@@ -654,7 +675,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 delta_y = curr_y - prev_y
                 prev_x, prev_y = curr_x, curr_y
 
-                if enabled and State.stick:
+                if enabled:
                     Axis.x += delta_x * Sens.x * Sens.mou * 0.48
                     Axis.y += delta_y * Sens.y * Sens.mou
 
@@ -670,13 +691,36 @@ class MainWindow(QtWidgets.QMainWindow):
                     def map_to_vjoy(val):
                         return int((val - axis_min) / (axis_max - axis_min) * 32767) + 1
 
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_X, map_to_vjoy(Axis.x))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_Y, map_to_vjoy(Axis.y))
+                    if taxi_mode:
+                        vjoy_device.set_axis(pyvjoy.HID_USAGE_RZ, map_to_vjoy(Axis.x))
+                    else:
+                        vjoy_device.set_axis(pyvjoy.HID_USAGE_X, map_to_vjoy(Axis.x))
+                        vjoy_device.set_axis(pyvjoy.HID_USAGE_Y, map_to_vjoy(Axis.y))
 
-                if enabled and State.th:
+                if enabled and self.fixed_wing_mode:
                     Axis.th += wheel_th(Sens.mou, Sens.th, -input.get_wheel_delta())
                     Axis.th = check_overflow(Axis.th, axis_min, axis_max)
                     vjoy_device.set_axis(pyvjoy.HID_USAGE_Z, map_to_vjoy(Axis.th))
+
+                if enabled and self.helicopter_mode:
+                    if input.is_pressed('X'):
+                        Axis.rd = 0
+                    if input.is_pressed('Z'):
+                        Axis.th = axis_max
+                    if input.is_pressing('W'):
+                        Axis.th = Axis.th - self.helicopter_mode_step
+                        Axis.th = check_overflow(Axis.th, axis_min, axis_max)
+                    if input.is_pressing('S'):
+                        Axis.th = Axis.th + self.helicopter_mode_step
+                        Axis.th = check_overflow(Axis.th, axis_min, axis_max)
+                    if input.is_pressing('A'):
+                        Axis.rd = Axis.rd - self.helicopter_mode_step
+                        Axis.rd = check_overflow(Axis.rd, axis_min, axis_max)
+                    if input.is_pressing('D'):
+                        Axis.rd = Axis.rd + self.helicopter_mode_step
+                        Axis.rd = check_overflow(Axis.rd, axis_min, axis_max)
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_Z, map_to_vjoy(Axis.th))
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RZ, map_to_vjoy(Axis.rd))
 
                 if controller is not None and isinstance(controller, BaseController):
                     controller.update(SimpleNamespace(

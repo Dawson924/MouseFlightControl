@@ -63,8 +63,21 @@
                 border-radius: 3px;
                 padding: 4px;
                 background: white;
-                min-width: 120px;
-                max-width: 240px;
+                min-width: 100px;
+                max-width: 100px;
+                }
+                QSpinBox {
+                border: 1px solid #A0A0A0;
+                border-radius: 3px;
+                padding: 4px;
+                background: white;
+                min-width: 75px;
+                max-width: 75px;
+                }
+                QSpinBox::up-button, QSpinBox::down-button {
+                background: transparent;
+                border: none;
+                width: 16px;
                 }
                 #controllerComboBox {
                 border: 1px solid #A0A0A0;
@@ -260,6 +273,91 @@
                     </layout>
                 </item>
 
+                <!-- 鼠标滚轮轴 -->
+                <item>
+                    <layout class="QHBoxLayout">
+                        <property name="spacing">
+                            <number>10</number>
+                        </property>
+                        <item>
+                            <widget class="QLabel" name="fixedWingModeLabel">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <spacer>
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                    <size>
+                                        <width>40</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </item>
+                        <item>
+                            <widget class="QCheckBox" name="fixedWingModeOption">
+                                <property name="checked">
+                                    <bool>false</bool>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+
+                <!-- 直升机控制 -->
+                <item>
+                    <layout class="QHBoxLayout">
+                        <property name="spacing">
+                            <number>10</number>
+                        </property>
+                        <item>
+                            <widget class="QLabel" name="helicopterModeLabel">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <spacer>
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                    <size>
+                                        <width>40</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </item>
+                        <item>
+                            <widget class="QCheckBox" name="helicopterModeOption">
+                                <property name="checked">
+                                    <bool>false</bool>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <widget class="QSpinBox" name="helicopterModeSpinBox">
+                                <property name="value">
+                                    <number></number>
+                                </property>
+                                <property name="minimum">
+                                    <number>100</number>
+                                </property>
+                                <property name="maximum">
+                                    <number>1000</number>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+
                 <!-- 控制器选择 -->
                 <item>
                     <layout class="QVBoxLayout">
@@ -270,7 +368,7 @@
                         <item>
                             <layout class="QVBoxLayout" name="controllerLayout">
                                 <property name="spacing">
-                                    <number>15</number>
+                                    <number>5</number>
                                 </property>
                                 <item>
                                     <widget class="QLabel" name="controllerLabel">
@@ -474,42 +572,6 @@
                                 </item>
                                 <item>
                                     <widget class="QCheckBox" name="memorizeAxisPosOption">
-                                        <property name="checked">
-                                            <bool>false</bool>
-                                        </property>
-                                    </widget>
-                                </item>
-                            </layout>
-                        </item>
-
-                        <!-- 鼠标滚轮轴 -->
-                        <item>
-                            <layout class="QHBoxLayout">
-                                <property name="spacing">
-                                    <number>10</number>
-                                </property>
-                                <item>
-                                    <widget class="QLabel" name="wheelAxisModeLabel">
-                                        <property name="text">
-                                            <string></string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item>
-                                    <spacer>
-                                        <property name="orientation">
-                                            <enum>Qt::Horizontal</enum>
-                                        </property>
-                                        <property name="sizeHint" stdset="0">
-                                            <size>
-                                                <width>40</width>
-                                                <height>20</height>
-                                            </size>
-                                        </property>
-                                    </spacer>
-                                </item>
-                                <item>
-                                    <widget class="QCheckBox" name="wheelAxisModeOption">
                                         <property name="checked">
                                             <bool>false</bool>
                                         </property>

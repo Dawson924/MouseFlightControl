@@ -59,7 +59,7 @@ class DCSController(BaseController):
         self.send("LoSetCommand", 177)
 
     def update(self, state, context):
-        if state.input.is_pressed(context.key_toggle):
+        if state.input.alt_ctrl_shift() and state.input.is_pressed(context.key_toggle):
             if state.enabled and state.options.view_center_on_ctrl:
                 self.view_center()
             if state.enabled and state.options.zoom_normal_on_ctrl:

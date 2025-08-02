@@ -32,11 +32,6 @@ class InputStateMonitor:
 
         # 设置虚拟键码映射
         self.VK_MAP = {
-            win32con.VK_LBUTTON: "left",
-            win32con.VK_RBUTTON: "right",
-            win32con.VK_MBUTTON: "middle",
-            0x05: "xbutton1",  # VK_XBUTTON1
-            0x06: "xbutton2",  # VK_XBUTTON2
             win32con.VK_SHIFT: "shift",
             win32con.VK_CONTROL: "ctrl",
             win32con.VK_MENU: "alt",
@@ -212,7 +207,6 @@ class InputStateMonitor:
                        self.prev_key_states.get(key, False)
         return False
 
-    # ===== 组合方法 =====
     def is_pressed(self, name):
         if self.is_key_pressed(name) or self.is_mouse_pressed(name):
             return True
@@ -228,7 +222,14 @@ class InputStateMonitor:
             return True
         return False
 
-    # ===== 其他方法 =====
+    def alt_ctrl_shift(self, alt: bool=False, ctrl: bool=False, shift: bool=False):
+        if self.is_key_presssing('alt') == alt\
+            and self.is_key_presssing('ctrl') == ctrl\
+                and self.is_key_presssing('shift') == shift:
+            return True
+        else:
+            return False
+
     def get_mouse_position(self):
         return self.mouse_x, self.mouse_y
 

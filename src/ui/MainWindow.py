@@ -71,12 +71,25 @@ class Ui_MainWindow(object):
 "                border-radius: 3px;\n"
 "                padding: 4px;\n"
 "                background: white;\n"
-"                min-width: 120px;\n"
-"                max-width: 240px;\n"
+"                min-width: 100px;\n"
+"                max-width: 100px;\n"
+"                }\n"
+"                QSpinBox {\n"
+"                border: 1px solid"
+                        " #A0A0A0;\n"
+"                border-radius: 3px;\n"
+"                padding: 4px;\n"
+"                background: white;\n"
+"                min-width: 75px;\n"
+"                max-width: 75px;\n"
+"                }\n"
+"                QSpinBox::up-button, QSpinBox::down-button {\n"
+"                background: transparent;\n"
+"                border: none;\n"
+"                width: 16px;\n"
 "                }\n"
 "                #controllerComboBox {\n"
-"                border"
-                        ": 1px solid #A0A0A0;\n"
+"                border: 1px solid #A0A0A0;\n"
 "                border-radius: 3px;\n"
 "                padding: 4px;\n"
 "                background: white;\n"
@@ -89,7 +102,8 @@ class Ui_MainWindow(object):
 "                border-left-width: 1px;\n"
 "                border-left-color: #A0A0A0;\n"
 "                border-left-style: solid;\n"
-"                border-top-right-radius: 3px;\n"
+"                b"
+                        "order-top-right-radius: 3px;\n"
 "                border-bottom-right-radius: 3px;\n"
 "                }\n"
 "                #controllerComboBox::down-arrow {\n"
@@ -100,8 +114,7 @@ class Ui_MainWindow(object):
 "                #controllerComboBox QAbstractItemView {\n"
 "                border: 1px solid #A0A0A0;\n"
 "                background: white;\n"
-"                selection-backgrou"
-                        "nd-color: #E1E1E1;\n"
+"                selection-background-color: #E1E1E1;\n"
 "                }\n"
 "            ")
         self.centralWidget = QWidget(MainWindow)
@@ -188,11 +201,61 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.centerControlLayout)
 
+        self.hboxLayout1 = QHBoxLayout()
+        self.hboxLayout1.setSpacing(10)
+        self.hboxLayout1.setObjectName(u"hboxLayout1")
+        self.fixedWingModeLabel = QLabel(self.centralWidget)
+        self.fixedWingModeLabel.setObjectName(u"fixedWingModeLabel")
+
+        self.hboxLayout1.addWidget(self.fixedWingModeLabel)
+
+        self.spacerItem2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout1.addItem(self.spacerItem2)
+
+        self.fixedWingModeOption = QCheckBox(self.centralWidget)
+        self.fixedWingModeOption.setObjectName(u"fixedWingModeOption")
+        self.fixedWingModeOption.setChecked(False)
+
+        self.hboxLayout1.addWidget(self.fixedWingModeOption)
+
+
+        self.verticalLayout.addLayout(self.hboxLayout1)
+
+        self.hboxLayout2 = QHBoxLayout()
+        self.hboxLayout2.setSpacing(10)
+        self.hboxLayout2.setObjectName(u"hboxLayout2")
+        self.helicopterModeLabel = QLabel(self.centralWidget)
+        self.helicopterModeLabel.setObjectName(u"helicopterModeLabel")
+
+        self.hboxLayout2.addWidget(self.helicopterModeLabel)
+
+        self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout2.addItem(self.spacerItem3)
+
+        self.helicopterModeOption = QCheckBox(self.centralWidget)
+        self.helicopterModeOption.setObjectName(u"helicopterModeOption")
+        self.helicopterModeOption.setChecked(False)
+
+        self.hboxLayout2.addWidget(self.helicopterModeOption)
+
+        self.helicopterModeSpinBox = QSpinBox(self.centralWidget)
+        self.helicopterModeSpinBox.setObjectName(u"helicopterModeSpinBox")
+        self.helicopterModeSpinBox.setValue(0)
+        self.helicopterModeSpinBox.setMinimum(100)
+        self.helicopterModeSpinBox.setMaximum(1000)
+
+        self.hboxLayout2.addWidget(self.helicopterModeSpinBox)
+
+
+        self.verticalLayout.addLayout(self.hboxLayout2)
+
         self.vboxLayout1 = QVBoxLayout()
         self.vboxLayout1.setSpacing(5)
         self.vboxLayout1.setObjectName(u"vboxLayout1")
         self.controllerLayout = QVBoxLayout()
-        self.controllerLayout.setSpacing(15)
+        self.controllerLayout.setSpacing(5)
         self.controllerLayout.setObjectName(u"controllerLayout")
         self.controllerLabel = QLabel(self.centralWidget)
         self.controllerLabel.setObjectName(u"controllerLabel")
@@ -239,65 +302,23 @@ class Ui_MainWindow(object):
         self.vboxLayout2 = QVBoxLayout()
         self.vboxLayout2.setSpacing(8)
         self.vboxLayout2.setObjectName(u"vboxLayout2")
-        self.hboxLayout1 = QHBoxLayout()
-        self.hboxLayout1.setSpacing(10)
-        self.hboxLayout1.setObjectName(u"hboxLayout1")
-        self.showCursorLabel = QLabel(self.centralWidget)
-        self.showCursorLabel.setObjectName(u"showCursorLabel")
-
-        self.hboxLayout1.addWidget(self.showCursorLabel)
-
-        self.spacerItem2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.hboxLayout1.addItem(self.spacerItem2)
-
-        self.showCursorOption = QCheckBox(self.centralWidget)
-        self.showCursorOption.setObjectName(u"showCursorOption")
-        self.showCursorOption.setChecked(False)
-
-        self.hboxLayout1.addWidget(self.showCursorOption)
-
-
-        self.vboxLayout2.addLayout(self.hboxLayout1)
-
-        self.hboxLayout2 = QHBoxLayout()
-        self.hboxLayout2.setSpacing(10)
-        self.hboxLayout2.setObjectName(u"hboxLayout2")
-        self.hintOverlayLabel = QLabel(self.centralWidget)
-        self.hintOverlayLabel.setObjectName(u"hintOverlayLabel")
-
-        self.hboxLayout2.addWidget(self.hintOverlayLabel)
-
-        self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.hboxLayout2.addItem(self.spacerItem3)
-
-        self.hintOverlayOption = QCheckBox(self.centralWidget)
-        self.hintOverlayOption.setObjectName(u"hintOverlayOption")
-        self.hintOverlayOption.setChecked(False)
-
-        self.hboxLayout2.addWidget(self.hintOverlayOption)
-
-
-        self.vboxLayout2.addLayout(self.hboxLayout2)
-
         self.hboxLayout3 = QHBoxLayout()
         self.hboxLayout3.setSpacing(10)
         self.hboxLayout3.setObjectName(u"hboxLayout3")
-        self.buttonMappingLabel = QLabel(self.centralWidget)
-        self.buttonMappingLabel.setObjectName(u"buttonMappingLabel")
+        self.showCursorLabel = QLabel(self.centralWidget)
+        self.showCursorLabel.setObjectName(u"showCursorLabel")
 
-        self.hboxLayout3.addWidget(self.buttonMappingLabel)
+        self.hboxLayout3.addWidget(self.showCursorLabel)
 
         self.spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout3.addItem(self.spacerItem4)
 
-        self.buttonMappingOption = QCheckBox(self.centralWidget)
-        self.buttonMappingOption.setObjectName(u"buttonMappingOption")
-        self.buttonMappingOption.setChecked(False)
+        self.showCursorOption = QCheckBox(self.centralWidget)
+        self.showCursorOption.setObjectName(u"showCursorOption")
+        self.showCursorOption.setChecked(False)
 
-        self.hboxLayout3.addWidget(self.buttonMappingOption)
+        self.hboxLayout3.addWidget(self.showCursorOption)
 
 
         self.vboxLayout2.addLayout(self.hboxLayout3)
@@ -305,20 +326,20 @@ class Ui_MainWindow(object):
         self.hboxLayout4 = QHBoxLayout()
         self.hboxLayout4.setSpacing(10)
         self.hboxLayout4.setObjectName(u"hboxLayout4")
-        self.memorizeAxisPosLabel = QLabel(self.centralWidget)
-        self.memorizeAxisPosLabel.setObjectName(u"memorizeAxisPosLabel")
+        self.hintOverlayLabel = QLabel(self.centralWidget)
+        self.hintOverlayLabel.setObjectName(u"hintOverlayLabel")
 
-        self.hboxLayout4.addWidget(self.memorizeAxisPosLabel)
+        self.hboxLayout4.addWidget(self.hintOverlayLabel)
 
         self.spacerItem5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout4.addItem(self.spacerItem5)
 
-        self.memorizeAxisPosOption = QCheckBox(self.centralWidget)
-        self.memorizeAxisPosOption.setObjectName(u"memorizeAxisPosOption")
-        self.memorizeAxisPosOption.setChecked(False)
+        self.hintOverlayOption = QCheckBox(self.centralWidget)
+        self.hintOverlayOption.setObjectName(u"hintOverlayOption")
+        self.hintOverlayOption.setChecked(False)
 
-        self.hboxLayout4.addWidget(self.memorizeAxisPosOption)
+        self.hboxLayout4.addWidget(self.hintOverlayOption)
 
 
         self.vboxLayout2.addLayout(self.hboxLayout4)
@@ -326,23 +347,44 @@ class Ui_MainWindow(object):
         self.hboxLayout5 = QHBoxLayout()
         self.hboxLayout5.setSpacing(10)
         self.hboxLayout5.setObjectName(u"hboxLayout5")
-        self.wheelAxisModeLabel = QLabel(self.centralWidget)
-        self.wheelAxisModeLabel.setObjectName(u"wheelAxisModeLabel")
+        self.buttonMappingLabel = QLabel(self.centralWidget)
+        self.buttonMappingLabel.setObjectName(u"buttonMappingLabel")
 
-        self.hboxLayout5.addWidget(self.wheelAxisModeLabel)
+        self.hboxLayout5.addWidget(self.buttonMappingLabel)
 
         self.spacerItem6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout5.addItem(self.spacerItem6)
 
-        self.wheelAxisModeOption = QCheckBox(self.centralWidget)
-        self.wheelAxisModeOption.setObjectName(u"wheelAxisModeOption")
-        self.wheelAxisModeOption.setChecked(False)
+        self.buttonMappingOption = QCheckBox(self.centralWidget)
+        self.buttonMappingOption.setObjectName(u"buttonMappingOption")
+        self.buttonMappingOption.setChecked(False)
 
-        self.hboxLayout5.addWidget(self.wheelAxisModeOption)
+        self.hboxLayout5.addWidget(self.buttonMappingOption)
 
 
         self.vboxLayout2.addLayout(self.hboxLayout5)
+
+        self.hboxLayout6 = QHBoxLayout()
+        self.hboxLayout6.setSpacing(10)
+        self.hboxLayout6.setObjectName(u"hboxLayout6")
+        self.memorizeAxisPosLabel = QLabel(self.centralWidget)
+        self.memorizeAxisPosLabel.setObjectName(u"memorizeAxisPosLabel")
+
+        self.hboxLayout6.addWidget(self.memorizeAxisPosLabel)
+
+        self.spacerItem7 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout6.addItem(self.spacerItem7)
+
+        self.memorizeAxisPosOption = QCheckBox(self.centralWidget)
+        self.memorizeAxisPosOption.setObjectName(u"memorizeAxisPosOption")
+        self.memorizeAxisPosOption.setChecked(False)
+
+        self.hboxLayout6.addWidget(self.memorizeAxisPosOption)
+
+
+        self.vboxLayout2.addLayout(self.hboxLayout6)
 
 
         self.verticalLayout.addLayout(self.vboxLayout2)
@@ -351,9 +393,9 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addItem(self.verticalSpacer_sensitivity)
 
-        self.spacerItem7 = QSpacerItem(0, 15, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.spacerItem8 = QSpacerItem(0, 15, QSizePolicy.Minimum, QSizePolicy.Fixed)
 
-        self.verticalLayout.addItem(self.spacerItem7)
+        self.verticalLayout.addItem(self.spacerItem8)
 
         self.startBtn = QPushButton(self.centralWidget)
         self.startBtn.setObjectName(u"startBtn")
@@ -381,6 +423,8 @@ class Ui_MainWindow(object):
         self.toggleEnabledKey.setText("")
         self.centerControlLabel.setText("")
         self.centerControlKey.setText("")
+        self.fixedWingModeLabel.setText("")
+        self.helicopterModeLabel.setText("")
         self.controllerLabel.setText("")
         self.controllerHint.setText(QCoreApplication.translate("MainWindow", u"\u4ee5\u4e0b\u7684\u9009\u9879\u4f9d\u8d56\u6b63\u786e\u7684\u63a7\u5236\u5668", None))
         self.optionsTitleLabel.setText("")
@@ -388,7 +432,6 @@ class Ui_MainWindow(object):
         self.hintOverlayLabel.setText("")
         self.buttonMappingLabel.setText("")
         self.memorizeAxisPosLabel.setText("")
-        self.wheelAxisModeLabel.setText("")
         self.startBtn.setText("")
         self.statusLabel.setText("")
         pass
