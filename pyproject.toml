@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MouseFlightControl"
-version = "0.4.0"
+version = "0.5.0"
 authors = [
     { name = "Dawson", email = "bendawson0924@gmail.com" }
 ]

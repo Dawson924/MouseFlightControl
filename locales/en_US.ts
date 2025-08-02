@@ -3,17 +3,17 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="main.py" line="431"/>
+        <location filename="main.py" line="466"/>
         <source>Language</source>
         <translation>Language</translation>
     </message>
     <message>
-        <location filename="main.py" line="430"/>
+        <location filename="main.py" line="465"/>
         <source>MouseFlightControl</source>
         <translation>Mouse Flight Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="487"/>
+        <location filename="main.py" line="529"/>
         <source>Start</source>
         <translation>Start</translation>
     </message>
@@ -23,84 +23,89 @@
         <translation type="obsolete">Config</translation>
     </message>
     <message>
-        <location filename="main.py" line="488"/>
+        <location filename="main.py" line="530"/>
         <source>StatusStopped</source>
         <translation>Status:stopped</translation>
     </message>
     <message>
-        <location filename="main.py" line="488"/>
+        <location filename="main.py" line="530"/>
         <source>StatusWorking</source>
         <translation>Status:working</translation>
     </message>
     <message>
-        <location filename="main.py" line="440"/>
+        <location filename="main.py" line="475"/>
         <source>CurrentValue</source>
         <translation>Current value</translation>
     </message>
     <message>
-        <location filename="main.py" line="487"/>
+        <location filename="main.py" line="529"/>
         <source>Stop</source>
         <translation>Stop</translation>
     </message>
     <message>
-        <location filename="main.py" line="439"/>
+        <location filename="main.py" line="474"/>
         <source>Sensitive</source>
         <translation>Sensitive</translation>
     </message>
     <message>
-        <location filename="main.py" line="441"/>
+        <location filename="main.py" line="476"/>
         <source>ToggleEnabled</source>
         <translation>Toggle Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="443"/>
+        <location filename="main.py" line="478"/>
         <source>CenterControl</source>
         <translation>Center Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="449"/>
+        <location filename="main.py" line="489"/>
         <source>ShowCursor</source>
         <translation>Show Cursor</translation>
     </message>
     <message>
-        <location filename="main.py" line="451"/>
+        <location filename="main.py" line="491"/>
         <source>HintOverlay</source>
         <translation>Hint Overlay</translation>
     </message>
     <message>
-        <location filename="main.py" line="453"/>
+        <location filename="main.py" line="493"/>
         <source>ButtonMapping</source>
         <translation>Mouse Button Mapping</translation>
     </message>
     <message>
-        <location filename="main.py" line="455"/>
+        <location filename="main.py" line="495"/>
         <source>MemorizeAxisPos</source>
         <translation>Maintain Axis Position</translation>
     </message>
     <message>
-        <location filename="main.py" line="437"/>
+        <location filename="main.py" line="472"/>
         <source>ControlsTitle</source>
         <translation>Controls</translation>
     </message>
     <message>
-        <location filename="main.py" line="448"/>
+        <location filename="main.py" line="488"/>
         <source>OptionsTitle</source>
         <translation>Options</translation>
     </message>
     <message>
-        <location filename="main.py" line="445"/>
+        <location filename="main.py" line="485"/>
         <source>Controller</source>
         <translation>Game Controller</translation>
     </message>
     <message>
-        <location filename="main.py" line="447"/>
+        <location filename="main.py" line="487"/>
         <source>ControllerHint</source>
-        <translation type="unfinished">Some options may require specific controllers to work</translation>
+        <translation>Some options may require specific controllers to work</translation>
     </message>
     <message>
-        <location filename="main.py" line="457"/>
-        <source>WheelAxisMode</source>
-        <translation>Wheel Axis Mode</translation>
+        <location filename="main.py" line="480"/>
+        <source>FixedWingMode</source>
+        <translation>Fixed-wing Mode</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="482"/>
+        <source>HelicopterMode</source>
+        <translation>Helicopter Mode</translation>
     </message>
 </context>
 </TS>
