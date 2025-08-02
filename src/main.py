@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pyvjoy
 import win32api
 
-from PySide2 import QtWidgets, QtCore
+from PySide2 import QtWidgets, QtCore, QtGui
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QFont
 from app import App
@@ -75,11 +75,11 @@ controllers.register('DCS World', DCSController, {
     'i18n': {
         'en_US': {
             'view_center_on_ctrl': 'View Center On Control',
-            'zoom_normal_on_ctrl': 'Zoom Normal On Control'
+            'zoom_normal_on_ctrl': 'Zoom Normal On Control',
         },
         'zh_CN': {
             'view_center_on_ctrl': '控制时视角回中',
-            'zoom_normal_on_ctrl': '控制时视场正常'
+            'zoom_normal_on_ctrl': '控制时视场正常',
         }
     }
 })
@@ -277,8 +277,37 @@ class MainWindow(QtWidgets.QMainWindow):
 
             elif widget == OptionWidget.LineEdit:
                 # 创建文本输入
-                # TODO 支持字符串、整数类型的选项
-                pass
+                line_edit = QtWidgets.QLineEdit()
+                line_edit.setObjectName(f"{option}Option")
+                line_edit.setFixedWidth(100)  # 设置固定宽度
+
+                # 从配置或默认值获取当前值
+                if hasattr(self.__external__, option):
+                    value = getattr(self.__external__, option)
+                else:
+                    value = default
+                    setattr(self.__external__, option, value)
+
+                # 设置验证器根据值的类型
+                if isinstance(value, int):
+                    line_edit.setValidator(QtGui.QIntValidator())
+                elif isinstance(value, float):
+                    line_edit.setValidator(QtGui.QDoubleValidator())
+
+                line_edit.setText(str(value))
+
+                # 连接信号
+                line_edit.textChanged.connect(
+                    lambda text, opt=option: setattr(self.__external__, opt, str(text))
+                )
+
+                h_layout.addWidget(line_edit)
+
+                self.dynamic_widgets[option] = {
+                    'label': label,
+                    'line_edit': line_edit,
+                    'layout': h_layout
+                }
 
             # 添加到布局
             self.ui.ControllerVerticalLayout.addLayout(h_layout)
@@ -492,8 +521,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.controllerComboBox.setDisabled(disabled)
         self.ui.controllerHint.setHidden(self.controller != 'None')
         for option, controls in self.dynamic_widgets.items():
-            controls['checkbox'].setDisabled(disabled)
-            controls['label'].setDisabled(disabled)
+            if 'checkbox' in controls:
+                controls['checkbox'].setDisabled(disabled)
+            elif 'line_edit' in controls:
+                controls['line_edit'].setDisabled(disabled)
         self.ui.showCursorOption.setDisabled(disabled)
         self.ui.hintOverlayOption.setDisabled(disabled)
         self.ui.buttonMappingOption.setDisabled(disabled)
@@ -567,7 +598,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def main(self):
         global delta_x, delta_y, enabled
         try:
-            print(self.__external__)
             controller_class = controllers.get_class(self.controller)
             if controller_class:
                 controller = controller_class(vjoy_device)
