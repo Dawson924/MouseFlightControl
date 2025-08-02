@@ -75,7 +75,7 @@
     <message>
         <location filename="main.py" line="455"/>
         <source>MemorizeAxisPos</source>
-        <translation>Keep Axis Position</translation>
+        <translation>Maintain Axis Position</translation>
     </message>
     <message>
         <location filename="main.py" line="437"/>
