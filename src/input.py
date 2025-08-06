@@ -47,6 +47,7 @@ class InputStateMonitor:
             win32con.VK_END: "end",
             win32con.VK_PRIOR: "pageup",
             win32con.VK_NEXT: "pagedown",
+            win32con.VK_LWIN: "win",
             win32con.VK_UP: "up",
             win32con.VK_DOWN: "down",
             win32con.VK_LEFT: "left",
@@ -62,7 +63,7 @@ class InputStateMonitor:
             win32con.VK_F9: "f9",
             win32con.VK_F10: "f10",
             win32con.VK_F11: "f11",
-            win32con.VK_F12: "f12"
+            win32con.VK_F12: "f12",
         }
 
         # 添加字母和数字键
@@ -230,6 +231,18 @@ class InputStateMonitor:
         else:
             return False
 
+    def is_hotkey_pressed(self, hotkey_str):
+        modifiers, main_key = self.parse_hotkey(hotkey_str)
+
+        ctrl_ok = ('ctrl' in modifiers) == self.is_key_presssing('ctrl')
+        alt_ok = ('alt' in modifiers) == self.is_key_presssing('alt')
+        shift_ok = ('shift' in modifiers) == self.is_key_presssing('shift')
+
+        if not (ctrl_ok and alt_ok and shift_ok):
+            return False
+
+        return self.is_pressed(main_key)
+
     def get_mouse_position(self):
         return self.mouse_x, self.mouse_y
 
@@ -252,6 +265,25 @@ class InputStateMonitor:
     def reset_wheel_delta(self):
         with self.wheel_lock:
             self.wheel_delta = 0
+
+    def parse_hotkey(self, hotkey_str):
+        """解析组合键字符串"""
+        keys = hotkey_str.split('+')
+        modifiers = []
+        main_key = None
+
+        for key in keys:
+            normalized = key.strip().lower()
+            if normalized in ['ctrl', 'control']:
+                modifiers.append('ctrl')
+            elif normalized == 'alt':
+                modifiers.append('alt')
+            elif normalized == 'shift':
+                modifiers.append('shift')
+            else:
+                main_key = normalized
+
+        return modifiers, main_key
 
     def __del__(self):
         self.stop_wheel_listener()

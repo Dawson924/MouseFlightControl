@@ -80,18 +80,29 @@ class Ui_MainWindow(object):
 "                border-radius: 3px;\n"
 "                padding: 4px;\n"
 "                background: white;\n"
-"                min-width: 75px;\n"
-"                max-width: 75px;\n"
+"                min-width: 100px;\n"
+"                max-width: 100px;\n"
 "                }\n"
 "                QSpinBox::up-button, QSpinBox::down-button {\n"
 "                background: transparent;\n"
 "                border: none;\n"
 "                width: 16px;\n"
 "                }\n"
+"                QSpinBox::up-arrow {\n"
+"                image: url(assets/up_arrow.svg); /* \u81ea\u5b9a\u4e49\u5411\u4e0a\u7bad\u5934 */\n"
+"                width: 16px;\n"
+"                height: 16px;\n"
+"                }\n"
+"                QSpinBox::down-arrow {\n"
+"                image: url(assets/down_arrow.svg); /* \u81ea\u5b9a\u4e49\u5411\u4e0b\u7bad\u5934 */\n"
+"                width: 16px;\n"
+"                height: 16px;\n"
+"                }\n"
 "                #controllerComboBox {\n"
 "                border: 1px solid #A0A0A0;\n"
 "                border-radius: 3px;\n"
-"                padding: 4px;\n"
+"    "
+                        "            padding: 4px;\n"
 "                background: white;\n"
 "                min-width: 120px;\n"
 "                }\n"
@@ -102,8 +113,7 @@ class Ui_MainWindow(object):
 "                border-left-width: 1px;\n"
 "                border-left-color: #A0A0A0;\n"
 "                border-left-style: solid;\n"
-"                b"
-                        "order-top-right-radius: 3px;\n"
+"                border-top-right-radius: 3px;\n"
 "                border-bottom-right-radius: 3px;\n"
 "                }\n"
 "                #controllerComboBox::down-arrow {\n"
@@ -201,6 +211,53 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.centerControlLayout)
 
+        self.enableFreelookLayout = QHBoxLayout()
+        self.enableFreelookLayout.setSpacing(10)
+        self.enableFreelookLayout.setObjectName(u"enableFreelookLayout")
+        self.enableFreelookLabel = QLabel(self.centralWidget)
+        self.enableFreelookLabel.setObjectName(u"enableFreelookLabel")
+
+        self.enableFreelookLayout.addWidget(self.enableFreelookLabel)
+
+        self.spacerItem2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.enableFreelookLayout.addItem(self.spacerItem2)
+
+        self.enableFreelookKey = QLineEdit(self.centralWidget)
+        self.enableFreelookKey.setObjectName(u"enableFreelookKey")
+
+        self.enableFreelookLayout.addWidget(self.enableFreelookKey)
+
+
+        self.verticalLayout.addLayout(self.enableFreelookLayout)
+
+        self.taxiModeLayout = QHBoxLayout()
+        self.taxiModeLayout.setSpacing(10)
+        self.taxiModeLayout.setObjectName(u"taxiModeLayout")
+        self.taxiModeLabel = QLabel(self.centralWidget)
+        self.taxiModeLabel.setObjectName(u"taxiModeLabel")
+
+        self.taxiModeLayout.addWidget(self.taxiModeLabel)
+
+        self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.taxiModeLayout.addItem(self.spacerItem3)
+
+        self.taxiModeKey = QLineEdit(self.centralWidget)
+        self.taxiModeKey.setObjectName(u"taxiModeKey")
+
+        self.taxiModeLayout.addWidget(self.taxiModeKey)
+
+
+        self.verticalLayout.addLayout(self.taxiModeLayout)
+
+        self.controlModeDescription = QLabel(self.centralWidget)
+        self.controlModeDescription.setObjectName(u"controlModeDescription")
+        self.controlModeDescription.setStyleSheet(u"color: #505050; font-size: 9pt;")
+        self.controlModeDescription.setWordWrap(True)
+
+        self.verticalLayout.addWidget(self.controlModeDescription)
+
         self.hboxLayout1 = QHBoxLayout()
         self.hboxLayout1.setSpacing(10)
         self.hboxLayout1.setObjectName(u"hboxLayout1")
@@ -209,15 +266,23 @@ class Ui_MainWindow(object):
 
         self.hboxLayout1.addWidget(self.fixedWingModeLabel)
 
-        self.spacerItem2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.hboxLayout1.addItem(self.spacerItem2)
-
         self.fixedWingModeOption = QCheckBox(self.centralWidget)
         self.fixedWingModeOption.setObjectName(u"fixedWingModeOption")
         self.fixedWingModeOption.setChecked(False)
 
         self.hboxLayout1.addWidget(self.fixedWingModeOption)
+
+        self.spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout1.addItem(self.spacerItem4)
+
+        self.fixedWingModeSpinBox = QSpinBox(self.centralWidget)
+        self.fixedWingModeSpinBox.setObjectName(u"fixedWingModeSpinBox")
+        self.fixedWingModeSpinBox.setValue(0)
+        self.fixedWingModeSpinBox.setMinimum(100)
+        self.fixedWingModeSpinBox.setMaximum(10000)
+
+        self.hboxLayout1.addWidget(self.fixedWingModeSpinBox)
 
 
         self.verticalLayout.addLayout(self.hboxLayout1)
@@ -230,15 +295,15 @@ class Ui_MainWindow(object):
 
         self.hboxLayout2.addWidget(self.helicopterModeLabel)
 
-        self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.hboxLayout2.addItem(self.spacerItem3)
-
         self.helicopterModeOption = QCheckBox(self.centralWidget)
         self.helicopterModeOption.setObjectName(u"helicopterModeOption")
         self.helicopterModeOption.setChecked(False)
 
         self.hboxLayout2.addWidget(self.helicopterModeOption)
+
+        self.spacerItem5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout2.addItem(self.spacerItem5)
 
         self.helicopterModeSpinBox = QSpinBox(self.centralWidget)
         self.helicopterModeSpinBox.setObjectName(u"helicopterModeSpinBox")
@@ -279,6 +344,7 @@ class Ui_MainWindow(object):
         self.controllerHint.setObjectName(u"controllerHint")
         self.controllerHint.setStyleSheet(u"color: #505050; font-size: 9pt; min-width:\n"
 "                                        30px;")
+        self.controllerHint.setWordWrap(True)
 
         self.vboxLayout1.addWidget(self.controllerHint)
 
@@ -310,9 +376,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout3.addWidget(self.showCursorLabel)
 
-        self.spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout3.addItem(self.spacerItem4)
+        self.hboxLayout3.addItem(self.spacerItem6)
 
         self.showCursorOption = QCheckBox(self.centralWidget)
         self.showCursorOption.setObjectName(u"showCursorOption")
@@ -331,9 +397,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout4.addWidget(self.hintOverlayLabel)
 
-        self.spacerItem5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem7 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout4.addItem(self.spacerItem5)
+        self.hboxLayout4.addItem(self.spacerItem7)
 
         self.hintOverlayOption = QCheckBox(self.centralWidget)
         self.hintOverlayOption.setObjectName(u"hintOverlayOption")
@@ -352,9 +418,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout5.addWidget(self.buttonMappingLabel)
 
-        self.spacerItem6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem8 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout5.addItem(self.spacerItem6)
+        self.hboxLayout5.addItem(self.spacerItem8)
 
         self.buttonMappingOption = QCheckBox(self.centralWidget)
         self.buttonMappingOption.setObjectName(u"buttonMappingOption")
@@ -373,9 +439,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout6.addWidget(self.memorizeAxisPosLabel)
 
-        self.spacerItem7 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem9 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout6.addItem(self.spacerItem7)
+        self.hboxLayout6.addItem(self.spacerItem9)
 
         self.memorizeAxisPosOption = QCheckBox(self.centralWidget)
         self.memorizeAxisPosOption.setObjectName(u"memorizeAxisPosOption")
@@ -389,13 +455,13 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.vboxLayout2)
 
-        self.verticalSpacer_sensitivity = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.verticalSpacer = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
-        self.verticalLayout.addItem(self.verticalSpacer_sensitivity)
+        self.verticalLayout.addItem(self.verticalSpacer)
 
-        self.spacerItem8 = QSpacerItem(0, 15, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.spacerItem10 = QSpacerItem(0, 15, QSizePolicy.Minimum, QSizePolicy.Fixed)
 
-        self.verticalLayout.addItem(self.spacerItem8)
+        self.verticalLayout.addItem(self.spacerItem10)
 
         self.startBtn = QPushButton(self.centralWidget)
         self.startBtn.setObjectName(u"startBtn")
@@ -423,6 +489,11 @@ class Ui_MainWindow(object):
         self.toggleEnabledKey.setText("")
         self.centerControlLabel.setText("")
         self.centerControlKey.setText("")
+        self.enableFreelookLabel.setText("")
+        self.enableFreelookKey.setText("")
+        self.taxiModeLabel.setText("")
+        self.taxiModeKey.setText("")
+        self.controlModeDescription.setText("")
         self.fixedWingModeLabel.setText("")
         self.helicopterModeLabel.setText("")
         self.controllerLabel.setText("")
