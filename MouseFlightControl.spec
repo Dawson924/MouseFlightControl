@@ -8,11 +8,7 @@ a = Analysis(
     ['src/main.py'],  # 主脚本路径
     pathex=[],  # 额外搜索路径
     binaries=[],
-    datas=[
-        ('locales', 'Locales'),
-        ('assets', 'Assets'),
-        ('Platform', 'Platform')
-    ],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -32,7 +28,7 @@ exe = EXE(
     a.scripts,
     [],
     name='MouseFlightControl',
-    contents_directory='.',
+    contents_directory='libs',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

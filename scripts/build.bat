@@ -1,1 +1,0 @@
-pyinstaller ./MouseFlightControl.spec --noconfirm
