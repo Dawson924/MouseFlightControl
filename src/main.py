@@ -574,7 +574,7 @@ class MainWindow(QtWidgets.QMainWindow):
         not_equal = self.helicopter_mode != self.fixed_wing_mode
         self.ui.fixedWingModeOption.setDisabled(disabled or self.helicopter_mode and not_equal)
         self.ui.helicopterModeOption.setDisabled(disabled or self.fixed_wing_mode and not_equal)
-        self.ui.controllerHint.setHidden(self.controller != 'None')
+        self.ui.controllerHint.setHidden(self.controller != 'None' or not self.show_tips)
         for option, controls in self.dynamic_widgets.items():
             if 'checkbox' in controls:
                 controls['checkbox'].setDisabled(disabled)
