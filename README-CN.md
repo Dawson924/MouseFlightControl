@@ -19,28 +19,37 @@
 1. **下载软件**：📥 从 [这里](https://github.com/Dawson924/MouseFlightControl/releases) 下载软件包。
 2. **安装 vJoy**：按照说明安装 vJoy 设备驱动。
 3. **运行程序**
-4. **控制器设置**：对于 DCS，将 ./Platform/DCS/ 目录下的 MouseFlightControl 文件夹和 Export.lua 文件复制到 C:/.../DCS.openbeta/Scripts 目录中。如果已存在 Export.lua 文件，请在文件底部添加以下代码：
-```lua
-dofile(lfs.writedir()..[[Scripts\MouseFlightControl\MouseFlightControl.lua]]);
-```
+4. **分配虚拟轴**:
+  - X: 横滚轴
+  - Y: 俯仰轴
+  - Z: 节流阀
+  - RZ: 脚舵
+  - RX: 自由视角水平方向
+  - RY: 自由视角垂直方向
+  - SL0: 自由视角缩放
 
+强烈建议在RX和RY的轴调整设置中将"Y轴边界"都设定为50。这样可以在自由视角中达成这种效果：鼠标在屏幕中点和屏幕边缘中间时，视角正好看向正侧方。鼠标在屏幕边缘时正好看向侧后方。  
+而且使用阿帕奇的头盔瞄准联动机炮时也能更加准确。不设置边界可能会导致自由视角灵敏度偏高（手柄摇杆移动视角也是同理）。
 
 ## 使用方法
 
-### 启动程序
+#### 启动程序
 - 点击“开始”按钮即可开始使用。🚀
 
 
-### 调整灵敏度
+#### 调整灵敏度
 - 使用灵敏度滑块调整鼠标灵敏度，可设置范围为 1-20。🔍
 
 
-### 控制切换
+#### 控制切换
 - 默认情况下，按键盘上的 `~` 键可在暂停和恢复控制之间切换。⏯️
 
 
-### 配置选项
-- 你可以在设置菜单中配置各种选项，包括语言、控制器类型、按键映射和显示选项。⚙️
+#### 控制器设置（实验性功能）
+- 对于 DCS，将 ./Platform/DCS/ 目录下的 MouseFlightControl 文件夹和 Export.lua 文件复制到 C:/.../DCS.openbeta/Scripts 目录中。如果已存在 Export.lua 文件，请在文件底部添加以下代码：
+```lua
+dofile(lfs.writedir()..[[Scripts\MouseFlightControl\MouseFlightControl.lua]]);
+```
 
 
 ## 许可证
@@ -50,7 +59,7 @@ dofile(lfs.writedir()..[[Scripts\MouseFlightControl\MouseFlightControl.lua]]);
 
 ## 联系方式
 
-如有任何问题或反馈，请联系开发者：[bendawson0924@gmail.com](mailto:bendawson0924@gmail.com)。
+如有任何问题或反馈，请联系开发者：[bendawson0924@gmail.com](mailto:bendawson0924@gmail.com) 或 [bilibili](https://space.bilibili.com/1738605283)。
 
 
 ---
