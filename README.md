@@ -18,7 +18,15 @@ Mouse Flight Control is designed to provide a intuitive way to control flight in
 1. **Download the Software**: 📥 Download the software package from [Releases](https://github.com/Dawson924/MouseFlightControl/releases).
 2. **Install vJoy**: Follow the instructions to install the vJoy device driver.
 3. **Run the Program**
-4. **Setup Controller**: For DCS, drop the MouseFlightControl folder and Export.lua from ./Platform/DCS/ into C:/.../DCS.openbeta/Scripts. In case you already have Export.lua, then add this line of code at the bottom.
+4. **Assign Axis**:
+  - X: Roll
+  - Y: Pitch
+  - Z: Throttle
+  - RZ: Rudder
+  - RX: Camera horizontal view
+  - RY: Camera vertical view
+  - SL0: Camera zoom in/out
+5. **Setup Controller**: For DCS, drop the MouseFlightControl folder and Export.lua from ./Platform/DCS/ into C:/.../DCS.openbeta/Scripts. In case you already have Export.lua, then add this line of code at the bottom.
 ```lua
 dofile(lfs.writedir()..[[Scripts\MouseFlightControl\MouseFlightControl.lua]]);
 ```
