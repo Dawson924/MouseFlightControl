@@ -231,6 +231,29 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.enableFreelookLayout)
 
+        self.freelookFovLayout = QHBoxLayout()
+        self.freelookFovLayout.setSpacing(10)
+        self.freelookFovLayout.setObjectName(u"freelookFovLayout")
+        self.freelookFovLabel = QLabel(self.centralWidget)
+        self.freelookFovLabel.setObjectName(u"freelookFovLabel")
+
+        self.freelookFovLayout.addWidget(self.freelookFovLabel)
+
+        self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.freelookFovLayout.addItem(self.spacerItem3)
+
+        self.freelookFovSpinBox = QSpinBox(self.centralWidget)
+        self.freelookFovSpinBox.setObjectName(u"freelookFovSpinBox")
+        self.freelookFovSpinBox.setValue(0)
+        self.freelookFovSpinBox.setMinimum(60)
+        self.freelookFovSpinBox.setMaximum(120)
+
+        self.freelookFovLayout.addWidget(self.freelookFovSpinBox)
+
+
+        self.verticalLayout.addLayout(self.freelookFovLayout)
+
         self.taxiModeLayout = QHBoxLayout()
         self.taxiModeLayout.setSpacing(10)
         self.taxiModeLayout.setObjectName(u"taxiModeLayout")
@@ -239,9 +262,9 @@ class Ui_MainWindow(object):
 
         self.taxiModeLayout.addWidget(self.taxiModeLabel)
 
-        self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.taxiModeLayout.addItem(self.spacerItem3)
+        self.taxiModeLayout.addItem(self.spacerItem4)
 
         self.taxiModeKey = QLineEdit(self.centralWidget)
         self.taxiModeKey.setObjectName(u"taxiModeKey")
@@ -272,9 +295,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout1.addWidget(self.fixedWingModeOption)
 
-        self.spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout1.addItem(self.spacerItem4)
+        self.hboxLayout1.addItem(self.spacerItem5)
 
         self.fixedWingModeSpinBox = QSpinBox(self.centralWidget)
         self.fixedWingModeSpinBox.setObjectName(u"fixedWingModeSpinBox")
@@ -301,9 +324,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout2.addWidget(self.helicopterModeOption)
 
-        self.spacerItem5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout2.addItem(self.spacerItem5)
+        self.hboxLayout2.addItem(self.spacerItem6)
 
         self.helicopterModeSpinBox = QSpinBox(self.centralWidget)
         self.helicopterModeSpinBox.setObjectName(u"helicopterModeSpinBox")
@@ -376,9 +399,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout3.addWidget(self.showCursorLabel)
 
-        self.spacerItem6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem7 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout3.addItem(self.spacerItem6)
+        self.hboxLayout3.addItem(self.spacerItem7)
 
         self.showCursorOption = QCheckBox(self.centralWidget)
         self.showCursorOption.setObjectName(u"showCursorOption")
@@ -397,9 +420,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout4.addWidget(self.hintOverlayLabel)
 
-        self.spacerItem7 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem8 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout4.addItem(self.spacerItem7)
+        self.hboxLayout4.addItem(self.spacerItem8)
 
         self.hintOverlayOption = QCheckBox(self.centralWidget)
         self.hintOverlayOption.setObjectName(u"hintOverlayOption")
@@ -418,9 +441,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout5.addWidget(self.buttonMappingLabel)
 
-        self.spacerItem8 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem9 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout5.addItem(self.spacerItem8)
+        self.hboxLayout5.addItem(self.spacerItem9)
 
         self.buttonMappingOption = QCheckBox(self.centralWidget)
         self.buttonMappingOption.setObjectName(u"buttonMappingOption")
@@ -439,9 +462,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout6.addWidget(self.memorizeAxisPosLabel)
 
-        self.spacerItem9 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem10 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout6.addItem(self.spacerItem9)
+        self.hboxLayout6.addItem(self.spacerItem10)
 
         self.memorizeAxisPosOption = QCheckBox(self.centralWidget)
         self.memorizeAxisPosOption.setObjectName(u"memorizeAxisPosOption")
@@ -452,6 +475,27 @@ class Ui_MainWindow(object):
 
         self.vboxLayout2.addLayout(self.hboxLayout6)
 
+        self.hboxLayout7 = QHBoxLayout()
+        self.hboxLayout7.setSpacing(10)
+        self.hboxLayout7.setObjectName(u"hboxLayout7")
+        self.freelookAutoCenterLabel = QLabel(self.centralWidget)
+        self.freelookAutoCenterLabel.setObjectName(u"freelookAutoCenterLabel")
+
+        self.hboxLayout7.addWidget(self.freelookAutoCenterLabel)
+
+        self.spacerItem11 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout7.addItem(self.spacerItem11)
+
+        self.freelookAutoCenterOption = QCheckBox(self.centralWidget)
+        self.freelookAutoCenterOption.setObjectName(u"freelookAutoCenterOption")
+        self.freelookAutoCenterOption.setChecked(False)
+
+        self.hboxLayout7.addWidget(self.freelookAutoCenterOption)
+
+
+        self.vboxLayout2.addLayout(self.hboxLayout7)
+
 
         self.verticalLayout.addLayout(self.vboxLayout2)
 
@@ -459,9 +503,9 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addItem(self.verticalSpacer)
 
-        self.spacerItem10 = QSpacerItem(0, 15, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.spacerItem12 = QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
 
-        self.verticalLayout.addItem(self.spacerItem10)
+        self.verticalLayout.addItem(self.spacerItem12)
 
         self.startBtn = QPushButton(self.centralWidget)
         self.startBtn.setObjectName(u"startBtn")
@@ -491,6 +535,7 @@ class Ui_MainWindow(object):
         self.centerControlKey.setText("")
         self.enableFreelookLabel.setText("")
         self.enableFreelookKey.setText("")
+        self.freelookFovLabel.setText("")
         self.taxiModeLabel.setText("")
         self.taxiModeKey.setText("")
         self.controlModeDescription.setText("")
@@ -503,6 +548,7 @@ class Ui_MainWindow(object):
         self.hintOverlayLabel.setText("")
         self.buttonMappingLabel.setText("")
         self.memorizeAxisPosLabel.setText("")
+        self.freelookAutoCenterLabel.setText("")
         self.startBtn.setText("")
         self.statusLabel.setText("")
         pass

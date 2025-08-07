@@ -319,6 +319,48 @@
                     </layout>
                 </item>
 
+                <!-- 自由视角fov选项 -->
+                <item>
+                    <layout class="QHBoxLayout" name="freelookFovLayout">
+                        <property name="spacing">
+                            <number>10</number>
+                        </property>
+                        <item>
+                            <widget class="QLabel" name="freelookFovLabel">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <spacer>
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                    <size>
+                                        <width>40</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </item>
+                        <item>
+                            <widget class="QSpinBox" name="freelookFovSpinBox">
+                                <property name="value">
+                                    <number></number>
+                                </property>
+                                <property name="minimum">
+                                    <number>60</number>
+                                </property>
+                                <property name="maximum">
+                                    <number>120</number>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+
                 <!-- 地面滑行模式 -->
                 <item>
                     <layout class="QHBoxLayout" name="taxiModeLayout">
@@ -691,6 +733,42 @@
                                 </item>
                             </layout>
                         </item>
+
+                        <!-- 自由视角自动回中 -->
+                        <item>
+                            <layout class="QHBoxLayout">
+                                <property name="spacing">
+                                    <number>10</number>
+                                </property>
+                                <item>
+                                    <widget class="QLabel" name="freelookAutoCenterLabel">
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item>
+                                    <spacer>
+                                        <property name="orientation">
+                                            <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                            <size>
+                                                <width>40</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </item>
+                                <item>
+                                    <widget class="QCheckBox" name="freelookAutoCenterOption">
+                                        <property name="checked">
+                                            <bool>false</bool>
+                                        </property>
+                                    </widget>
+                                </item>
+                            </layout>
+                        </item>
                     </layout>
                 </item>
 
@@ -721,7 +799,7 @@
                         <property name="sizeHint" stdset="0">
                             <size>
                                 <width>0</width>
-                                <height>15</height>
+                                <height>5</height>
                             </size>
                         </property>
                     </spacer>

@@ -56,6 +56,8 @@ CONFIG = {
         'key_toggle': (str),
         'key_center': (str),
         'key_freelook': (str),
+        'freelook_fov': (int),
+        'key_taxi': (str),
         'fixed_wing_mode': (bool),
         'fixed_wing_mode_step': (int),
         'helicopter_mode': (bool),
@@ -66,6 +68,7 @@ CONFIG = {
         'hint_overlay': (bool),
         'button_mapping': (bool),
         'memorize_axis_pos': (bool),
+        'freelook_auto_center': (bool),
     },
     'External': {}
 }
@@ -75,17 +78,17 @@ controllers = ControllerManager()
 controllers.register('None', None)
 controllers.register('DCS World', DCSController, {
     'options': [
-        ('view_center_on_ctrl', OptionWidget.CheckBox, True),
-        ('zoom_normal_on_ctrl', OptionWidget.CheckBox, True),
+        ('view_center_on_ctrl', OptionWidget.CheckBox, False),
+        ('zoom_normal_on_ctrl', OptionWidget.CheckBox, False),
     ],
     'i18n': {
         'en_US': {
             'view_center_on_ctrl': 'View Center On Control',
-            'zoom_normal_on_ctrl': 'Zoom Normal On Control',
+            'zoom_normal_on_ctrl': 'Zoom Normal On Control (Incompatible: FreeLook)',
         },
         'zh_CN': {
             'view_center_on_ctrl': '控制时视角回中',
-            'zoom_normal_on_ctrl': '控制时视场正常',
+            'zoom_normal_on_ctrl': '控制时视场正常（冲突：自由视角）',
         }
     }
 })
@@ -93,7 +96,7 @@ controllers.register('DCS World', DCSController, {
 class vjoyAxis():
     def __init__(self, x, y, th, rd):
         self.x, self.y, self.th, self.rd = x, y, th, rd
-        self.vx, self.vy = 0, 0
+        self.vx, self.vy, self.vz = 0, 0, 0
 
 class vjoyState():
     def __init__(self, stick, th):
@@ -117,6 +120,7 @@ axis_max = 32767
 axis_min = -axis_max
 center_axis_x = 0
 center_axis_y = 0
+axis_step = int(axis_max * 2 / 120)
 
 Axis = vjoyAxis(0, 0, axis_max, 0)
 Sens = vjoySensitive(15.0, 0.7, 0.9, 1.9)
@@ -140,7 +144,7 @@ def check_overflow(a, min_val, max_val):
         return max_val
     return a
 
-def wheel_th(step, wheel_delta):
+def wheel_step(step, wheel_delta):
     if wheel_delta == 0: return 0
     if wheel_delta > 0:
         sign = 1
@@ -180,6 +184,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.key_toggle = '`'
         self.key_center = 'MMB'
         self.key_freelook = 'tab'
+        self.freelook_fov = 90
         self.key_taxi = 'alt + `'
         self.fixed_wing_mode = False
         self.fixed_wing_mode_step = 2500
@@ -190,6 +195,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.hint_overlay = True
         self.button_mapping = True
         self.memorize_axis_pos = True
+        self.freelook_auto_center = False
         self.__external__ = SimpleNamespace()
 
         # 加载所有配置
@@ -203,6 +209,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.toggleEnabledKey.textChanged.connect(lambda text: self.update('key_toggle', text))
         self.ui.centerControlKey.textChanged.connect(lambda text: self.update('key_center', text))
         self.ui.enableFreelookKey.textChanged.connect(lambda text: self.update('key_freelook', text))
+        self.ui.freelookFovSpinBox.valueChanged.connect(lambda value: self.update('freelook_fov', value))
         self.ui.taxiModeKey.textChanged.connect(lambda text: self.update('key_taxi', text))
         self.ui.fixedWingModeOption.stateChanged.connect(lambda state: self.update('fixed_wing_mode', bool(state)))
         self.ui.fixedWingModeSpinBox.valueChanged.connect(lambda value: self.update('fixed_wing_mode_step', value))
@@ -213,6 +220,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.hintOverlayOption.stateChanged.connect(lambda state: self.update('hint_overlay', bool(state)))
         self.ui.buttonMappingOption.stateChanged.connect(lambda state: self.update('button_mapping', bool(state)))
         self.ui.memorizeAxisPosOption.stateChanged.connect(lambda state: self.update('memorize_axis_pos', bool(state)))
+        self.ui.freelookAutoCenterOption.stateChanged.connect(lambda state: self.update('freelook_auto_center', bool(state)))
 
         # 加载配置的语言
         translator = QtCore.QTranslator()
@@ -510,6 +518,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.centerControlKey.setText(self.key_center)
         self.ui.enableFreelookLabel.setText(self.tr("EnableFreelook"))
         self.ui.enableFreelookKey.setText(self.key_freelook)
+        self.ui.freelookFovLabel.setText(self.tr('FreelookFov'))
+        self.ui.freelookFovSpinBox.setValue(self.freelook_fov)
         self.ui.taxiModeLabel.setText(self.tr('TaxiMode'))
         self.ui.taxiModeKey.setText(self.key_taxi)
         self.ui.fixedWingModeLabel.setText(self.tr("FixedWingMode"))
@@ -531,6 +541,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.buttonMappingOption.setChecked(self.button_mapping)
         self.ui.memorizeAxisPosLabel.setText(self.tr("MemorizeAxisPos"))
         self.ui.memorizeAxisPosOption.setChecked(self.memorize_axis_pos)
+        self.ui.freelookAutoCenterLabel.setText(self.tr('FreelookAutoCenter'))
+        self.ui.freelookAutoCenterOption.setChecked(self.freelook_auto_center)
 
     def on_speed_changed(self, value):
         self.mouse_speed = value
@@ -584,6 +596,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.hintOverlayOption.setDisabled(disabled)
         self.ui.buttonMappingOption.setDisabled(disabled)
         self.ui.memorizeAxisPosOption.setDisabled(disabled)
+        self.ui.freelookAutoCenterOption.setDisabled(disabled)
+        self.ui.freelookFovSpinBox.setDisabled(disabled)
 
         self.ui.verticalLayout.invalidate()
         self.ui.verticalLayout.activate()
@@ -654,9 +668,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def main(self):
         global delta_x, delta_y, enabled, taxi_mode
         try:
-            controller_class = controllers.get_class(self.controller)
-            if controller_class:
-                controller = controller_class(vjoy_device)
+            Class = controllers.get_class(self.controller)
+            if Class:
+                controller = Class(vjoy_device)
             else:
                 controller = None
 
@@ -722,10 +736,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 if enabled and input.alt_ctrl_shift():
                     if input.is_pressed(self.key_freelook):
                         Axis.vx, Axis.vy = 0, 0
+                        Axis.vz = axis_min + self.freelook_fov * axis_step
                         memo_x, memo_y = input.get_mouse_position()
                         input.set_mouse_position(screen_center_x, screen_center_y)
                     if input.is_released(self.key_freelook):
-                        Axis.vx, Axis.vy = 0, 0
+                        if self.freelook_auto_center:
+                            Axis.vx, Axis.vy = 0, 0
                         if memo_x is not None and memo_y is not None:
                             prev_x, prev_y = memo_x, memo_y
                             input.set_mouse_position(memo_x, memo_y)
@@ -742,6 +758,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
                         Axis.vx = check_overflow(Axis.vx, axis_min, axis_max)
                         Axis.vy = check_overflow(Axis.vy, axis_min, axis_max)
+
+                        Axis.vz += wheel_step(axis_step * 10, -input.get_wheel_delta())
+                        Axis.vz = check_overflow(Axis.vz, axis_min, axis_max)
                     else:
                         Axis.x += delta_x * Sens.x * Sens.mou * 0.48
                         Axis.y += delta_y * Sens.y * Sens.mou
@@ -759,7 +778,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             Axis.rd = Axis.x
 
                 if enabled and self.fixed_wing_mode and input.alt_ctrl_shift():
-                    Axis.th += wheel_th(self.fixed_wing_mode_step, -input.get_wheel_delta())
+                    Axis.th += wheel_step(self.fixed_wing_mode_step, -input.get_wheel_delta())
                     Axis.th = check_overflow(Axis.th, axis_min, axis_max)
 
                 if enabled and self.helicopter_mode and input.alt_ctrl_shift():
@@ -787,6 +806,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     vjoy_device.set_axis(pyvjoy.HID_USAGE_RZ, map_to_vjoy(Axis.rd))
                     vjoy_device.set_axis(pyvjoy.HID_USAGE_RX, map_to_vjoy(Axis.vx))
                     vjoy_device.set_axis(pyvjoy.HID_USAGE_RY, map_to_vjoy(Axis.vy))
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_SL0, map_to_vjoy(Axis.vz))
 
                 if controller is not None and isinstance(controller, BaseController):
                     controller.update(SimpleNamespace(
