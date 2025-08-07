@@ -26,6 +26,7 @@ Mouse Flight Control is designed to provide a intuitive way to control flight in
   - RX: Camera horizontal view
   - RY: Camera vertical view
   - SL0: Camera zoom in/out
+It's recommanded to set Saturation-Y to 50 for both RX and RY in tune setting.
 5. **Setup Controller**: For DCS, drop the MouseFlightControl folder and Export.lua from ./Platform/DCS/ into C:/.../DCS.openbeta/Scripts. In case you already have Export.lua, then add this line of code at the bottom.
 ```lua
 dofile(lfs.writedir()..[[Scripts\MouseFlightControl\MouseFlightControl.lua]]);
