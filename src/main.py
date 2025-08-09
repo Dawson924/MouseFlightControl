@@ -455,7 +455,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.general_menu = self.menuBar().addMenu('')
         self.language_menu = self.menuBar().addMenu('')
 
-        # 创建 ShowTips 菜单项并保存为成员变量
         self.tip_action = QtWidgets.QAction('', self)
         self.tip_action.setCheckable(True)
         self.tip_action.setChecked(self.show_tips)
@@ -679,6 +678,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             prev_x, prev_y = screen_center_x, screen_center_y
             memo_x, memo_y = None, None
+            freelook_on = False
 
             while not stop_thread:  # 用stop_thread控制退出
                 input.update()
@@ -706,7 +706,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 if enabled and input.is_hotkey_pressed(self.key_center):
                     input.set_mouse_position(screen_center_x, screen_center_y)
 
-                if enabled and self.button_mapping:
+                if enabled and self.button_mapping and not freelook_on:
                     if input.is_pressing('LMB'):
                         vjoy_device.set_button(1, True)
                     else:
@@ -733,13 +733,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 delta_y = curr_y - prev_y
                 prev_x, prev_y = curr_x, curr_y
 
-                if enabled and input.alt_ctrl_shift():
+                if enabled and not input.alt_ctrl_shift(ctrl=True):
                     if input.is_pressed(self.key_freelook):
+                        freelook_on = True
                         Axis.vx, Axis.vy = 0, 0
                         Axis.vz = axis_min + self.freelook_fov * axis_step
                         memo_x, memo_y = input.get_mouse_position()
                         input.set_mouse_position(screen_center_x, screen_center_y)
                     if input.is_released(self.key_freelook):
+                        freelook_on = False
                         if self.freelook_auto_center:
                             Axis.vx, Axis.vy = 0, 0
                         if memo_x is not None and memo_y is not None:
