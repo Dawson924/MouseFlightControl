@@ -319,14 +319,14 @@
                     </layout>
                 </item>
 
-                <!-- 自由视角fov选项 -->
+                <!-- 自由视角回中 -->
                 <item>
-                    <layout class="QHBoxLayout" name="freelookFovLayout">
+                    <layout class="QHBoxLayout" name="viewCenterLayout">
                         <property name="spacing">
                             <number>10</number>
                         </property>
                         <item>
-                            <widget class="QLabel" name="freelookFovLabel">
+                            <widget class="QLabel" name="viewCenterLabel">
                                 <property name="text">
                                     <string></string>
                                 </property>
@@ -346,7 +346,43 @@
                             </spacer>
                         </item>
                         <item>
-                            <widget class="QSpinBox" name="freelookFovSpinBox">
+                            <widget class="QLineEdit" name="viewCenterKey">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+
+                <!-- 自由视角fov选项 -->
+                <item>
+                    <layout class="QHBoxLayout" name="cameraFovLayout">
+                        <property name="spacing">
+                            <number>10</number>
+                        </property>
+                        <item>
+                            <widget class="QLabel" name="cameraFovLabel">
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <spacer>
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                    <size>
+                                        <width>40</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </item>
+                        <item>
+                            <widget class="QSpinBox" name="cameraFovSpinBox">
                                 <property name="value">
                                     <number></number>
                                 </property>

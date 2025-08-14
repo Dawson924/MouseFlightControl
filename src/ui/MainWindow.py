@@ -231,28 +231,48 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.enableFreelookLayout)
 
-        self.freelookFovLayout = QHBoxLayout()
-        self.freelookFovLayout.setSpacing(10)
-        self.freelookFovLayout.setObjectName(u"freelookFovLayout")
-        self.freelookFovLabel = QLabel(self.centralWidget)
-        self.freelookFovLabel.setObjectName(u"freelookFovLabel")
+        self.viewCenterLayout = QHBoxLayout()
+        self.viewCenterLayout.setSpacing(10)
+        self.viewCenterLayout.setObjectName(u"viewCenterLayout")
+        self.viewCenterLabel = QLabel(self.centralWidget)
+        self.viewCenterLabel.setObjectName(u"viewCenterLabel")
 
-        self.freelookFovLayout.addWidget(self.freelookFovLabel)
+        self.viewCenterLayout.addWidget(self.viewCenterLabel)
 
         self.spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.freelookFovLayout.addItem(self.spacerItem3)
+        self.viewCenterLayout.addItem(self.spacerItem3)
 
-        self.freelookFovSpinBox = QSpinBox(self.centralWidget)
-        self.freelookFovSpinBox.setObjectName(u"freelookFovSpinBox")
-        self.freelookFovSpinBox.setValue(0)
-        self.freelookFovSpinBox.setMinimum(60)
-        self.freelookFovSpinBox.setMaximum(120)
+        self.viewCenterKey = QLineEdit(self.centralWidget)
+        self.viewCenterKey.setObjectName(u"viewCenterKey")
 
-        self.freelookFovLayout.addWidget(self.freelookFovSpinBox)
+        self.viewCenterLayout.addWidget(self.viewCenterKey)
 
 
-        self.verticalLayout.addLayout(self.freelookFovLayout)
+        self.verticalLayout.addLayout(self.viewCenterLayout)
+
+        self.cameraFovLayout = QHBoxLayout()
+        self.cameraFovLayout.setSpacing(10)
+        self.cameraFovLayout.setObjectName(u"cameraFovLayout")
+        self.cameraFovLabel = QLabel(self.centralWidget)
+        self.cameraFovLabel.setObjectName(u"cameraFovLabel")
+
+        self.cameraFovLayout.addWidget(self.cameraFovLabel)
+
+        self.spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.cameraFovLayout.addItem(self.spacerItem4)
+
+        self.cameraFovSpinBox = QSpinBox(self.centralWidget)
+        self.cameraFovSpinBox.setObjectName(u"cameraFovSpinBox")
+        self.cameraFovSpinBox.setValue(0)
+        self.cameraFovSpinBox.setMinimum(60)
+        self.cameraFovSpinBox.setMaximum(120)
+
+        self.cameraFovLayout.addWidget(self.cameraFovSpinBox)
+
+
+        self.verticalLayout.addLayout(self.cameraFovLayout)
 
         self.taxiModeLayout = QHBoxLayout()
         self.taxiModeLayout.setSpacing(10)
@@ -262,9 +282,9 @@ class Ui_MainWindow(object):
 
         self.taxiModeLayout.addWidget(self.taxiModeLabel)
 
-        self.spacerItem4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.taxiModeLayout.addItem(self.spacerItem4)
+        self.taxiModeLayout.addItem(self.spacerItem5)
 
         self.taxiModeKey = QLineEdit(self.centralWidget)
         self.taxiModeKey.setObjectName(u"taxiModeKey")
@@ -295,9 +315,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout1.addWidget(self.fixedWingModeOption)
 
-        self.spacerItem5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout1.addItem(self.spacerItem5)
+        self.hboxLayout1.addItem(self.spacerItem6)
 
         self.fixedWingModeSpinBox = QSpinBox(self.centralWidget)
         self.fixedWingModeSpinBox.setObjectName(u"fixedWingModeSpinBox")
@@ -324,9 +344,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout2.addWidget(self.helicopterModeOption)
 
-        self.spacerItem6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem7 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout2.addItem(self.spacerItem6)
+        self.hboxLayout2.addItem(self.spacerItem7)
 
         self.helicopterModeSpinBox = QSpinBox(self.centralWidget)
         self.helicopterModeSpinBox.setObjectName(u"helicopterModeSpinBox")
@@ -399,9 +419,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout3.addWidget(self.showCursorLabel)
 
-        self.spacerItem7 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem8 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout3.addItem(self.spacerItem7)
+        self.hboxLayout3.addItem(self.spacerItem8)
 
         self.showCursorOption = QCheckBox(self.centralWidget)
         self.showCursorOption.setObjectName(u"showCursorOption")
@@ -420,9 +440,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout4.addWidget(self.hintOverlayLabel)
 
-        self.spacerItem8 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem9 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout4.addItem(self.spacerItem8)
+        self.hboxLayout4.addItem(self.spacerItem9)
 
         self.hintOverlayOption = QCheckBox(self.centralWidget)
         self.hintOverlayOption.setObjectName(u"hintOverlayOption")
@@ -441,9 +461,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout5.addWidget(self.buttonMappingLabel)
 
-        self.spacerItem9 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem10 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout5.addItem(self.spacerItem9)
+        self.hboxLayout5.addItem(self.spacerItem10)
 
         self.buttonMappingOption = QCheckBox(self.centralWidget)
         self.buttonMappingOption.setObjectName(u"buttonMappingOption")
@@ -462,9 +482,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout6.addWidget(self.memorizeAxisPosLabel)
 
-        self.spacerItem10 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem11 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout6.addItem(self.spacerItem10)
+        self.hboxLayout6.addItem(self.spacerItem11)
 
         self.memorizeAxisPosOption = QCheckBox(self.centralWidget)
         self.memorizeAxisPosOption.setObjectName(u"memorizeAxisPosOption")
@@ -483,9 +503,9 @@ class Ui_MainWindow(object):
 
         self.hboxLayout7.addWidget(self.freelookAutoCenterLabel)
 
-        self.spacerItem11 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacerItem12 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.hboxLayout7.addItem(self.spacerItem11)
+        self.hboxLayout7.addItem(self.spacerItem12)
 
         self.freelookAutoCenterOption = QCheckBox(self.centralWidget)
         self.freelookAutoCenterOption.setObjectName(u"freelookAutoCenterOption")
@@ -503,9 +523,9 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addItem(self.verticalSpacer)
 
-        self.spacerItem12 = QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.spacerItem13 = QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
 
-        self.verticalLayout.addItem(self.spacerItem12)
+        self.verticalLayout.addItem(self.spacerItem13)
 
         self.startBtn = QPushButton(self.centralWidget)
         self.startBtn.setObjectName(u"startBtn")
@@ -535,7 +555,9 @@ class Ui_MainWindow(object):
         self.centerControlKey.setText("")
         self.enableFreelookLabel.setText("")
         self.enableFreelookKey.setText("")
-        self.freelookFovLabel.setText("")
+        self.viewCenterLabel.setText("")
+        self.viewCenterKey.setText("")
+        self.cameraFovLabel.setText("")
         self.taxiModeLabel.setText("")
         self.taxiModeKey.setText("")
         self.controlModeDescription.setText("")

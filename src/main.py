@@ -46,7 +46,6 @@ MOUSE_SPEED_DEFAULT = 10  # Windows默认灵敏度(1-20)
 CONFIG_FILE = "config.ini"
 CONFIG = {
     'General': {
-        'wsize': (int),
         'language': (str),
         'show_tips': (bool),
     },
@@ -56,7 +55,8 @@ CONFIG = {
         'key_toggle': (str),
         'key_center': (str),
         'key_freelook': (str),
-        'freelook_fov': (int),
+        'key_view_center': (str),
+        'camera_fov': (int),
         'key_taxi': (str),
         'fixed_wing_mode': (bool),
         'fixed_wing_mode_step': (int),
@@ -69,6 +69,12 @@ CONFIG = {
         'button_mapping': (bool),
         'memorize_axis_pos': (bool),
         'freelook_auto_center': (bool),
+    },
+    'Internal': {
+        'w_size': (int),
+        'min_w_size': (int),
+        'max_w_size': (int),
+        'report_rate': (float),
     },
     'External': {}
 }
@@ -169,7 +175,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = Ui_MainWindow()
-        self.wsize = 350
+        self.w_size = 350
+        self.min_w_size = 300
+        self.max_w_size = 500
+        self.report_rate = 0.004
         self.setup_ui()
 
         # 程序状态
@@ -184,12 +193,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.key_toggle = '`'
         self.key_center = 'MMB'
         self.key_freelook = 'tab'
-        self.freelook_fov = 90
+        self.key_view_center = 'capslock'
+        self.camera_fov = 90
         self.key_taxi = 'alt + `'
         self.fixed_wing_mode = False
-        self.fixed_wing_mode_step = 2500
+        self.fixed_wing_mode_step = 3000
         self.helicopter_mode = False
-        self.helicopter_mode_step = 250
+        self.helicopter_mode_step = 150
         self.controller = 'None'
         self.show_cursor = False
         self.hint_overlay = True
@@ -209,7 +219,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.toggleEnabledKey.textChanged.connect(lambda text: self.update('key_toggle', text))
         self.ui.centerControlKey.textChanged.connect(lambda text: self.update('key_center', text))
         self.ui.enableFreelookKey.textChanged.connect(lambda text: self.update('key_freelook', text))
-        self.ui.freelookFovSpinBox.valueChanged.connect(lambda value: self.update('freelook_fov', value))
+        self.ui.viewCenterKey.textChanged.connect(lambda text: self.update('key_view_center', text))
+        self.ui.cameraFovSpinBox.valueChanged.connect(lambda value: self.update('camera_fov', value))
         self.ui.taxiModeKey.textChanged.connect(lambda text: self.update('key_taxi', text))
         self.ui.fixedWingModeOption.stateChanged.connect(lambda state: self.update('fixed_wing_mode', bool(state)))
         self.ui.fixedWingModeSpinBox.valueChanged.connect(lambda value: self.update('fixed_wing_mode_step', value))
@@ -244,8 +255,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.setWindowFlags(self.windowFlags() &
                             ~Qt.WindowMaximizeButtonHint)
-        self.setMinimumWidth(300)
-        self.setMaximumWidth(500)
+        self.setMinimumWidth(self.min_w_size)
+        self.setMaximumWidth(self.max_w_size)
 
         for name in controllers.names():
             self.ui.controllerComboBox.addItem(name)
@@ -517,8 +528,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.centerControlKey.setText(self.key_center)
         self.ui.enableFreelookLabel.setText(self.tr("EnableFreelook"))
         self.ui.enableFreelookKey.setText(self.key_freelook)
-        self.ui.freelookFovLabel.setText(self.tr('FreelookFov'))
-        self.ui.freelookFovSpinBox.setValue(self.freelook_fov)
+        self.ui.viewCenterLabel.setText(self.tr("ViewCenter"))
+        self.ui.viewCenterKey.setText(self.key_view_center)
+        self.ui.cameraFovLabel.setText(self.tr('CameraFov'))
+        self.ui.cameraFovSpinBox.setValue(self.camera_fov)
         self.ui.taxiModeLabel.setText(self.tr('TaxiMode'))
         self.ui.taxiModeKey.setText(self.key_taxi)
         self.ui.fixedWingModeLabel.setText(self.tr("FixedWingMode"))
@@ -580,6 +593,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.centerControlKey.setDisabled(disabled)
         self.ui.controllerComboBox.setDisabled(disabled)
         self.ui.enableFreelookKey.setDisabled(disabled)
+        self.ui.viewCenterKey.setDisabled(disabled)
         self.ui.taxiModeKey.setDisabled(disabled)
         self.ui.controlModeDescription.setHidden(not self.show_tips)
         not_equal = self.helicopter_mode != self.fixed_wing_mode
@@ -596,12 +610,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.buttonMappingOption.setDisabled(disabled)
         self.ui.memorizeAxisPosOption.setDisabled(disabled)
         self.ui.freelookAutoCenterOption.setDisabled(disabled)
-        self.ui.freelookFovSpinBox.setDisabled(disabled)
+        self.ui.cameraFovSpinBox.setDisabled(disabled)
 
         self.ui.verticalLayout.invalidate()
         self.ui.verticalLayout.activate()
         self.setMinimumHeight(self.minimumSizeHint().height())
-        self.resize(self.wsize, self.minimumSizeHint().height())
+        self.resize(self.w_size, self.minimumSizeHint().height())
         QtWidgets.QApplication.processEvents()
 
     def start_main_thread(self):
@@ -641,7 +655,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.main_thread:
             self.main_thread.join()
 
-        self.wsize = self.size().width()
+        self.w_size = self.size().width()
         self.save_config()
 
         event.accept()
@@ -677,7 +691,8 @@ class MainWindow(QtWidgets.QMainWindow):
             input.set_mouse_position(screen_center_x, screen_center_y)
 
             prev_x, prev_y = screen_center_x, screen_center_y
-            memo_x, memo_y = None, None
+            memo_x, memo_y = screen_center_x, screen_center_y
+            cam_x, cam_y = screen_center_x, screen_center_y
             freelook_on = False
 
             while not stop_thread:  # 用stop_thread控制退出
@@ -688,7 +703,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.toggle_enabled(_flag)
                     if self.memorize_axis_pos:
                         if not _flag:
-                            memo_x, memo_y = input.get_mouse_position()
+                            memo_x, memo_y = prev_x, prev_y
                         elif memo_x is not None and memo_y is not None:
                             prev_x, prev_y = memo_x, memo_y
                             input.set_mouse_position(memo_x, memo_y)
@@ -705,6 +720,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 if enabled and input.is_hotkey_pressed(self.key_center):
                     input.set_mouse_position(screen_center_x, screen_center_y)
+
+                if enabled and input.is_hotkey_pressed(self.key_view_center):
+                    Axis.vx, Axis.vy, cam_x, cam_y = 0, 0, screen_center_x, screen_center_y
+                    Axis.vz = axis_min + self.camera_fov * axis_step
 
                 if enabled and self.button_mapping and not freelook_on:
                     if input.is_pressing('LMB'):
@@ -728,27 +747,32 @@ class MainWindow(QtWidgets.QMainWindow):
                     else:
                         vjoy_device.set_button(5, False)
 
-                curr_x, curr_y = input.get_mouse_position()
-                delta_x = curr_x - prev_x
-                delta_y = curr_y - prev_y
-                prev_x, prev_y = curr_x, curr_y
-
-                if enabled and not input.alt_ctrl_shift(ctrl=True):
+                if enabled:
                     if input.is_pressed(self.key_freelook):
                         freelook_on = True
-                        Axis.vx, Axis.vy = 0, 0
-                        Axis.vz = axis_min + self.freelook_fov * axis_step
-                        memo_x, memo_y = input.get_mouse_position()
-                        input.set_mouse_position(screen_center_x, screen_center_y)
-                    if input.is_released(self.key_freelook):
-                        freelook_on = False
+                        memo_x, memo_y = prev_x, prev_y
                         if self.freelook_auto_center:
                             Axis.vx, Axis.vy = 0, 0
-                        if memo_x is not None and memo_y is not None:
-                            prev_x, prev_y = memo_x, memo_y
-                            input.set_mouse_position(memo_x, memo_y)
-                            memo_x, memo_y = None, None
-                    if input.is_pressing(self.key_freelook):
+                            Axis.vz = axis_min + self.camera_fov * axis_step
+                            prev_x, prev_y = screen_center_x, screen_center_y
+                            input.set_mouse_position(screen_center_x, screen_center_y)
+                        else:
+                            prev_x, prev_y = cam_x, cam_y
+                            input.set_mouse_position(cam_x, cam_y)
+                    if input.is_released(self.key_freelook):
+                        freelook_on = False
+                        cam_x, cam_y = prev_x, prev_y
+                        if self.freelook_auto_center:
+                            Axis.vx, Axis.vy = 0, 0
+                        prev_x, prev_y = memo_x, memo_y
+                        input.set_mouse_position(memo_x, memo_y)
+
+                    curr_x, curr_y = input.get_mouse_position()
+                    delta_x = curr_x - prev_x
+                    delta_y = curr_y - prev_y
+                    prev_x, prev_y = curr_x, curr_y
+
+                    if input.is_pressing(self.key_freelook) and freelook_on:
                         Axis.vx += delta_x * Sens.x * Sens.mou * 0.48
                         Axis.vy += delta_y * Sens.y * Sens.mou
 
@@ -821,7 +845,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 input.reset_wheel_delta()
 
-                time.sleep(0.004)
+                time.sleep(self.report_rate)
 
         except KeyboardInterrupt:
             pass
