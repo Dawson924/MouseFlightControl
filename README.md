@@ -27,7 +27,7 @@ Mouse Flight Control is designed to provide a intuitive way to control flight in
   - RY: Camera vertical view
   - SL0: Camera zoom in/out
 
-It's recommanded to set Saturation-Y to 50 for both RX and RY in tune setting.
+It's recommanded to set Saturation-Y to 38 for both RX and 50 for RY in tune setting.
 
 ## Usage
 
