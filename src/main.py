@@ -13,13 +13,17 @@ from PySide2.QtCore import Qt
 from PySide2.QtGui import QFont
 from app import App
 from controller.base import BaseController
-from controller.lockon.dcs import DCSController
+from controller.control import FixedWingController, HelicopterController
 from controller.manager import ControllerManager
 from enums.widget import OptionWidget
 from input import InputStateMonitor
 from ui.MainWindow import Ui_MainWindow
 from ui.overlay.CursorGraph import CursorGraph
 from ui.overlay.HintLabel import HintLabel
+
+from calc import map_to_vjoy
+
+from utils import check_overflow, wheel_step
 
 # 初始化vJoy设备
 vjoy_device = None
@@ -51,17 +55,13 @@ CONFIG = {
     },
     'Controls': {
         'mouse_speed': (int),
-        'controller': (str),
+        'controller': (int),
         'key_toggle': (str),
         'key_center': (str),
         'key_freelook': (str),
         'key_view_center': (str),
         'camera_fov': (int),
         'key_taxi': (str),
-        'fixed_wing_mode': (bool),
-        'fixed_wing_mode_step': (int),
-        'helicopter_mode': (bool),
-        'helicopter_mode_step': (int),
     },
     'Options': {
         'show_cursor': (bool),
@@ -81,23 +81,6 @@ CONFIG = {
 
 # 控制器管理
 controllers = ControllerManager()
-controllers.register('None', None)
-controllers.register('DCS World', DCSController, {
-    'options': [
-        ('view_center_on_ctrl', OptionWidget.CheckBox, False),
-        ('zoom_normal_on_ctrl', OptionWidget.CheckBox, False),
-    ],
-    'i18n': {
-        'en_US': {
-            'view_center_on_ctrl': 'View Center On Control',
-            'zoom_normal_on_ctrl': 'Zoom Normal On Control (Incompatible: FreeLook)',
-        },
-        'zh_CN': {
-            'view_center_on_ctrl': '控制时视角回中',
-            'zoom_normal_on_ctrl': '控制时视场正常（冲突：自由视角）',
-        }
-    }
-})
 
 class vjoyAxis():
     def __init__(self, x, y, th, rd):
@@ -140,24 +123,6 @@ screen_center_y = screen_height / 2
 delta_x = 0
 delta_y = 0
 
-def map_to_vjoy(val):
-    return int((val - axis_min) / (axis_max - axis_min) * 32767) + 1
-
-def check_overflow(a, min_val, max_val):
-    if a < min_val:
-        return min_val
-    elif a > max_val:
-        return max_val
-    return a
-
-def wheel_step(step, wheel_delta):
-    if wheel_delta == 0: return 0
-    if wheel_delta > 0:
-        sign = 1
-    else:
-        sign = -1
-    return sign * step
-
 def set_mouse_speed(speed):
     ctypes.windll.user32.SystemParametersInfoW(SPI_SETMOUSESPEED, 0, speed, 0)
 
@@ -196,11 +161,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.key_view_center = 'capslock'
         self.camera_fov = 90
         self.key_taxi = 'alt + `'
-        self.fixed_wing_mode = False
-        self.fixed_wing_mode_step = 3000
-        self.helicopter_mode = False
-        self.helicopter_mode_step = 150
-        self.controller = 'None'
+        self.controller = 0
         self.show_cursor = False
         self.hint_overlay = True
         self.button_mapping = True
@@ -210,6 +171,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 加载所有配置
         self.load_config()
+
+        # 加载配置的语言
+        translator = QtCore.QTranslator()
+        if translator.load(f"locales/{self.language}.qm"):
+            QtWidgets.QApplication.instance().installTranslator(translator)
+            QtWidgets.QApplication.instance().translators.append(translator)
+
+        self.create_menu()
+
+        self.setup_controllers()
+        self.create_controller_widgets(self.controller)
+
+        self.retranslate_ui()
+        self.update_ui_state()
 
         # 用户页面操作
         self.ui.startBtn.clicked.connect(self.on_button_click)
@@ -222,26 +197,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.viewCenterKey.textChanged.connect(lambda text: self.update('key_view_center', text))
         self.ui.cameraFovSpinBox.valueChanged.connect(lambda value: self.update('camera_fov', value))
         self.ui.taxiModeKey.textChanged.connect(lambda text: self.update('key_taxi', text))
-        self.ui.fixedWingModeOption.stateChanged.connect(lambda state: self.update('fixed_wing_mode', bool(state)))
-        self.ui.fixedWingModeSpinBox.valueChanged.connect(lambda value: self.update('fixed_wing_mode_step', value))
-        self.ui.helicopterModeOption.stateChanged.connect(lambda state: self.update('helicopter_mode', bool(state)))
-        self.ui.helicopterModeSpinBox.valueChanged.connect(lambda value: self.update('helicopter_mode_step', value))
-        self.ui.controllerComboBox.currentTextChanged.connect(self.on_controller_changed)
+        self.ui.controllerComboBox.currentIndexChanged.connect(self.on_controller_changed)
         self.ui.showCursorOption.stateChanged.connect(lambda state: self.update('show_cursor', bool(state)))
         self.ui.hintOverlayOption.stateChanged.connect(lambda state: self.update('hint_overlay', bool(state)))
         self.ui.buttonMappingOption.stateChanged.connect(lambda state: self.update('button_mapping', bool(state)))
         self.ui.memorizeAxisPosOption.stateChanged.connect(lambda state: self.update('memorize_axis_pos', bool(state)))
         self.ui.freelookAutoCenterOption.stateChanged.connect(lambda state: self.update('freelook_auto_center', bool(state)))
-
-        # 加载配置的语言
-        translator = QtCore.QTranslator()
-        if translator.load(f"locales/{self.language}.qm"):
-            QtWidgets.QApplication.instance().installTranslator(translator)
-            QtWidgets.QApplication.instance().translators.append(translator)
-
-        self.create_menu()
-        self.retranslate_ui()
-        self.update_ui_state()
 
         # 创建界面绘制信号
         self.interface = HintLabel()
@@ -258,16 +219,49 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setMinimumWidth(self.min_w_size)
         self.setMaximumWidth(self.max_w_size)
 
+    def setup_controllers(self):
+        controllers.register(0, None, { 'name': 'None' })
+        controllers.register(1, FixedWingController, {
+            'name': self.tr('FixedWingMode'),
+            'options': {
+                ('plane_step', OptionWidget.SpinBox, 3000)
+            },
+            'i18n': {
+                'en_US': {
+                    'plane_step': 'Step (per frame)',
+                },
+                'zh_CN': {
+                    'plane_step': '步长（每帧）',
+                }
+            }
+        })
+        controllers.register(2, HelicopterController, {
+            'name': self.tr('HelicopterMode'),
+            'options': {
+                ('heli_step', OptionWidget.SpinBox, 150)
+            },
+            'i18n': {
+                'en_US': {
+                    'heli_step': 'Step (per frame)',
+                },
+                'zh_CN': {
+                    'heli_step': '步长（每帧）',
+                }
+            }
+        })
+        index = self.controller
+        self.ui.controllerComboBox.clear()
         for name in controllers.names():
             self.ui.controllerComboBox.addItem(name)
+        self.ui.controllerComboBox.setCurrentIndex(index)
 
-    def create_controller_widgets(self, controller_name):
+    def create_controller_widgets(self, id):
         """根据控制器元数据创建动态控件"""
         # 清除现有的动态控件
         self.clear_controller_widgets()
 
         # 获取控制器元数据
-        metadata = controllers.get_metadata(controller_name)
+        metadata = controllers.get_metadata(id)
         if not metadata or 'options' not in metadata:
             return
 
@@ -341,7 +335,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 line_edit.setText(str(value))
 
-                # 连接信号
                 line_edit.textChanged.connect(
                     lambda text, opt=option: setattr(self.__external__, opt, str(text))
                 )
@@ -351,6 +344,37 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.dynamic_widgets[option] = {
                     'label': label,
                     'line_edit': line_edit,
+                    'layout': h_layout
+                }
+
+            elif widget == OptionWidget.SpinBox:
+                # 创建数值选择器
+                spin_box = QtWidgets.QSpinBox()
+                spin_box.setObjectName(f"{option}Option")
+                spin_box.setFixedWidth(100)
+                spin_box.setMinimum(0)
+                spin_box.setMaximum(1000000)
+
+                if hasattr(self.__external__, option):
+                    value = getattr(self.__external__, option)
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        value = default
+                else:
+                    value = default
+                    setattr(self.__external__, option, value)
+
+                spin_box.setValue(value)
+
+                spin_box.valueChanged.connect(
+                    lambda value, opt=option: setattr(self.__external__, opt, value))
+
+                h_layout.addWidget(spin_box)
+
+                self.dynamic_widgets[option] = {
+                    'label': label,
+                    'spin_box': spin_box,
                     'layout': h_layout
                 }
 
@@ -398,6 +422,8 @@ class MainWindow(QtWidgets.QMainWindow):
                                     setattr(self.__external__, k, True)
                                 elif v.lower() == 'false':
                                     setattr(self.__external__, k, False)
+                                elif v.isdigit():
+                                    setattr(self.__external__, k, int(v))
                                 else:
                                     setattr(self.__external__, k, v)
                         else:
@@ -504,6 +530,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.language = language_code
         self.retranslate_ui()
+        self.setup_controllers()
         self.create_controller_widgets(self.controller)
 
     def retranslate_ui(self):
@@ -534,16 +561,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.cameraFovSpinBox.setValue(self.camera_fov)
         self.ui.taxiModeLabel.setText(self.tr('TaxiMode'))
         self.ui.taxiModeKey.setText(self.key_taxi)
-        self.ui.fixedWingModeLabel.setText(self.tr("FixedWingMode"))
-        self.ui.fixedWingModeOption.setChecked(self.fixed_wing_mode)
-        self.ui.fixedWingModeSpinBox.setValue(self.fixed_wing_mode_step)
-        self.ui.helicopterModeLabel.setText(self.tr("HelicopterMode"))
-        self.ui.helicopterModeOption.setChecked(self.helicopter_mode)
-        self.ui.helicopterModeSpinBox.setValue(self.helicopter_mode_step)
         self.ui.controlModeDescription.setText(self.tr("ControlModeTip"))
         self.ui.controllerLabel.setText(self.tr("Controller"))
-        self.ui.controllerComboBox.setCurrentText(self.controller)
-        self.ui.controllerHint.setText(self.tr("ControllerOptionTip"))
+        self.ui.controllerComboBox.setCurrentIndex(self.controller)
+        self.ui.controllerComboBox.setCurrentText(controllers.get_name(self.controller))
         self.ui.optionsTitleLabel.setText(self.tr("OptionsTitle"))
         self.ui.showCursorLabel.setText(self.tr("ShowCursor"))
         self.ui.showCursorOption.setChecked(self.show_cursor)
@@ -596,10 +617,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.viewCenterKey.setDisabled(disabled)
         self.ui.taxiModeKey.setDisabled(disabled)
         self.ui.controlModeDescription.setHidden(not self.show_tips)
-        not_equal = self.helicopter_mode != self.fixed_wing_mode
-        self.ui.fixedWingModeOption.setDisabled(disabled or self.helicopter_mode and not_equal)
-        self.ui.helicopterModeOption.setDisabled(disabled or self.fixed_wing_mode and not_equal)
-        self.ui.controllerHint.setHidden(self.controller != 'None' or not self.show_tips)
         for option, controls in self.dynamic_widgets.items():
             if 'checkbox' in controls:
                 controls['checkbox'].setDisabled(disabled)
@@ -803,40 +820,20 @@ class MainWindow(QtWidgets.QMainWindow):
                         if taxi_mode:
                             Axis.rd = Axis.x
 
-                if enabled and self.fixed_wing_mode and input.alt_ctrl_shift():
-                    Axis.th += wheel_step(self.fixed_wing_mode_step, -input.get_wheel_delta())
-                    Axis.th = check_overflow(Axis.th, axis_min, axis_max)
-
-                if enabled and self.helicopter_mode and input.alt_ctrl_shift():
-                    if input.is_pressed('X'):
-                        Axis.rd = 0
-                    if input.is_pressed('Z'):
-                        Axis.th = axis_max
-                    if input.is_pressing('W'):
-                        Axis.th = Axis.th - self.helicopter_mode_step
-                        Axis.th = check_overflow(Axis.th, axis_min, axis_max)
-                    if input.is_pressing('S'):
-                        Axis.th = Axis.th + self.helicopter_mode_step
-                        Axis.th = check_overflow(Axis.th, axis_min, axis_max)
-                    if input.is_pressing('A'):
-                        Axis.rd = Axis.rd - self.helicopter_mode_step
-                        Axis.rd = check_overflow(Axis.rd, axis_min, axis_max)
-                    if input.is_pressing('D'):
-                        Axis.rd = Axis.rd + self.helicopter_mode_step
-                        Axis.rd = check_overflow(Axis.rd, axis_min, axis_max)
-
                 if enabled:
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_X, map_to_vjoy(Axis.x))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_Y, map_to_vjoy(Axis.y))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_Z, map_to_vjoy(Axis.th))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RZ, map_to_vjoy(Axis.rd))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RX, map_to_vjoy(Axis.vx))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RY, map_to_vjoy(Axis.vy))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_SL0, map_to_vjoy(Axis.vz))
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_X, map_to_vjoy(int(Axis.x)))
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_Y, map_to_vjoy(int(Axis.y)))
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_Z, map_to_vjoy(int(Axis.th)))
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RZ, map_to_vjoy(int(Axis.rd)))
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RX, map_to_vjoy(int(Axis.vx)))
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RY, map_to_vjoy(int(Axis.vy)))
+                    vjoy_device.set_axis(pyvjoy.HID_USAGE_SL0, map_to_vjoy(int(Axis.vz)))
 
                 if controller is not None and isinstance(controller, BaseController):
                     controller.update(SimpleNamespace(
-                        axis=Axis,
+                        Axis=Axis,
+                        axis_min=axis_min,
+                        axis_max=axis_max,
                         vjoy=vjoy_device,
                         input=input,
                         options=self.__external__,

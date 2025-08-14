@@ -1,45 +1,44 @@
-[build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "MouseFlightControl"
-version = "0.8.0"
-authors = [
-    { name = "Dawson", email = "bendawson0924@gmail.com" }
-]
+version = "0.9.0"
 description = "Mouse flight control for DCS World"
-requires-python = ">=3.8.10"
+authors = ["Dawson <bendawson0924@gmail.com>"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
 ]
 
-# 项目依赖
-dependencies = [
-    "altgraph==0.17.4",
-    "importlib-metadata==8.5.0",
-    "keyboard==0.13.5",
-    "packaging==25.0",
-    "pefile==2023.2.7",
-    "pyinstaller==6.14.2",
-    "pyinstaller-hooks-contrib==2025.6",
-    "pynput==1.8.1",
-    "PySide2==5.15.2.1",
-    "pyvjoy==1.0.1",
-    "pywin32==311",
-    "pywin32-ctypes==0.2.3",
-    "shiboken2==5.15.2.1",
-    "six==1.17.0",
-    "zipp==3.20.2",
-]
+[[tool.poetry.source]]
+name = "ali"
+url = "https://mirrors.aliyun.com/pypi/simple/"
+priority = "primary"
 
-# 开发依赖
-[project.optional-dependencies]
-dev = [
-]
+[tool.poetry.dependencies]
+python = "==3.8.10"
+altgraph = "==0.17.4"
+importlib-metadata = "==8.5.0"
+keyboard = "==0.13.5"
+packaging = "==25.0"
+pefile = "==2023.2.7"
+pyinstaller = "==6.14.2"
+pyinstaller-hooks-contrib = "==2025.6"
+pynput = "==1.8.1"
+PySide2 = "==5.15.2.1"
+pyvjoy = "==1.0.1"
+pywin32 = "==311"
+pywin32-ctypes = "==0.2.3"
+shiboken2 = "==5.15.2.1"
+six = "==1.17.0"
+zipp = "==3.20.2"
+setuptools = "==75.3.2"
+wheel = "==0.45.1"
+build = "==1.2.2"
+extensions = {path = "dist/extensions-0.0.0-cp38-cp38-win_amd64.whl"}
 
-# 可选：使用 setuptools 特定配置
-[tool.setuptools]
-packages = ["src"]
+[tool.poetry.build]
+generate-setup-file = false
+
+[build-system]
+requires = ["setuptools>=42", "wheel", "poetry-core>=1.0.0"]
+build-backend = "setuptools.build_meta"

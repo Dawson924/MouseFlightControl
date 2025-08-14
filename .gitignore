@@ -1,3 +1,6 @@
+# Lockfile
+*.lock
+
 # Environment
 .venv/
 
