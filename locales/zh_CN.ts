@@ -93,19 +93,14 @@
         <translation>游戏控制器</translation>
     </message>
     <message>
-        <location filename="main.py" line="553"/>
-        <source>ControllerOptionTip</source>
-        <translation type="obsolete">部分功能实现依赖特定的控制器</translation>
-    </message>
-    <message>
         <location filename="main.py" line="225"/>
         <source>FixedWingMode</source>
-        <translation type="unfinished">固定翼模式</translation>
+        <translation>固定翼模式</translation>
     </message>
     <message>
         <location filename="main.py" line="239"/>
         <source>HelicopterMode</source>
-        <translation type="unfinished">直升机模式</translation>
+        <translation>直升机模式</translation>
     </message>
     <message>
         <location filename="main.py" line="564"/>
@@ -131,32 +126,27 @@
         <translation>通用</translation>
     </message>
     <message>
-        <location filename="main.py" line="507"/>
-        <source>ControlKeyDescription</source>
-        <translation type="obsolete">地面滑行模式: Alt + key_toggle</translation>
-    </message>
-    <message>
         <location filename="main.py" line="562"/>
         <source>TaxiMode</source>
         <translation>地面滑行模式</translation>
     </message>
     <message>
-        <location filename="main.py" line="690"/>
+        <location filename="main.py" line="692"/>
         <source>Controlled</source>
         <translation>正在控制</translation>
     </message>
     <message>
-        <location filename="main.py" line="694"/>
+        <location filename="main.py" line="696"/>
         <source>NoControl</source>
         <translation>无控制</translation>
     </message>
     <message>
-        <location filename="main.py" line="734"/>
+        <location filename="main.py" line="736"/>
         <source>TaxiModeOn</source>
         <translation>地面滑行模式：启用</translation>
     </message>
     <message>
-        <location filename="main.py" line="736"/>
+        <location filename="main.py" line="738"/>
         <source>TaxiModeOff</source>
         <translation>地面滑行模式：禁用</translation>
     </message>

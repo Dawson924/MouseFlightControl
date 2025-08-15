@@ -93,19 +93,14 @@
         <translation>Game Controller</translation>
     </message>
     <message>
-        <location filename="main.py" line="553"/>
-        <source>ControllerOptionTip</source>
-        <translation type="obsolete">Some options may require specific controllers to work</translation>
-    </message>
-    <message>
         <location filename="main.py" line="225"/>
         <source>FixedWingMode</source>
-        <translation type="unfinished">Plane Mode</translation>
+        <translation>Plane Mode</translation>
     </message>
     <message>
         <location filename="main.py" line="239"/>
         <source>HelicopterMode</source>
-        <translation type="unfinished">Helicopter Mode</translation>
+        <translation>Helicopter Mode</translation>
     </message>
     <message>
         <location filename="main.py" line="564"/>
@@ -135,22 +130,22 @@
         <translation>Taxi Mode</translation>
     </message>
     <message>
-        <location filename="main.py" line="690"/>
+        <location filename="main.py" line="692"/>
         <source>Controlled</source>
         <translation>Controlled</translation>
     </message>
     <message>
-        <location filename="main.py" line="694"/>
+        <location filename="main.py" line="696"/>
         <source>NoControl</source>
         <translation>No Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="734"/>
+        <location filename="main.py" line="736"/>
         <source>TaxiModeOn</source>
         <translation>Taxi mode: On</translation>
     </message>
     <message>
-        <location filename="main.py" line="736"/>
+        <location filename="main.py" line="738"/>
         <source>TaxiModeOff</source>
         <translation>Taxi mode: Off</translation>
     </message>
