@@ -622,6 +622,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 controls['checkbox'].setDisabled(disabled)
             elif 'line_edit' in controls:
                 controls['line_edit'].setDisabled(disabled)
+            elif 'spin_box' in controls:
+                controls['spin_box'].setDisabled(disabled)
         self.ui.showCursorOption.setDisabled(disabled)
         self.ui.hintOverlayOption.setDisabled(disabled)
         self.ui.buttonMappingOption.setDisabled(disabled)
