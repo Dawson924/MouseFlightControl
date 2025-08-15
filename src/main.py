@@ -22,7 +22,6 @@ from ui.overlay.CursorGraph import CursorGraph
 from ui.overlay.HintLabel import HintLabel
 
 from calc import map_to_vjoy
-
 from utils import check_overflow, wheel_step
 
 # 初始化vJoy设备
@@ -772,7 +771,6 @@ class MainWindow(QtWidgets.QMainWindow):
                         memo_x, memo_y = prev_x, prev_y
                         if self.freelook_auto_center:
                             Axis.vx, Axis.vy = 0, 0
-                            Axis.vz = axis_min + self.camera_fov * axis_step
                             prev_x, prev_y = screen_center_x, screen_center_y
                             input.set_mouse_position(screen_center_x, screen_center_y)
                         else:
