@@ -40,7 +40,7 @@ It's recommanded to set Saturation-Y to 38 for RX and 50 for RY in tune setting.
 #### Control Switching
 - By default, pressing the `~` key on the keyboard toggles between pausing and resuming control. ⏯️
 
-#### Controller (Experimental)
+#### Controller (Deprecated)
 - For DCS, drop the MouseFlightControl folder and Export.lua from ./Platform/DCS/ into C:/.../DCS.openbeta/Scripts. In case you already have Export.lua, then add this line of code at the bottom.
 ```lua
 dofile(lfs.writedir()..[[Scripts\MouseFlightControl\MouseFlightControl.lua]]);

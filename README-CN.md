@@ -45,13 +45,6 @@
 - 默认情况下，按键盘上的 `~` 键可在暂停和恢复控制之间切换。⏯️
 
 
-#### 控制器设置（实验性功能）
-- 对于 DCS，将 ./Platform/DCS/ 目录下的 MouseFlightControl 文件夹和 Export.lua 文件复制到 C:/.../DCS.openbeta/Scripts 目录中。如果已存在 Export.lua 文件，请在文件底部添加以下代码：
-```lua
-dofile(lfs.writedir()..[[Scripts\MouseFlightControl\MouseFlightControl.lua]]);
-```
-
-
 ## 许可证
 
 本项目采用 [MIT 许可证](https://opensource.org/licenses/MIT) 授权。
