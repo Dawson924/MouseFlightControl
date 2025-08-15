@@ -631,9 +631,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.ui.verticalLayout.invalidate()
         self.ui.verticalLayout.activate()
+        QtWidgets.QApplication.processEvents()
         self.setMinimumHeight(self.minimumSizeHint().height())
         self.resize(self.w_size, self.minimumSizeHint().height())
-        QtWidgets.QApplication.processEvents()
 
     def start_main_thread(self):
         """启动子线程"""
