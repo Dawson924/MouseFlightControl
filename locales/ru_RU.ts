@@ -1,169 +1,168 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="1.1" language="zh_CN">
+<!DOCTYPE TS><TS version="1.1" language="ru_RU">
 <context>
     <name>MainWindow</name>
     <message>
         <location filename="main.py" line="554"/>
         <source>Language</source>
-        <translation>语言</translation>
+        <translation>Язык</translation>
     </message>
     <message>
         <location filename="main.py" line="495"/>
         <source>MouseFlightControl</source>
-        <translation type="obsolete">鼠标飞行控制软件</translation>
+        <translation type="obsolete">Управление полетом мышью</translation>
     </message>
     <message>
         <location filename="main.py" line="623"/>
         <source>Start</source>
-        <translation>开始</translation>
+        <translation>Старт</translation>
     </message>
     <message>
         <location filename="main.py" line="552"/>
         <source>Title</source>
-        <translation>鼠标飞行控制（免费软件）</translation>
+        <translation>Управление полетом мышью</translation>
     </message>
     <message>
         <location filename="main.py" line="624"/>
         <source>StatusStopped</source>
-        <translation>状态：停止</translation>
+        <translation>Состояние: остановлено</translation>
     </message>
     <message>
         <location filename="main.py" line="624"/>
         <source>StatusWorking</source>
-        <translation>状态：工作中</translation>
+        <translation>Состояние: работает</translation>
     </message>
     <message>
         <location filename="main.py" line="564"/>
         <source>CurrentValue</source>
-        <translation>当前值</translation>
+        <translation>Текущее значение</translation>
     </message>
     <message>
         <location filename="main.py" line="623"/>
         <source>Stop</source>
-        <translation>停止</translation>
+        <translation>Стоп</translation>
     </message>
     <message>
         <location filename="main.py" line="563"/>
         <source>Sensitive</source>
-        <translation>鼠标灵敏度</translation>
+        <translation>Чувствительность</translation>
     </message>
     <message>
         <location filename="main.py" line="565"/>
         <source>ToggleEnabled</source>
-        <translation>开关控制</translation>
+        <translation>Переключить управление</translation>
     </message>
     <message>
         <location filename="main.py" line="567"/>
         <source>CenterControl</source>
-        <translation>操控回中</translation>
+        <translation>Центрировать управление</translation>
     </message>
     <message>
         <location filename="main.py" line="582"/>
         <source>ShowCursor</source>
-        <translation>展示光标</translation>
+        <translation>Показать курсор</translation>
     </message>
     <message>
         <location filename="main.py" line="584"/>
         <source>HintOverlay</source>
-        <translation>提示覆盖</translation>
+        <translation>Прозрачные подсказки</translation>
     </message>
     <message>
         <location filename="main.py" line="586"/>
         <source>ButtonMapping</source>
-        <translation>鼠标按钮映射</translation>
+        <translation>Назначение кнопок мыши</translation>
     </message>
     <message>
         <location filename="main.py" line="588"/>
         <source>MemorizeAxisPos</source>
-        <translation>维持摇杆位置</translation>
+        <translation>Сохранять положение осей</translation>
     </message>
     <message>
         <location filename="main.py" line="561"/>
         <source>ControlsTitle</source>
-        <translation>控制</translation>
+        <translation>Управление</translation>
     </message>
     <message>
         <location filename="main.py" line="581"/>
         <source>OptionsTitle</source>
-        <translation>选项</translation>
+        <translation>Параметры</translation>
     </message>
     <message>
         <location filename="main.py" line="578"/>
         <source>Controller</source>
-        <translation>游戏控制器</translation>
+        <translation>Игровой контроллер</translation>
     </message>
     <message>
         <location filename="main.py" line="224"/>
         <source>FixedWingMode</source>
-        <translation>固定翼模式</translation>
+        <translation>Режим самолета</translation>
     </message>
     <message>
         <location filename="main.py" line="241"/>
         <source>HelicopterMode</source>
-        <translation>直升机模式</translation>
+        <translation>Режим вертолета</translation>
     </message>
     <message>
         <location filename="main.py" line="577"/>
         <source>ControlModeTip</source>
-        <translation>以下两种控制模式中：
-- 固定翼模式使用滚轮控制节流阀
-- 直升机模式使用wasd控制总距和舵
-你可以自定义每一次移动在轴上的步长</translation>
+        <translation>В следующих режимах управления:
+- В режиме самолета с неподвижными крыльями колесо мыши управляет дросселем
+- В режиме вертолета клавиши WASD управляют коллективом и педалями</translation>
     </message>
     <message>
         <location filename="main.py" line="569"/>
         <source>EnableFreelook</source>
-        <translation>启用自由视角</translation>
+        <translation>Включить свободный обзор</translation>
     </message>
     <message>
         <location filename="main.py" line="555"/>
         <source>ShowTips</source>
-        <translation>展示提示</translation>
+        <translation>Показать подсказки</translation>
     </message>
     <message>
         <location filename="main.py" line="553"/>
         <source>General</source>
-        <translation>通用</translation>
+        <translation>Основные</translation>
     </message>
     <message>
         <location filename="main.py" line="575"/>
         <source>TaxiMode</source>
-        <translation>地面滑行模式</translation>
+        <translation>Режим таксировки</translation>
     </message>
     <message>
         <location filename="main.py" line="705"/>
         <source>Controlled</source>
-        <translation>正在控制</translation>
+        <translation>Управляется</translation>
     </message>
     <message>
         <location filename="main.py" line="709"/>
         <source>NoControl</source>
-        <translation>无控制</translation>
+        <translation>Без управления</translation>
     </message>
     <message>
         <location filename="main.py" line="749"/>
         <source>TaxiModeOn</source>
-        <translation>地面滑行模式：启用</translation>
+        <translation>Режим таксировки: Включен</translation>
     </message>
     <message>
         <location filename="main.py" line="751"/>
         <source>TaxiModeOff</source>
-        <translation>地面滑行模式：禁用</translation>
+        <translation>Режим таксировки: Выключен</translation>
     </message>
     <message>
         <location filename="main.py" line="590"/>
         <source>FreelookAutoCenter</source>
-        <translation>自由视角自动回中</translation>
+        <translation>Автоматическое центрирование свободного обзора</translation>
     </message>
     <message>
         <location filename="main.py" line="573"/>
         <source>CameraFov</source>
-        <translation>自由视角视场角度</translation>
+        <translation>Поле зрения свободного обзора</translation>
     </message>
     <message>
         <location filename="main.py" line="571"/>
         <source>ViewCenter</source>
-        <translation>自由视角归中</translation>
+        <translation>Центр обзора</translation>
     </message>
 </context>
 </TS>

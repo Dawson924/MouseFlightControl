@@ -230,7 +230,10 @@ class MainWindow(QtWidgets.QMainWindow):
                     'plane_step': 'Step (per frame)',
                 },
                 'zh_CN': {
-                    'plane_step': '步长（每帧）',
+                    'plane_step': '每次滚轮滚动',
+                },
+                'ru_RU': {
+                    'plane_step': 'Шаг (на кадр)'
                 }
             }
         })
@@ -244,7 +247,10 @@ class MainWindow(QtWidgets.QMainWindow):
                     'heli_step': 'Step (per frame)',
                 },
                 'zh_CN': {
-                    'heli_step': '步长（每帧）',
+                    'heli_step': '每帧键盘移动',
+                },
+                'ru_RU': {
+                    'plane_step': 'Шаг (на кадр)'
                 }
             }
         })
@@ -516,6 +522,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.language_group.addAction(self.chinese_action)
         self.language_menu.addAction(self.chinese_action)
         self.chinese_action.setChecked(self.language == 'zh_CN')
+
+        # 俄语
+        self.russian_action = QtWidgets.QAction("Русский", self)
+        self.russian_action.setCheckable(True)
+        self.russian_action.triggered.connect(lambda: self.change_language('ru_RU'))
+        self.language_group.addAction(self.russian_action)
+        self.language_menu.addAction(self.russian_action)
+        self.russian_action.setChecked(self.language == 'ru_RU')
 
     def change_language(self, language_code):
         """更改应用程序语言"""
