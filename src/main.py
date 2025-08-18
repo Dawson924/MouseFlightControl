@@ -754,8 +754,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     input.set_mouse_position(screen_center_x, screen_center_y)
 
                 if enabled and input.is_hotkey_pressed(self.key_view_center):
-                    Axis.vx, Axis.vy, cam_x, cam_y = 0, 0, screen_center_x, screen_center_y
                     Axis.vz = axis_min + self.camera_fov * axis_step
+                    if not freelook_on:
+                        Axis.vx, Axis.vy, cam_x, cam_y = 0, 0, screen_center_x, screen_center_y
 
                 if enabled and self.button_mapping and not freelook_on:
                     if input.is_pressing('LMB'):

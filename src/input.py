@@ -251,16 +251,14 @@ class InputStateMonitor:
         try:
             current_x, current_y = win32api.GetCursorPos()
             if (current_x, current_y) != (int(x), int(y)):
-                dx = int(x) - current_x
-                dy = int(y) - current_y
                 win32api.mouse_event(
                     win32con.MOUSEEVENTF_MOVE,
-                    dx,
-                    dy,
+                    1,
+                    1,
                     0,
                     0
                 )
-                time.sleep(0.004)
+                time.sleep(0.016)
                 win32api.SetCursorPos((int(x), int(y)))
             self.mouse_x, self.mouse_y = x, y
         except:
