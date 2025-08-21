@@ -74,6 +74,7 @@ CONFIG = {
         'min_w_size': (int),
         'max_w_size': (int),
         'report_rate': (float),
+        'retry_count': (int),
     },
     'External': {}
 }
@@ -142,13 +143,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.w_size = 350
         self.min_w_size = 300
         self.max_w_size = 500
-        self.report_rate = 0.004
         self.setup_ui()
 
         # 程序状态
         self.main_thread = None
         self.running = False
         self.original_mouse_speed = get_mouse_speed()
+        self.report_rate = 0.004
+        self.retry_count = 2
 
         # 配置默认值
         self.language = 'en_US'
@@ -719,13 +721,16 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 controller = None
 
-            input = InputStateMonitor()
+            input = InputStateMonitor(self.report_rate, self.retry_count)
             input.set_mouse_position(screen_center_x, screen_center_y)
 
             prev_x, prev_y = screen_center_x, screen_center_y
-            memo_x, memo_y = screen_center_x, screen_center_y
+
+            stick_x, stick_y = screen_center_x, screen_center_y
             cam_x, cam_y = screen_center_x, screen_center_y
+
             freelook_on = False
+            use_cache = False
 
             while not stop_thread:  # 用stop_thread控制退出
                 input.update()
@@ -735,11 +740,10 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.toggle_enabled(_flag)
                     if self.memorize_axis_pos:
                         if not _flag:
-                            memo_x, memo_y = prev_x, prev_y
-                        elif memo_x is not None and memo_y is not None:
-                            prev_x, prev_y = memo_x, memo_y
-                            input.set_mouse_position(memo_x, memo_y)
-                            memo_x, memo_y = None, None
+                            stick_x, stick_y = prev_x, prev_y
+                        elif stick_x is not None and stick_y is not None:
+                            prev_x, prev_y = stick_x, stick_y
+                            use_cache = True
 
                 if input.is_hotkey_pressed(self.key_taxi):
                     if enabled:
@@ -751,7 +755,8 @@ class MainWindow(QtWidgets.QMainWindow):
                             if self.hint_overlay: self.interface_signal.emit(self.tr('TaxiModeOff'), 1000, 'red')
 
                 if enabled and input.is_hotkey_pressed(self.key_center):
-                    input.set_mouse_position(screen_center_x, screen_center_y)
+                    prev_x, prev_y = screen_center_x, screen_center_y
+                    use_cache = True
 
                 if enabled and input.is_hotkey_pressed(self.key_view_center):
                     Axis.vz = axis_min + self.camera_fov * axis_step
@@ -783,21 +788,25 @@ class MainWindow(QtWidgets.QMainWindow):
                 if enabled:
                     if input.is_pressed(self.key_freelook):
                         freelook_on = True
-                        memo_x, memo_y = prev_x, prev_y
+                        stick_x, stick_y = prev_x, prev_y
                         if self.freelook_auto_center:
                             Axis.vx, Axis.vy = 0, 0
                             prev_x, prev_y = screen_center_x, screen_center_y
-                            input.set_mouse_position(screen_center_x, screen_center_y)
+                            use_cache = True
                         else:
                             prev_x, prev_y = cam_x, cam_y
-                            input.set_mouse_position(cam_x, cam_y)
+                            use_cache = True
                     if input.is_released(self.key_freelook):
                         freelook_on = False
                         cam_x, cam_y = prev_x, prev_y
                         if self.freelook_auto_center:
                             Axis.vx, Axis.vy = 0, 0
-                        prev_x, prev_y = memo_x, memo_y
-                        input.set_mouse_position(memo_x, memo_y)
+                        prev_x, prev_y = stick_x, stick_y
+                        use_cache = True
+
+                    if use_cache:
+                        input.set_mouse_position(prev_x, prev_y)
+                        use_cache = False
 
                     curr_x, curr_y = input.get_mouse_position()
                     delta_x = curr_x - prev_x

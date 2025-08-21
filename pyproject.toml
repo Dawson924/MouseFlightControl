@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "MouseFlightControl"
-version = "0.10.0"
+version = "0.11.1"
 description = "Mouse flight control for DCS World"
 authors = ["Dawson <bendawson0924@gmail.com>"]
 classifiers = [
@@ -35,6 +35,7 @@ setuptools = "==75.3.2"
 wheel = "==0.45.1"
 build = "==1.2.2"
 extensions = {path = "dist/extensions-0.0.0-cp38-cp38-win_amd64.whl"}
+pydirectinput = "^1.0.4"
 
 [tool.poetry.build]
 generate-setup-file = false

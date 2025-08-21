@@ -1,11 +1,14 @@
-import time
+import pydirectinput
 from pynput import mouse
 import win32api
 import win32con
 import threading
 
 class InputStateMonitor:
-    def __init__(self):
+    def __init__(self, pause=0.016, retry=2):
+        pydirectinput.PAUSE = pause
+        self.retry = retry
+
         # 初始化鼠标状态
         self.mouse_buttons = {
             "LMB": False,  # 左键
@@ -249,18 +252,9 @@ class InputStateMonitor:
 
     def set_mouse_position(self, x, y):
         try:
-            current_x, current_y = win32api.GetCursorPos()
-            if (current_x, current_y) != (int(x), int(y)):
-                win32api.mouse_event(
-                    win32con.MOUSEEVENTF_MOVE,
-                    1,
-                    1,
-                    0,
-                    0
-                )
-                time.sleep(0.016)
-                win32api.SetCursorPos((int(x), int(y)))
-            self.mouse_x, self.mouse_y = x, y
+            for _ in range(self.retry):
+                pydirectinput.moveTo(int(x), int(y), duration=0)
+            self._update_mouse_position()
         except:
             pass
 
