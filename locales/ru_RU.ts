@@ -167,7 +167,7 @@
     <message>
         <location filename="main.py" line="595"/>
         <source>ShowIndicator</source>
-        <translation type="unfinished"></translation>
+        <translation>Индикатор</translation>
     </message>
 </context>
 </TS>

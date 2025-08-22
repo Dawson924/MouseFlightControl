@@ -168,7 +168,7 @@
     <message>
         <location filename="main.py" line="595"/>
         <source>ShowIndicator</source>
-        <translation type="unfinished"></translation>
+        <translation>控制指示器</translation>
     </message>
 </context>
 </TS>
