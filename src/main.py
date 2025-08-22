@@ -252,7 +252,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     'heli_step': '每帧键盘移动',
                 },
                 'ru_RU': {
-                    'plane_step': 'Шаг (на кадр)'
+                    'heli_step': 'Шаг (на кадр)'
                 }
             }
         })
