@@ -1,46 +1,35 @@
 from PySide2.QtWidgets import QWidget, QApplication
-from PySide2.QtGui import QPixmap, QPainter, QCursor, QBitmap
+from PySide2.QtGui import QPainter, QCursor, QBitmap, QPen, QColor
 from PySide2.QtCore import Qt, QTimer
 
 class CursorGraph(QWidget):
-    def __init__(self, cursor_path, size=(32, 32), parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        # 初始隐藏
         self.is_visible = False
 
-        # 窗口属性：无边框、透明、置顶、鼠标穿透
         self.setWindowFlags(
             Qt.FramelessWindowHint |
             Qt.WindowStaysOnTopHint |
             Qt.X11BypassWindowManagerHint |
-            Qt.Tool |                  # 工具窗口（不在任务栏显示）
-            Qt.WindowDoesNotAcceptFocus |  # 不接受焦点（避免任务栏激活）
-            Qt.WindowTransparentForInput  # 鼠标穿透（不拦截输入事件）
+            Qt.Tool |
+            Qt.WindowDoesNotAcceptFocus |
+            Qt.WindowTransparentForInput
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        # 加载并缩放光标图标（支持高DPI）
-        self.pixmap = QPixmap(cursor_path).scaled(
-            size[0] * self.devicePixelRatio(),
-            size[1] * self.devicePixelRatio(),
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation
-        )
-        self.pixmap.setDevicePixelRatio(self.devicePixelRatio())
+        # 增大窗口大小以容纳十字
+        cross_size = 20  # 十字大小
         self.resize(
-            self.pixmap.width() // self.devicePixelRatio(),
-            self.pixmap.height() // self.devicePixelRatio()
+            cross_size // self.devicePixelRatio(),
+            cross_size // self.devicePixelRatio()
         )
 
-        # 定时器：用于跟踪鼠标位置（初始不启动）
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_position)
         self.timer.setInterval(16)  # ~60Hz更新频率
 
-        # 创建空白光标（用于隐藏系统原光标）
         self.blank_cursor = QCursor(QBitmap(1, 1), QBitmap(1, 1))  # 1x1透明光标
 
-        # 初始隐藏窗口
         self.hide()
 
     def update_position(self):
@@ -55,19 +44,33 @@ class CursorGraph(QWidget):
 
     def paintEvent(self, event):
         """绘制自定义光标图标"""
-        if not self.is_visible or self.pixmap.isNull():
+        if not self.is_visible:
             return
+
         painter = QPainter(self)
-        painter.drawPixmap(0, 0, self.pixmap)
+
+        # 设置抗锯齿渲染
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # 将坐标系原点移动到窗口中心
+        painter.translate(self.width() / 2, self.height() / 2)
+
+        pen = QPen(QColor(255, 255, 255), 2)
+        painter.setPen(pen)
+
+        # 绘制十字
+        size = 8  # 十字大小的一半
+        painter.drawLine(-size, 0, size, 0)  # 水平线
+        painter.drawLine(0, -size, 0, size)  # 垂直线
 
     def show_cursor(self, flag):
         if flag:
             self.is_visible = True
             self.show()
-            self.timer.start()  # 启动位置跟踪
+            self.timer.start()
             QApplication.setOverrideCursor(self.blank_cursor)
         else:
             self.is_visible = False
-            self.timer.stop()  # 停止位置跟踪
+            self.timer.stop()
             self.hide()
             QApplication.restoreOverrideCursor()

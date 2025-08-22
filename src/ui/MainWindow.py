@@ -394,20 +394,20 @@ class Ui_MainWindow(object):
         self.hboxLayout3 = QHBoxLayout()
         self.hboxLayout3.setSpacing(10)
         self.hboxLayout3.setObjectName(u"hboxLayout3")
-        self.buttonMappingLabel = QLabel(self.centralWidget)
-        self.buttonMappingLabel.setObjectName(u"buttonMappingLabel")
+        self.showIndicatorLabel = QLabel(self.centralWidget)
+        self.showIndicatorLabel.setObjectName(u"showIndicatorLabel")
 
-        self.hboxLayout3.addWidget(self.buttonMappingLabel)
+        self.hboxLayout3.addWidget(self.showIndicatorLabel)
 
         self.spacerItem9 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout3.addItem(self.spacerItem9)
 
-        self.buttonMappingOption = QCheckBox(self.centralWidget)
-        self.buttonMappingOption.setObjectName(u"buttonMappingOption")
-        self.buttonMappingOption.setChecked(False)
+        self.showIndicatorOption = QCheckBox(self.centralWidget)
+        self.showIndicatorOption.setObjectName(u"showIndicatorOption")
+        self.showIndicatorOption.setChecked(False)
 
-        self.hboxLayout3.addWidget(self.buttonMappingOption)
+        self.hboxLayout3.addWidget(self.showIndicatorOption)
 
 
         self.vboxLayout2.addLayout(self.hboxLayout3)
@@ -415,20 +415,20 @@ class Ui_MainWindow(object):
         self.hboxLayout4 = QHBoxLayout()
         self.hboxLayout4.setSpacing(10)
         self.hboxLayout4.setObjectName(u"hboxLayout4")
-        self.memorizeAxisPosLabel = QLabel(self.centralWidget)
-        self.memorizeAxisPosLabel.setObjectName(u"memorizeAxisPosLabel")
+        self.buttonMappingLabel = QLabel(self.centralWidget)
+        self.buttonMappingLabel.setObjectName(u"buttonMappingLabel")
 
-        self.hboxLayout4.addWidget(self.memorizeAxisPosLabel)
+        self.hboxLayout4.addWidget(self.buttonMappingLabel)
 
         self.spacerItem10 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout4.addItem(self.spacerItem10)
 
-        self.memorizeAxisPosOption = QCheckBox(self.centralWidget)
-        self.memorizeAxisPosOption.setObjectName(u"memorizeAxisPosOption")
-        self.memorizeAxisPosOption.setChecked(False)
+        self.buttonMappingOption = QCheckBox(self.centralWidget)
+        self.buttonMappingOption.setObjectName(u"buttonMappingOption")
+        self.buttonMappingOption.setChecked(False)
 
-        self.hboxLayout4.addWidget(self.memorizeAxisPosOption)
+        self.hboxLayout4.addWidget(self.buttonMappingOption)
 
 
         self.vboxLayout2.addLayout(self.hboxLayout4)
@@ -436,23 +436,44 @@ class Ui_MainWindow(object):
         self.hboxLayout5 = QHBoxLayout()
         self.hboxLayout5.setSpacing(10)
         self.hboxLayout5.setObjectName(u"hboxLayout5")
-        self.freelookAutoCenterLabel = QLabel(self.centralWidget)
-        self.freelookAutoCenterLabel.setObjectName(u"freelookAutoCenterLabel")
+        self.memorizeAxisPosLabel = QLabel(self.centralWidget)
+        self.memorizeAxisPosLabel.setObjectName(u"memorizeAxisPosLabel")
 
-        self.hboxLayout5.addWidget(self.freelookAutoCenterLabel)
+        self.hboxLayout5.addWidget(self.memorizeAxisPosLabel)
 
         self.spacerItem11 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout5.addItem(self.spacerItem11)
 
+        self.memorizeAxisPosOption = QCheckBox(self.centralWidget)
+        self.memorizeAxisPosOption.setObjectName(u"memorizeAxisPosOption")
+        self.memorizeAxisPosOption.setChecked(False)
+
+        self.hboxLayout5.addWidget(self.memorizeAxisPosOption)
+
+
+        self.vboxLayout2.addLayout(self.hboxLayout5)
+
+        self.hboxLayout6 = QHBoxLayout()
+        self.hboxLayout6.setSpacing(10)
+        self.hboxLayout6.setObjectName(u"hboxLayout6")
+        self.freelookAutoCenterLabel = QLabel(self.centralWidget)
+        self.freelookAutoCenterLabel.setObjectName(u"freelookAutoCenterLabel")
+
+        self.hboxLayout6.addWidget(self.freelookAutoCenterLabel)
+
+        self.spacerItem12 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hboxLayout6.addItem(self.spacerItem12)
+
         self.freelookAutoCenterOption = QCheckBox(self.centralWidget)
         self.freelookAutoCenterOption.setObjectName(u"freelookAutoCenterOption")
         self.freelookAutoCenterOption.setChecked(False)
 
-        self.hboxLayout5.addWidget(self.freelookAutoCenterOption)
+        self.hboxLayout6.addWidget(self.freelookAutoCenterOption)
 
 
-        self.vboxLayout2.addLayout(self.hboxLayout5)
+        self.vboxLayout2.addLayout(self.hboxLayout6)
 
 
         self.verticalLayout.addLayout(self.vboxLayout2)
@@ -461,9 +482,9 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addItem(self.verticalSpacer)
 
-        self.spacerItem12 = QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.spacerItem13 = QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
 
-        self.verticalLayout.addItem(self.spacerItem12)
+        self.verticalLayout.addItem(self.spacerItem13)
 
         self.startBtn = QPushButton(self.centralWidget)
         self.startBtn.setObjectName(u"startBtn")
@@ -503,6 +524,7 @@ class Ui_MainWindow(object):
         self.optionsTitleLabel.setText("")
         self.showCursorLabel.setText("")
         self.hintOverlayLabel.setText("")
+        self.showIndicatorLabel.setText("")
         self.buttonMappingLabel.setText("")
         self.memorizeAxisPosLabel.setText("")
         self.freelookAutoCenterLabel.setText("")

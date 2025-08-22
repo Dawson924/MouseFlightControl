@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "MouseFlightControl"
-version = "0.11.2"
+version = "0.12.0"
 description = "Mouse flight control for DCS World"
 authors = ["Dawson <bendawson0924@gmail.com>"]
 classifiers = [

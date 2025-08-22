@@ -22,6 +22,7 @@ from ui.overlay.CursorGraph import CursorGraph
 from ui.overlay.HintLabel import HintLabel
 
 from calc import map_to_vjoy
+from ui.overlay.IndicatorWindow import IndicatorWindow
 from utils import check_overflow, wheel_step
 
 # 初始化vJoy设备
@@ -65,6 +66,7 @@ CONFIG = {
     'Options': {
         'show_cursor': (bool),
         'hint_overlay': (bool),
+        'show_indicator': (bool),
         'button_mapping': (bool),
         'memorize_axis_pos': (bool),
         'freelook_auto_center': (bool),
@@ -136,6 +138,7 @@ class MainWindow(QtWidgets.QMainWindow):
     dynamic_widgets = {}
     pointer_signal = QtCore.Signal(bool)
     interface_signal = QtCore.Signal(str, int, str)
+    indicator_signal = QtCore.Signal(bool)
 
     def __init__(self):
         super().__init__()
@@ -165,6 +168,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.controller = 0
         self.show_cursor = False
         self.hint_overlay = True
+        self.show_indicator = False
         self.button_mapping = True
         self.memorize_axis_pos = True
         self.freelook_auto_center = False
@@ -201,6 +205,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.controllerComboBox.currentIndexChanged.connect(self.on_controller_changed)
         self.ui.showCursorOption.stateChanged.connect(lambda state: self.update('show_cursor', bool(state)))
         self.ui.hintOverlayOption.stateChanged.connect(lambda state: self.update('hint_overlay', bool(state)))
+        self.ui.showIndicatorOption.stateChanged.connect(lambda state: self.update('show_indicator', bool(state)))
         self.ui.buttonMappingOption.stateChanged.connect(lambda state: self.update('button_mapping', bool(state)))
         self.ui.memorizeAxisPosOption.stateChanged.connect(lambda state: self.update('memorize_axis_pos', bool(state)))
         self.ui.freelookAutoCenterOption.stateChanged.connect(lambda state: self.update('freelook_auto_center', bool(state)))
@@ -208,8 +213,10 @@ class MainWindow(QtWidgets.QMainWindow):
         # 创建界面绘制信号
         self.interface = HintLabel()
         self.interface_signal.connect(self.interface.show_message)
-        self.pointer = CursorGraph('assets/cursor.png')
+        self.pointer = CursorGraph()
         self.pointer_signal.connect(self.pointer.show_cursor)
+        self.indicator = IndicatorWindow()
+        self.indicator_signal.connect(self.indicator.show_overlay)
 
         self.show()
 
@@ -585,6 +592,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.showCursorOption.setChecked(self.show_cursor)
         self.ui.hintOverlayLabel.setText(self.tr("HintOverlay"))
         self.ui.hintOverlayOption.setChecked(self.hint_overlay)
+        self.ui.showIndicatorLabel.setText(self.tr('ShowIndicator'))
+        self.ui.showIndicatorOption.setChecked(self.show_indicator)
         self.ui.buttonMappingLabel.setText(self.tr("ButtonMapping"))
         self.ui.buttonMappingOption.setChecked(self.button_mapping)
         self.ui.memorizeAxisPosLabel.setText(self.tr("MemorizeAxisPos"))
@@ -641,6 +650,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 controls['spin_box'].setDisabled(disabled)
         self.ui.showCursorOption.setDisabled(disabled)
         self.ui.hintOverlayOption.setDisabled(disabled)
+        self.ui.showIndicatorOption.setDisabled(disabled)
         self.ui.buttonMappingOption.setDisabled(disabled)
         self.ui.memorizeAxisPosOption.setDisabled(disabled)
         self.ui.freelookAutoCenterOption.setDisabled(disabled)
@@ -662,6 +672,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.update_ui_state()
 
+        if self.show_indicator:
+            self.indicator.show_overlay(True)
+
         self.main_thread = threading.Thread(
             target=self.main,
             daemon=True
@@ -677,6 +690,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.main_thread.join(timeout=1)
 
         self.update_ui_state()
+        self.indicator.show_overlay(False)
 
         self.main_thread = None
         self.pointer_signal.emit(False)
@@ -863,6 +877,9 @@ class MainWindow(QtWidgets.QMainWindow):
                         options=self.__external__,
                         enabled=enabled,
                     ), self)
+
+                self.indicator.set_throttle_value(1 - (map_to_vjoy(int(Axis.th)) / 0x8000))
+                self.indicator.set_rudder_value(map_to_vjoy(int(Axis.rd)) / 0x8000)
 
                 input.reset_wheel_delta()
 
