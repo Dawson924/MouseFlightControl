@@ -107,7 +107,7 @@
         <source>ControlModeTip</source>
         <translation>In the following control modes:
 - Fixed-wing mode uses wheel to control throttle
-- Helicopter mode uses WASD to control collective and peddal</translation>
+- Helicopter mode uses WASD to control collective and pedals</translation>
     </message>
     <message>
         <location filename="main.py" line="578"/>
