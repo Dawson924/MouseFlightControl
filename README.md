@@ -27,18 +27,12 @@ Mouse Flight Control is designed to provide a intuitive way to control flight in
   - RY: Camera vertical view
   - SL0: Camera zoom in/out
 
-It's recommanded to set Saturation-Y to 38 for RX and 50 for RY in tune setting.
+For more detailed information, please visit the Wiki
 
 ## Usage
 
-#### Starting the Program
-- Click the "Start" button to begin using the mouse flight control. 🚀
+- [Wiki](https://github.com/Dawson924/MouseFlightControl/wiki/English)
 
-#### Adjusting Sensitivity
-- Use the sensitivity slider to adjust the mouse sensitivity. You can set it to a value between 1 - 20. 🔍
-
-#### Control Switching
-- By default, pressing the `~` key on the keyboard toggles between pausing and resuming control. ⏯️
 
 ## License
 
