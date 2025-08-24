@@ -136,9 +136,10 @@ def get_mouse_speed():
 
 class MainWindow(QtWidgets.QMainWindow):
     dynamic_widgets = {}
-    pointer_signal = QtCore.Signal(bool)
-    interface_signal = QtCore.Signal(str, int, str)
-    indicator_signal = QtCore.Signal(bool)
+    pointer_show = QtCore.Signal(bool)
+    interface_show = QtCore.Signal(str, int, str)
+    indicator_show = QtCore.Signal(bool)
+    indicator_update = QtCore.Signal(float, float, float, float)
 
     def __init__(self):
         super().__init__()
@@ -212,11 +213,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 创建界面绘制信号
         self.interface = HintLabel()
-        self.interface_signal.connect(self.interface.show_message)
+        self.interface_show.connect(self.interface.show_message)
         self.pointer = CursorGraph()
-        self.pointer_signal.connect(self.pointer.show_cursor)
+        self.pointer_show.connect(self.pointer.show_cursor)
         self.indicator = IndicatorWindow()
-        self.indicator_signal.connect(self.indicator.show_overlay)
+        self.indicator_show.connect(self.indicator.show_overlay)
+        self.indicator_update.connect(self.update_indicator)
 
         self.show()
 
@@ -693,7 +695,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.indicator.show_overlay(False)
 
         self.main_thread = None
-        self.pointer_signal.emit(False)
+        self.pointer_show.emit(False)
 
     def closeEvent(self, event):
         """停止子线程"""
@@ -717,12 +719,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if flag:
             set_mouse_speed(self.mouse_speed)
-            if self.show_cursor: self.pointer_signal.emit(True)
-            if self.hint_overlay: self.interface_signal.emit(self.tr('Controlled'), 1000, 'green')
+            if self.show_cursor: self.pointer_show.emit(True)
+            if self.hint_overlay: self.interface_show.emit(self.tr('Controlled'), 1000, 'green')
         else:
             set_mouse_speed(self.original_mouse_speed)
-            self.pointer_signal.emit(False)
-            if self.hint_overlay: self.interface_signal.emit(self.tr('NoControl'), 1000, 'red')
+            self.pointer_show.emit(False)
+            if self.hint_overlay: self.interface_show.emit(self.tr('NoControl'), 1000, 'red')
 
         self.retranslate_ui()
 
@@ -738,11 +740,11 @@ class MainWindow(QtWidgets.QMainWindow):
             input = InputStateMonitor(self.report_rate, self.retry_count)
             input.set_mouse_position(screen_center_x, screen_center_y)
 
-            prev_x, prev_y = screen_center_x, screen_center_y
+            map_to_percentage = lambda value, rev=False: map_to_vjoy(int(value)) / 0x8000 if not rev else 1 - map_to_vjoy(int(value)) / 0x8000
 
+            prev_x, prev_y = screen_center_x, screen_center_y
             stick_x, stick_y = screen_center_x, screen_center_y
             cam_x, cam_y = screen_center_x, screen_center_y
-
             freelook_on = False
             use_cache = False
 
@@ -764,9 +766,9 @@ class MainWindow(QtWidgets.QMainWindow):
                         taxi_mode = not taxi_mode
                         Axis.rd = 0
                         if taxi_mode:
-                            if self.hint_overlay: self.interface_signal.emit(self.tr('TaxiModeOn'), 1000, 'green')
+                            if self.hint_overlay: self.interface_show.emit(self.tr('TaxiModeOn'), 1000, 'green')
                         else:
-                            if self.hint_overlay: self.interface_signal.emit(self.tr('TaxiModeOff'), 1000, 'red')
+                            if self.hint_overlay: self.interface_show.emit(self.tr('TaxiModeOff'), 1000, 'red')
 
                 if enabled and input.is_hotkey_pressed(self.key_center):
                     prev_x, prev_y = screen_center_x, screen_center_y
@@ -878,8 +880,12 @@ class MainWindow(QtWidgets.QMainWindow):
                         enabled=enabled,
                     ), self)
 
-                self.indicator.set_throttle_value(1 - (map_to_vjoy(int(Axis.th)) / 0x8000))
-                self.indicator.set_rudder_value(map_to_vjoy(int(Axis.rd)) / 0x8000)
+                if self.show_indicator:
+                    x_val = map_to_percentage(Axis.x)
+                    y_val = map_to_percentage(Axis.y)
+                    throttle_val = map_to_percentage(Axis.th, True)
+                    rudder_val = map_to_percentage(Axis.rd)
+                    self.indicator_update.emit(x_val, y_val, throttle_val, rudder_val)
 
                 input.reset_wheel_delta()
 
@@ -890,6 +896,12 @@ class MainWindow(QtWidgets.QMainWindow):
         finally:
             set_mouse_speed(self.original_mouse_speed)
             vjoy_device.reset()
+
+    def update_indicator(self, x, y, throttle, rudder):
+        """在主线程中更新IndicatorWindow的显示"""
+        self.indicator.set_xy_values(x, y)
+        self.indicator.set_throttle_value(throttle)
+        self.indicator.set_rudder_value(rudder)
 
 
 if __name__ == "__main__":

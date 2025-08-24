@@ -1,6 +1,6 @@
 from PySide2.QtWidgets import QApplication, QWidget
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QPainter, QColor, QPen
+from PySide2.QtCore import Qt, QPointF
+from PySide2.QtGui import QPainter, QColor, QPen, QPolygonF, QBrush
 
 class IndicatorWindow(QWidget):
     def __init__(self, parent=None):
@@ -12,6 +12,8 @@ class IndicatorWindow(QWidget):
         # 初始化轴量值（范围0-1）
         self.throttle_value = 0  # 油门轴值
         self.rudder_value = 0.5    # 方向舵轴值
+        self.x_axis_value = 0.5    # X轴值
+        self.y_axis_value = 0.5    # Y轴值
 
         screen_geometry = QApplication.primaryScreen().geometry()
         self.setGeometry(screen_geometry)
@@ -26,15 +28,37 @@ class IndicatorWindow(QWidget):
         self.rudder_value = max(0, min(1, value))
         self.update()
 
+    def set_xy_values(self, x_value, y_value):
+        """设置XY轴量值（0到1之间）"""
+        self.x_axis_value = max(0, min(1, x_value))
+        self.y_axis_value = max(0, min(1, y_value))
+        self.update()
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # 绘制油门轴（垂直）
-        self.draw_throttle_axis(painter)
+        # 首先绘制透明背景正方形
+        self.draw_transparent_background(painter)
 
-        # 绘制方向舵轴（水平）
+        # 然后绘制三个指示器
+        self.draw_throttle_axis(painter)
         self.draw_rudder_axis(painter)
+        self.draw_quadrant_cross(painter)
+
+    def draw_transparent_background(self, painter):
+        """绘制透明背景正方形"""
+        screen_rect = self.geometry()
+
+        # 计算正方形的位置和大小
+        square_size = 180  # 正方形边长
+        square_x = 30  # 距离屏幕左侧30像素
+        square_y = screen_rect.height() - square_size - 30  # 距离屏幕底部30像素
+
+        # 绘制半透明红色背景
+        painter.setBrush(QBrush(QColor(255, 0, 0, 50)))
+        painter.setPen(Qt.NoPen)  # 无边框
+        painter.drawRect(square_x, square_y, square_size, square_size)
 
     def draw_throttle_axis(self, painter):
         """绘制垂直的油门轴"""
@@ -74,7 +98,7 @@ class IndicatorWindow(QWidget):
         line_length = 100  # 横线长度
 
         # 绘制主横线
-        pen = QPen(QColor(255, 0, 0), 2)  # 蓝色，2像素宽
+        pen = QPen(QColor(255, 0, 0), 2)  # 红色，2像素宽
         painter.setPen(pen)
         painter.drawLine(base_x, base_y, base_x + line_length, base_y)
 
@@ -83,12 +107,52 @@ class IndicatorWindow(QWidget):
         painter.setPen(pen)
         painter.drawLine(base_x + line_length / 2, base_y - 5, base_x + line_length / 2, base_y + 5)
 
-        # 绘制表示方向舵轴量的竖线（深蓝色）
+        # 绘制表示方向舵轴量的竖线（深红色）
         indicator_x = base_x + int(self.rudder_value * line_length)
-        pen.setColor(QColor(200, 0, 0))  # 深蓝色
+        pen.setColor(QColor(200, 0, 0))  # 深红色
         pen.setWidth(2)
         painter.setPen(pen)
         painter.drawLine(indicator_x, base_y - 10, indicator_x, base_y + 10)
+
+    def draw_quadrant_cross(self, painter):
+        """绘制象限十字和位置小球"""
+        # 计算位置和尺寸
+        screen_rect = self.geometry()
+        center_x = 125
+        center_y = screen_rect.height() - 125
+        cross_size = 60
+
+        # 绘制十字线
+        pen = QPen(QColor(255, 0, 0), 2)
+        painter.setPen(pen)
+
+        # 水平线
+        painter.drawLine(center_x - cross_size, center_y, center_x + cross_size, center_y)
+        # 垂直线
+        painter.drawLine(center_x, center_y - cross_size, center_x, center_y + cross_size)
+
+        # 计算小球位置
+        # X轴：0=最左，1=最右；Y轴：0=最上，1=最下
+        ball_x = center_x + int((self.x_axis_value - 0.5) * 2 * cross_size)
+        ball_y = center_y + int((self.y_axis_value - 0.5) * 2 * cross_size)
+
+        # 绘制空心菱形
+        pen = QPen(QColor(200, 0, 0))  # 设置边框颜色
+        pen.setWidth(2)  # 设置边框宽度
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)  # 不使用填充（空心）
+
+        # 定义菱形的四个顶点（以ball_x, ball_y为中心）
+        diamond_points = [
+            QPointF(ball_x, ball_y - 7),   # 上顶点
+            QPointF(ball_x + 5, ball_y),   # 右顶点
+            QPointF(ball_x, ball_y + 7),   # 下顶点
+            QPointF(ball_x - 5, ball_y)    # 左顶点
+        ]
+
+        # 创建多边形并绘制
+        polygon = QPolygonF(diamond_points)
+        painter.drawPolygon(polygon)
 
     def show_overlay(self, show: bool):
         """控制overlay窗口的显示与隐藏"""
