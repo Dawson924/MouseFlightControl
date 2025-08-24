@@ -4,11 +4,6 @@
 
 Mouse Flight Control is designed to provide a intuitive way to control flight in Game. It emulates a joystick's functionality through the mouse.
 
-## Features
-
-- **Mouse Joystick Emulation**: 🖱️ The center of the screen acts as the joystick's midpoint, with screen width representing the X-axis and height the Y-axis. This is a perfect solution for simulating joystick controls with a mouse.
-- **Customizable Controls**: 🎮 You can customize key mappings and various options such as cursor display, hint overlays, and use mouse button as joystick button.
-
 ## Installation
 
 ### Prerequisites
@@ -27,11 +22,14 @@ Mouse Flight Control is designed to provide a intuitive way to control flight in
   - RY: Camera vertical view
   - SL0: Camera zoom in/out
 
-For more detailed information, please visit the Wiki
+For more detailed information, please visit the [Wiki](https://github.com/Dawson924/MouseFlightControl/wiki/English)
 
 ## Usage
 
-- [Wiki](https://github.com/Dawson924/MouseFlightControl/wiki/English)
+- [Getting Started](https://github.com/Dawson924/MouseFlightControl/wiki/English#basic-concepts)
+- [Assign Axes](https://github.com/Dawson924/MouseFlightControl/wiki/English#assigning-virtual-axes)
+- [Custom Keybinds](https://github.com/Dawson924/MouseFlightControl/wiki/English#key-bindings)
+- [Controllers](https://github.com/Dawson924/MouseFlightControl/wiki/English#selecting-controllers)
 
 
 ## License
