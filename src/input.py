@@ -6,8 +6,11 @@ import threading
 
 class InputStateMonitor:
     def __init__(self, pause=0.016, retry=2):
-        pydirectinput.PAUSE = pause
+        self.pause = pause
         self.retry = retry
+
+        pydirectinput.PAUSE = self.pause
+        pydirectinput.FAILSAFE = False
 
         # 初始化鼠标状态
         self.mouse_buttons = {
@@ -255,8 +258,8 @@ class InputStateMonitor:
             for _ in range(self.retry):
                 pydirectinput.moveTo(int(x), int(y), duration=0)
             self._update_mouse_position()
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
     def get_mouse_delta(self, prev_x, prev_y):
         return self.mouse_x - prev_x, self.mouse_y - prev_y
