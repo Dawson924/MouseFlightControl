@@ -5,7 +5,14 @@ from PySide2.QtGui import QPainter, QColor, QPen, QPolygonF, QBrush
 class IndicatorWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.setWindowFlags(
+            Qt.FramelessWindowHint |
+            Qt.WindowStaysOnTopHint |
+            Qt.X11BypassWindowManagerHint |
+            Qt.Tool |
+            Qt.WindowDoesNotAcceptFocus |
+            Qt.WindowTransparentForInput
+        )
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
 
