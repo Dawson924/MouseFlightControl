@@ -233,35 +233,27 @@ class MainWindow(QtWidgets.QMainWindow):
         controllers.register(0, None, { 'name': 'None' })
         controllers.register(1, FixedWingController, {
             'name': self.tr('FixedWingMode'),
-            'options': {
+            'options': [
                 ('plane_step', OptionWidget.SpinBox, 3000)
-            },
+            ],
             'i18n': {
-                'en_US': {
-                    'plane_step': 'Step (per frame)',
-                },
-                'zh_CN': {
-                    'plane_step': '每次滚轮滚动',
-                },
-                'ru_RU': {
-                    'plane_step': 'Шаг (на кадр)'
+                'plane_step': {
+                    'en_US': 'Step Size',
+                    'zh_CN': '步长',
+                    'ru_RU': 'Размер шага'
                 }
             }
         })
         controllers.register(2, HelicopterController, {
             'name': self.tr('HelicopterMode'),
-            'options': {
+            'options': [
                 ('heli_step', OptionWidget.SpinBox, 150)
-            },
+            ],
             'i18n': {
-                'en_US': {
-                    'heli_step': 'Step (per frame)',
-                },
-                'zh_CN': {
-                    'heli_step': '每帧键盘移动',
-                },
-                'ru_RU': {
-                    'heli_step': 'Шаг (на кадр)'
+                'heli_step': {
+                    'en_US': 'Step Size',
+                    'zh_CN': '步长',
+                    'ru_RU': 'Размер шага'
                 }
             }
         })
@@ -289,7 +281,7 @@ class MainWindow(QtWidgets.QMainWindow):
             h_layout.setContentsMargins(0, 0, 0, 0)
 
             # 创建标签
-            text = metadata['i18n'][self.language][option]
+            text = metadata.get('i18n', {}).get(option, {}).get(self.language, option)
             label = QtWidgets.QLabel(text)
             label.setObjectName(f"{option}Label")
             label.setMinimumWidth(150)
@@ -743,8 +735,8 @@ class MainWindow(QtWidgets.QMainWindow):
             map_to_percentage = lambda value, rev=False: map_to_vjoy(int(value)) / 0x8000 if not rev else 1 - map_to_vjoy(int(value)) / 0x8000
 
             prev_x, prev_y = screen_center_x, screen_center_y
-            stick_x, stick_y = screen_center_x, screen_center_y
-            cam_x, cam_y = screen_center_x, screen_center_y
+            stick_pos = [screen_center_x, screen_center_y]
+            cam_pos = [screen_center_x, screen_center_y]
             freelook_on = False
             use_cache = False
 
@@ -756,9 +748,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.toggle_enabled(_flag)
                     if self.memorize_axis_pos:
                         if not _flag:
-                            stick_x, stick_y = prev_x, prev_y
-                        elif stick_x is not None and stick_y is not None:
-                            prev_x, prev_y = stick_x, stick_y
+                            stick_pos[0], stick_pos[1] = prev_x, prev_y
+                        elif stick_pos[0] is not None and stick_pos[1] is not None:
+                            prev_x, prev_y = stick_pos[0], stick_pos[1]
                             use_cache = True
 
                 if input.is_hotkey_pressed(self.key_taxi):
@@ -777,7 +769,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 if enabled and input.is_hotkey_pressed(self.key_view_center):
                     Axis.vz = axis_min + self.camera_fov * axis_step
                     if not freelook_on:
-                        Axis.vx, Axis.vy, cam_x, cam_y = 0, 0, screen_center_x, screen_center_y
+                        Axis.vx, Axis.vy = 0, 0
+                        cam_pos[0], cam_pos[1] = screen_center_x, screen_center_y
 
                 if enabled and self.button_mapping and not freelook_on:
                     if input.is_pressing('LMB'):
@@ -804,20 +797,20 @@ class MainWindow(QtWidgets.QMainWindow):
                 if enabled:
                     if input.is_pressed(self.key_freelook):
                         freelook_on = True
-                        stick_x, stick_y = prev_x, prev_y
+                        stick_pos[0], stick_pos[1] = prev_x, prev_y
                         if self.freelook_auto_center:
                             Axis.vx, Axis.vy = 0, 0
                             prev_x, prev_y = screen_center_x, screen_center_y
                             use_cache = True
                         else:
-                            prev_x, prev_y = cam_x, cam_y
+                            prev_x, prev_y = cam_pos[0], cam_pos[1]
                             use_cache = True
                     if input.is_released(self.key_freelook):
                         freelook_on = False
-                        cam_x, cam_y = prev_x, prev_y
+                        cam_pos[0], cam_pos[1] = prev_x, prev_y
                         if self.freelook_auto_center:
                             Axis.vx, Axis.vy = 0, 0
-                        prev_x, prev_y = stick_x, stick_y
+                        prev_x, prev_y = stick_pos[0], stick_pos[1]
                         use_cache = True
 
                     if use_cache:
@@ -827,16 +820,15 @@ class MainWindow(QtWidgets.QMainWindow):
                     curr_x, curr_y = input.get_mouse_position()
                     delta_x = curr_x - prev_x
                     delta_y = curr_y - prev_y
-                    prev_x, prev_y = curr_x, curr_y
 
                     if input.is_pressing(self.key_freelook) and freelook_on:
                         Axis.vx += delta_x * Sens.x * Sens.mou * 0.48
                         Axis.vy += delta_y * Sens.y * Sens.mou
 
-                        x_percent = (Axis.vx / axis_max) * 100
-                        y_percent = (Axis.vy / axis_max) * 100
-                        screen_x = screen_center_x + (x_percent / 100) * (screen_width / 2)
-                        screen_y = screen_center_y + (y_percent / 100) * (screen_height / 2)
+                        x_percent = Axis.vx / axis_max
+                        y_percent = Axis.vy / axis_max
+                        screen_x = screen_center_x + x_percent * (screen_width / 2)
+                        screen_y = screen_center_y + y_percent * (screen_height / 2)
                         prev_x, prev_y = screen_x, screen_y
 
                         Axis.vx = check_overflow(Axis.vx, axis_min, axis_max)
@@ -848,10 +840,10 @@ class MainWindow(QtWidgets.QMainWindow):
                         Axis.x += delta_x * Sens.x * Sens.mou * 0.48
                         Axis.y += delta_y * Sens.y * Sens.mou
 
-                        x_percent = (Axis.x / axis_max) * 100
-                        y_percent = (Axis.y / axis_max) * 100
-                        screen_x = screen_center_x + (x_percent / 100) * (screen_width / 2)
-                        screen_y = screen_center_y + (y_percent / 100) * (screen_height / 2)
+                        x_percent = Axis.x / axis_max
+                        y_percent = Axis.y / axis_max
+                        screen_x = screen_center_x + x_percent * (screen_width / 2)
+                        screen_y = screen_center_y + y_percent * (screen_height / 2)
                         prev_x, prev_y = screen_x, screen_y
 
                         Axis.x = check_overflow(Axis.x, axis_min, axis_max)
@@ -875,9 +867,11 @@ class MainWindow(QtWidgets.QMainWindow):
                         axis_min=axis_min,
                         axis_max=axis_max,
                         vjoy=vjoy_device,
+                        enabled=enabled,
                         input=input,
                         options=self.__external__,
-                        enabled=enabled,
+                        stick_pos=stick_pos,
+                        cam_pos=cam_pos,
                     ), self)
 
                 if self.show_indicator:
@@ -896,6 +890,15 @@ class MainWindow(QtWidgets.QMainWindow):
         finally:
             set_mouse_speed(self.original_mouse_speed)
             vjoy_device.reset()
+
+    def axis_to_screen(self, axis_x, axis_y):
+        x_percent = axis_x / axis_max
+        y_percent = axis_y / axis_max
+
+        screen_x = screen_center_x + x_percent * (screen_width / 2)
+        screen_y = screen_center_y + y_percent * (screen_height / 2)
+
+        return screen_x, screen_y
 
     def update_indicator(self, x, y, throttle, rudder):
         """在主线程中更新IndicatorWindow的显示"""

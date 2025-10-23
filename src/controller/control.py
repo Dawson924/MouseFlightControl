@@ -1,7 +1,6 @@
 from controller.base import BaseController
 from utils import check_overflow, wheel_step
 
-
 class FixedWingController(BaseController):
     def __init__(self, vjoy):
         super().__init__(vjoy)

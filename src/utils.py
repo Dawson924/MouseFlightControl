@@ -12,3 +12,9 @@ def wheel_step(step, wheel_delta):
     else:
         sign = -1
     return sign * step
+
+def pos(val):
+    val = float(val)
+    threshold = 1
+    val = 1 if abs(val) < threshold else val
+    return int(round(val))
