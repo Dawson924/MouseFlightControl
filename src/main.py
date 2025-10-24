@@ -17,6 +17,8 @@ from controller.control import FixedWingController, HelicopterController
 from controller.manager import ControllerManager
 from enums.widget import OptionWidget
 from input import InputStateMonitor
+from script_engine.runtime import load_lua_scripts
+from type.widget import OptionWidget
 from ui.MainWindow import Ui_MainWindow
 from ui.overlay.CursorGraph import CursorGraph
 from ui.overlay.HintLabel import HintLabel
