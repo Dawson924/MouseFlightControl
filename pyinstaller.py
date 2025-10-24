@@ -3,7 +3,7 @@ import shutil
 import subprocess
 
 def main():
-    folders_to_copy = ['assets', 'Platform', 'locales']
+    folders_to_copy = ['assets', 'locales', 'presets', 'scripts']
     source_dir = os.getcwd()
     target_dir = os.path.join(source_dir, 'dist', 'MouseFlightControl')
 

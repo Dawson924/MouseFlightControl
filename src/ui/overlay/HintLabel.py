@@ -5,19 +5,16 @@ from PySide2.QtGui import QFont
 class HintLabel(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 1. 定义基础样式（固定不变的部分）
         self.base_style = """
             background-color: rgba(0, 0, 0, 150);
             padding: 12px 24px;
             border-radius: 8px;
         """
-        # 初始样式
         font = QFont()
         font.setPointSize(16)
         self.setFont(font)
         self.setStyleSheet(self.base_style)
 
-        # 其他初始化设置（保持不变）
         self.setWindowFlags(
             Qt.FramelessWindowHint |
             Qt.WindowStaysOnTopHint |
@@ -30,7 +27,7 @@ class HintLabel(QLabel):
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.hide()
 
-    def show_message(self, text, duration=3000, color='white'):
+    def show_message(self, text, color='white', duration=3000):
         dynamic_style = f"color: {color};" + self.base_style
         self.setStyleSheet(dynamic_style)
         self.setText(text)

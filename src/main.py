@@ -5,6 +5,7 @@ import threading
 import time
 import ctypes
 from types import SimpleNamespace
+from lupa import LuaRuntime
 import pyvjoy
 import win32api
 
@@ -12,10 +13,10 @@ from PySide2 import QtWidgets, QtCore, QtGui
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QFont
 from app import App
+from common.fs import choose_single_file
 from controller.base import BaseController
 from controller.control import FixedWingController, HelicopterController
 from controller.manager import ControllerManager
-from enums.widget import OptionWidget
 from input import InputStateMonitor
 from script_engine.runtime import load_lua_scripts
 from type.widget import OptionWidget
@@ -53,7 +54,7 @@ CONFIG_FILE = "config.ini"
 CONFIG = {
     'General': {
         'language': (str),
-        'show_tips': (bool),
+        'captions': (bool),
     },
     'Controls': {
         'mouse_speed': (int),
@@ -73,12 +74,10 @@ CONFIG = {
         'memorize_axis_pos': (bool),
         'freelook_auto_center': (bool),
     },
-    'Internal': {
+    'Window': {
         'w_size': (int),
         'min_w_size': (int),
         'max_w_size': (int),
-        'report_rate': (float),
-        'retry_count': (int),
     },
     'External': {}
 }
@@ -139,9 +138,10 @@ def get_mouse_speed():
 class MainWindow(QtWidgets.QMainWindow):
     dynamic_widgets = {}
     pointer_show = QtCore.Signal(bool)
-    interface_show = QtCore.Signal(str, int, str)
+    interface_show = QtCore.Signal(str, str, int)
     indicator_show = QtCore.Signal(bool)
     indicator_update = QtCore.Signal(float, float, float, float)
+    lua = LuaRuntime(encoding="utf-8", unpack_returned_tuples=True)
 
     def __init__(self):
         super().__init__()
@@ -155,18 +155,26 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_thread = None
         self.running = False
         self.original_mouse_speed = get_mouse_speed()
-        self.report_rate = 0.004
-        self.retry_count = 2
+        self.pause = 0.004
+        self.attempts = 2
+        self.indicator_x = 30
+        self.indicator_y = -30
+
+        # 其他状态
+        self.lua_globals = self.lua.globals()
+        self.lua_inits, self.lua_funcs = load_lua_scripts(self.lua, './scripts/')
+        for k, v in self.lua_inits:
+            self._set_attr_value(k, v)
 
         # 配置默认值
         self.language = 'en_US'
-        self.show_tips = True
+        self.captions = True
         self.mouse_speed = 5
         self.key_toggle = '`'
         self.key_center = 'MMB'
         self.key_freelook = 'tab'
         self.key_view_center = 'capslock'
-        self.camera_fov = 90
+        self.camera_fov = 75
         self.key_taxi = 'alt + `'
         self.controller = 0
         self.show_cursor = False
@@ -214,11 +222,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.freelookAutoCenterOption.stateChanged.connect(lambda state: self.update('freelook_auto_center', bool(state)))
 
         # 创建界面绘制信号
-        self.interface = HintLabel()
+        self.interface = HintLabel(self)
         self.interface_show.connect(self.interface.show_message)
-        self.pointer = CursorGraph()
+        self.pointer = CursorGraph(self)
         self.pointer_show.connect(self.pointer.show_cursor)
-        self.indicator = IndicatorWindow()
+        self.indicator = IndicatorWindow(self, self.indicator_x, self.indicator_y)
         self.indicator_show.connect(self.indicator.show_overlay)
         self.indicator_update.connect(self.update_indicator)
 
@@ -236,26 +244,39 @@ class MainWindow(QtWidgets.QMainWindow):
         controllers.register(1, FixedWingController, {
             'name': self.tr('FixedWingMode'),
             'options': [
-                ('plane_step', OptionWidget.SpinBox, 3000)
+                ('throttle_speed', OptionWidget.SpinBox, 300),
+                ('increase_throttle_speed', OptionWidget.LineEdit, 'shift'),
+                ('decrease_throttle_speed', OptionWidget.LineEdit, 'ctrl'),
             ],
             'i18n': {
-                'plane_step': {
-                    'en_US': 'Step Size',
-                    'zh_CN': '步长',
-                    'ru_RU': 'Размер шага'
-                }
+                'throttle_speed': {
+                    'en_US': 'Throttle Speed',
+                    'zh_CN': '节流阀速度',
+                },
+                'increase_throttle_speed': {
+                    'en_US': 'Increase Speed (Hold)',
+                    'zh_CN': '增加移动速度',
+                },
+                'decrease_throttle_speed': {
+                    'en_US': 'Decrease Speed (Hold)',
+                    'zh_CN': '减少移动速度',
+                },
             }
         })
         controllers.register(2, HelicopterController, {
             'name': self.tr('HelicopterMode'),
             'options': [
-                ('heli_step', OptionWidget.SpinBox, 150)
+                ('collective_speed', OptionWidget.SpinBox, 125),
+                ('pedals_speed', OptionWidget.SpinBox, 125),
             ],
             'i18n': {
-                'heli_step': {
-                    'en_US': 'Step Size',
-                    'zh_CN': '步长',
-                    'ru_RU': 'Размер шага'
+                'collective_speed': {
+                    'en_US': 'Collective Speed',
+                    'zh_CN': '总距速度',
+                },
+                'pedals_speed': {
+                    'en_US': 'Pedals Speed',
+                    'zh_CN': '尾桨踏板速度',
                 }
             }
         })
@@ -417,13 +438,13 @@ class MainWindow(QtWidgets.QMainWindow):
         # 删除布局本身
         layout.deleteLater()
 
-    def load_config(self):
+    def load_config(self, file: str=CONFIG_FILE):
         """从配置文件加载设置"""
         config = configparser.ConfigParser()
 
-        if os.path.exists(CONFIG_FILE):
+        if os.path.exists(file):
             try:
-                config.read(CONFIG_FILE)
+                config.read(file)
                 for section, options in CONFIG.items():
                     if config.has_section(section):
                         if section == 'External':
@@ -502,16 +523,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self.general_menu = self.menuBar().addMenu('')
         self.language_menu = self.menuBar().addMenu('')
 
+        # 打开预设
+        self.import_action = QtWidgets.QAction('', self)
+        self.import_action.triggered.connect(self.open_preset)
+        self.general_menu.addAction(self.import_action)
+        # 开关提示
         self.tip_action = QtWidgets.QAction('', self)
         self.tip_action.setCheckable(True)
-        self.tip_action.setChecked(self.show_tips)
-        self.tip_action.triggered.connect(lambda: self.update('show_tips', not self.show_tips))
+        self.tip_action.setChecked(self.captions)
+        self.tip_action.triggered.connect(lambda: self.update('captions', not self.captions))
         self.general_menu.addAction(self.tip_action)
 
         # 添加语言选项
         self.language_group = QtWidgets.QActionGroup(self)
         self.language_group.setExclusive(True)
-
         # 英语
         self.english_action = QtWidgets.QAction("English", self)
         self.english_action.setCheckable(True)
@@ -519,7 +544,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.language_group.addAction(self.english_action)
         self.language_menu.addAction(self.english_action)
         self.english_action.setChecked(self.language == 'en_US')
-
         # 简体中文
         self.chinese_action = QtWidgets.QAction("简体中文", self)
         self.chinese_action.setCheckable(True)
@@ -527,7 +551,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.language_group.addAction(self.chinese_action)
         self.language_menu.addAction(self.chinese_action)
         self.chinese_action.setChecked(self.language == 'zh_CN')
-
         # 俄语
         self.russian_action = QtWidgets.QAction("Русский", self)
         self.russian_action.setCheckable(True)
@@ -535,6 +558,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.language_group.addAction(self.russian_action)
         self.language_menu.addAction(self.russian_action)
         self.russian_action.setChecked(self.language == 'ru_RU')
+
+    def open_preset(self):
+        file_path = choose_single_file(self, self.tr('ImportPreset'), './presets')
+        if not file_path:
+            return
+
+        self.load_config(file_path)
+        self.change_language(self.language)
+        self.retranslate_ui()
+        self.update_ui_state()
 
     def change_language(self, language_code):
         """更改应用程序语言"""
@@ -555,9 +588,10 @@ class MainWindow(QtWidgets.QMainWindow):
         """重新翻译UI文本"""
         # 窗口标题
         self.setWindowTitle(self.tr('Title'))
-        self.general_menu.setTitle(self.tr("General"))
-        self.language_menu.setTitle(self.tr("Language"))
-        self.tip_action.setText(self.tr('ShowTips'))
+        self.general_menu.setTitle(self.tr('General'))
+        self.tip_action.setText(self.tr('ShowCaptions'))
+        self.import_action.setText(self.tr('ImportPreset'))
+        self.language_menu.setTitle(self.tr('Language'))
 
         # 按钮文本
         self.ui.startBtn.setText(self.tr("Start") if not self.running else self.tr("Stop"))
@@ -636,7 +670,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.enableFreelookKey.setDisabled(disabled)
         self.ui.viewCenterKey.setDisabled(disabled)
         self.ui.taxiModeKey.setDisabled(disabled)
-        self.ui.controlModeDescription.setHidden(not self.show_tips)
+        self.ui.controlModeDescription.setHidden(not self.captions)
         for option, controls in self.dynamic_widgets.items():
             if 'checkbox' in controls:
                 controls['checkbox'].setDisabled(disabled)
@@ -714,11 +748,11 @@ class MainWindow(QtWidgets.QMainWindow):
         if flag:
             set_mouse_speed(self.mouse_speed)
             if self.show_cursor: self.pointer_show.emit(True)
-            if self.hint_overlay: self.interface_show.emit(self.tr('Controlled'), 1000, 'green')
+            if self.hint_overlay: self.interface_show.emit(self.tr('Controlled'), 'green', 1000)
         else:
             set_mouse_speed(self.original_mouse_speed)
             self.pointer_show.emit(False)
-            if self.hint_overlay: self.interface_show.emit(self.tr('NoControl'), 1000, 'red')
+            if self.hint_overlay: self.interface_show.emit(self.tr('NoControl'), 'red', 1000)
 
         self.retranslate_ui()
 
@@ -731,7 +765,7 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 controller = None
 
-            input = InputStateMonitor(self.report_rate, self.retry_count)
+            input = InputStateMonitor(self.pause, self.attempts)
             input.set_mouse_position(screen_center_x, screen_center_y)
 
             map_to_percentage = lambda value, rev=False: map_to_vjoy(int(value)) / 0x8000 if not rev else 1 - map_to_vjoy(int(value)) / 0x8000
@@ -760,9 +794,9 @@ class MainWindow(QtWidgets.QMainWindow):
                         taxi_mode = not taxi_mode
                         Axis.rd = 0
                         if taxi_mode:
-                            if self.hint_overlay: self.interface_show.emit(self.tr('TaxiModeOn'), 1000, 'green')
+                            if self.hint_overlay: self.interface_show.emit(self.tr('TaxiModeOn'), 'green', 1000)
                         else:
-                            if self.hint_overlay: self.interface_show.emit(self.tr('TaxiModeOff'), 1000, 'red')
+                            if self.hint_overlay: self.interface_show.emit(self.tr('TaxiModeOff'), 'red', 1000)
 
                 if enabled and input.is_hotkey_pressed(self.key_center):
                     prev_x, prev_y = screen_center_x, screen_center_y
@@ -876,6 +910,28 @@ class MainWindow(QtWidgets.QMainWindow):
                         cam_pos=cam_pos,
                     ), self)
 
+                self.lua_globals.locale = self.language
+                self.lua_globals.input = input
+                self.lua_globals.mouse = {
+                    'speed': self.mouse_speed,
+                    'pos': (prev_x, prev_y),
+                    'deltaX': curr_x - prev_x,
+                    'deltaY': curr_y - prev_y,
+                }
+                self.lua_globals.control = {
+                    'active': enabled and not freelook_on,
+                    'steering': enabled and not freelook_on and taxi_mode,
+                }
+                self.lua_globals.camera = {
+                    'active': enabled and freelook_on,
+                    'fov': (Axis.vz - axis_min) / axis_step,
+                }
+                self.lua_globals.screen = {
+                    'renderMessage': lambda text, color, duration: self.interface_show.emit(text, color, duration)
+                }
+                for func in self.lua_funcs:
+                    func()
+
                 if self.show_indicator:
                     x_val = map_to_percentage(Axis.x)
                     y_val = map_to_percentage(Axis.y)
@@ -885,7 +941,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 input.reset_wheel_delta()
 
-                time.sleep(self.report_rate)
+                time.sleep(self.pause)
 
         except KeyboardInterrupt:
             pass

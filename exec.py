@@ -9,7 +9,7 @@ if __name__ == '__main__':
     try:
         if argv.__len__() >= 2:
             script_name = argv[1]
-            exec_path = BASE_DIR / 'scripts' / script_name.__add__('.bat')
+            exec_path = BASE_DIR / 'tasks' / script_name.__add__('.bat')
             args = " ".join(argv[2:])
             print('Target:', exec_path)
             if argv.__len__() > 2:
