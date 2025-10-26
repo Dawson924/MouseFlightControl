@@ -560,6 +560,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.russian_action.setChecked(self.language == 'ru_RU')
 
     def open_preset(self):
+        if self.running:
+            self.stop_main_thread()
+
         file_path = choose_single_file(self, self.tr('ImportPreset'), './presets')
         if not file_path:
             return
@@ -948,6 +951,8 @@ class MainWindow(QtWidgets.QMainWindow):
         finally:
             set_mouse_speed(self.original_mouse_speed)
             vjoy_device.reset()
+            input.cleanup()
+            del input
 
     def axis_to_screen(self, axis_x, axis_y):
         x_percent = axis_x / axis_max

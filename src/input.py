@@ -101,6 +101,29 @@ class InputStateMonitor:
         # 启动滚轮监听
         self.start_wheel_listener()
 
+    def cleanup(self):
+        self.stop_wheel_listener()
+        try:
+            pydirectinput.releaseAll()
+        except:
+            pass
+        self.mouse_buttons = {k: False for k in self.mouse_buttons}
+        self.prev_mouse_buttons = self.mouse_buttons.copy()
+        self.key_states = {}
+        self.prev_key_states = {}
+        self.wheel_delta = 0
+
+    def stop_wheel_listener(self):
+        if self.mouse_listener and self.mouse_listener.is_alive():
+            self.mouse_listener.stop()
+            # 强制等待线程退出
+            for _ in range(3):  # 重试3次
+                if self.mouse_listener.is_alive():
+                    self.mouse_listener.join(timeout=0.5)
+                else:
+                    break
+            self.mouse_listener = None  # 置空，避免重复操作
+
     def _on_scroll(self, x, y, dx, dy):
         """pynput滚轮事件回调函数"""
         with self.wheel_lock:
@@ -115,13 +138,6 @@ class InputStateMonitor:
                 on_click=None
             )
             self.mouse_listener.start()
-
-    def stop_wheel_listener(self):
-        """停止pynput滚轮监听器"""
-        if self.mouse_listener and self.mouse_listener.is_alive():
-            self.mouse_listener.stop()
-            self.mouse_listener.join(timeout=1.0)
-            self.mouse_listener = None
 
     def update(self):
         """更新所有输入状态并保存上一帧状态"""
