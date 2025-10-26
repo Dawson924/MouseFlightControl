@@ -27,19 +27,17 @@ def load_lua_scripts(runtime: LuaRuntime, dir: str):
             runtime.execute(script_content)
 
             init_func = runtime.globals().init
-            if not callable(init_func):
-                raise RuntimeError(f'Missing "init" function at {path}: \n{script_content}')
+            init = []
+            if callable(init_func):
+                for item in init_func().items():
+                    value = lua_table_to_python(item[1])
+                    init.append(value)
+            lua_inits.extend(init)
 
-            python_result = []
-            for item in init_func().items():
-                value = lua_table_to_python(item[1])
-                python_result.append(value)
-
-            lua_inits.extend(python_result)
             update_func = runtime.globals().update
-            if not callable(update_func):
-                raise RuntimeError(f'Missing "update" function at {path}: \n{script_content}')
-            lua_funcs.append(update_func)
+            if callable(update_func):
+                lua_funcs.append(update_func)
+
         except Exception as e:
             # TODO 打印错误日志
             print(e)
