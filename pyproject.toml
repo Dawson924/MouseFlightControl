@@ -9,6 +9,10 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
 ]
 
+[[tool.poetry.packages]]
+include = "*"
+from = "src"
+
 [[tool.poetry.source]]
 name = "ali"
 url = "https://mirrors.aliyun.com/pypi/simple/"
