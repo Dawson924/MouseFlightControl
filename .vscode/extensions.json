@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "ms-vscode.cpptools",
+        "sumneko.lua",
+        "shardulm94.trailing-spaces"
+    ]
+}

@@ -1,6 +1,6 @@
-function init()
+function Init()
     return {
-        {'indicator_x', 30},
-        {'indicator_y', -30},
+        indicator_x = 30,
+        indicator_y = -30,
     }
 end

@@ -1,6 +1,7 @@
-from PySide2.QtWidgets import QWidget, QApplication
-from PySide2.QtGui import QPainter, QCursor, QBitmap, QPen, QColor
 from PySide2.QtCore import Qt, QTimer
+from PySide2.QtGui import QBitmap, QColor, QCursor, QPainter, QPen
+from PySide2.QtWidgets import QApplication, QWidget
+
 
 class CursorGraph(QWidget):
     def __init__(self, parent=None):
@@ -8,20 +9,19 @@ class CursorGraph(QWidget):
         self.is_visible = False
 
         self.setWindowFlags(
-            Qt.FramelessWindowHint |
-            Qt.WindowStaysOnTopHint |
-            Qt.X11BypassWindowManagerHint |
-            Qt.Tool |
-            Qt.WindowDoesNotAcceptFocus |
-            Qt.WindowTransparentForInput
+            Qt.FramelessWindowHint
+            | Qt.WindowStaysOnTopHint
+            | Qt.X11BypassWindowManagerHint
+            | Qt.Tool
+            | Qt.WindowDoesNotAcceptFocus
+            | Qt.WindowTransparentForInput
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
 
         # 增大窗口大小以容纳十字
         cross_size = 20  # 十字大小
         self.resize(
-            cross_size // self.devicePixelRatio(),
-            cross_size // self.devicePixelRatio()
+            cross_size // self.devicePixelRatio(), cross_size // self.devicePixelRatio()
         )
 
         self.timer = QTimer(self)

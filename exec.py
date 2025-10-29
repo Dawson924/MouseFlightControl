@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
 
@@ -10,7 +10,7 @@ if __name__ == '__main__':
         if argv.__len__() >= 2:
             script_name = argv[1]
             exec_path = BASE_DIR / 'tasks' / script_name.__add__('.bat')
-            args = " ".join(argv[2:])
+            args = ' '.join(argv[2:])
             print('Target:', exec_path)
             if argv.__len__() > 2:
                 os.system(f'"{exec_path.__str__()}" {args}')

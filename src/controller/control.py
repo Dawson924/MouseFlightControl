@@ -1,6 +1,8 @@
 import time
+
 from controller.base import BaseController
 from utils import check_overflow, wheel_step
+
 
 class FixedWingController(BaseController):
     def __init__(self, vjoy):
@@ -13,8 +15,13 @@ class FixedWingController(BaseController):
                 f = 50
             elif state.input.alt_ctrl_shift(ctrl=True):
                 f = 5
-            state.Axis.th += wheel_step(state.options.throttle_speed * f, -state.input.get_wheel_delta())
-            state.Axis.th = check_overflow(state.Axis.th, state.axis_min, state.axis_max)
+            state.Axis.th += wheel_step(
+                state.options.throttle_speed * f, -state.input.get_wheel_delta()
+            )
+            state.Axis.th = check_overflow(
+                state.Axis.th, state.axis_min, state.axis_max
+            )
+
 
 class HelicopterController(BaseController):
     def __init__(self, vjoy):
@@ -32,11 +39,15 @@ class HelicopterController(BaseController):
             if time_since_collective >= self.min_interval:
                 if state.input.is_pressing('W'):
                     state.Axis.th -= state.options.collective_speed
-                    state.Axis.th = check_overflow(state.Axis.th, state.axis_min, state.axis_max)
+                    state.Axis.th = check_overflow(
+                        state.Axis.th, state.axis_min, state.axis_max
+                    )
                     self.last_collective_time = current_time
                 elif state.input.is_pressing('S'):
                     state.Axis.th += state.options.collective_speed
-                    state.Axis.th = check_overflow(state.Axis.th, state.axis_min, state.axis_max)
+                    state.Axis.th = check_overflow(
+                        state.Axis.th, state.axis_min, state.axis_max
+                    )
                     self.last_collective_time = current_time
 
             # 处理尾桨调节（A/D键）
@@ -44,11 +55,15 @@ class HelicopterController(BaseController):
             if time_since_pedals >= self.min_interval:
                 if state.input.is_pressing('A'):
                     state.Axis.rd -= state.options.pedals_speed
-                    state.Axis.rd = check_overflow(state.Axis.rd, state.axis_min, state.axis_max)
+                    state.Axis.rd = check_overflow(
+                        state.Axis.rd, state.axis_min, state.axis_max
+                    )
                     self.last_pedals_time = current_time
                 elif state.input.is_pressing('D'):
                     state.Axis.rd += state.options.pedals_speed
-                    state.Axis.rd = check_overflow(state.Axis.rd, state.axis_min, state.axis_max)
+                    state.Axis.rd = check_overflow(
+                        state.Axis.rd, state.axis_min, state.axis_max
+                    )
                     self.last_pedals_time = current_time
 
             # 重置操作（X/Z键）不受频率限制（瞬时触发）

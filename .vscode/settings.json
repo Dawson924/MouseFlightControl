@@ -1,0 +1,11 @@
+{
+    "Lua.diagnostics.disable": [
+        "missing-return"
+    ],
+    "Lua.workspace.library": [
+        "${workspaceFolder}/.vscode/lua-types"
+    ],
+    "Lua.diagnostics.unusedLocalExclude": ["_*"],
+    "Lua.runtime.version": "Lua 5.1",
+    "Lua.workspace.checkThirdParty": false
+}

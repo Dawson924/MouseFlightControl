@@ -7,10 +7,8 @@
 # Output
 build/
 dist/
+config.ini
 *.egg-info/
 *.pyc
-*.ini
 *.qm
-
-# Test
-*.test.py
+*.test.*

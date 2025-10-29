@@ -373,20 +373,20 @@ class Ui_MainWindow(object):
         self.hboxLayout2 = QHBoxLayout()
         self.hboxLayout2.setSpacing(10)
         self.hboxLayout2.setObjectName(u"hboxLayout2")
-        self.hintOverlayLabel = QLabel(self.centralWidget)
-        self.hintOverlayLabel.setObjectName(u"hintOverlayLabel")
+        self.showHintLabel = QLabel(self.centralWidget)
+        self.showHintLabel.setObjectName(u"showHintLabel")
 
-        self.hboxLayout2.addWidget(self.hintOverlayLabel)
+        self.hboxLayout2.addWidget(self.showHintLabel)
 
         self.spacerItem8 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout2.addItem(self.spacerItem8)
 
-        self.hintOverlayOption = QCheckBox(self.centralWidget)
-        self.hintOverlayOption.setObjectName(u"hintOverlayOption")
-        self.hintOverlayOption.setChecked(False)
+        self.showHintOption = QCheckBox(self.centralWidget)
+        self.showHintOption.setObjectName(u"showHintOption")
+        self.showHintOption.setChecked(False)
 
-        self.hboxLayout2.addWidget(self.hintOverlayOption)
+        self.hboxLayout2.addWidget(self.showHintOption)
 
 
         self.vboxLayout2.addLayout(self.hboxLayout2)
@@ -523,7 +523,7 @@ class Ui_MainWindow(object):
         self.controllerLabel.setText("")
         self.optionsTitleLabel.setText("")
         self.showCursorLabel.setText("")
-        self.hintOverlayLabel.setText("")
+        self.showHintLabel.setText("")
         self.showIndicatorLabel.setText("")
         self.buttonMappingLabel.setText("")
         self.memorizeAxisPosLabel.setText("")

@@ -9,6 +9,10 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
 ]
 
+[build-system]
+requires = ["setuptools>=42", "wheel", "poetry-core>=1.0.0"]
+build-backend = "setuptools.build_meta"
+
 [[tool.poetry.packages]]
 include = "*"
 from = "src"
@@ -40,10 +44,18 @@ wheel = "==0.45.1"
 build = "==1.2.2"
 pydirectinput = "^1.0.4"
 lupa = "^2.5"
+ruff = "^0.14.2"
+psutil = "^7.1.2"
 
 [tool.poetry.build]
 generate-setup-file = false
 
-[build-system]
-requires = ["setuptools>=42", "wheel", "poetry-core>=1.0.0"]
-build-backend = "setuptools.build_meta"
+[tool.ruff]
+exclude = ["src/ui/MainWindow.py"]
+
+[tool.ruff.lint]
+ignore = ["E722", "E731"]
+extend-select = ["I"]
+
+[tool.ruff.format]
+quote-style = "single"

@@ -1,17 +1,18 @@
+from PySide2.QtCore import QPointF, Qt, QTimer
+from PySide2.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF
 from PySide2.QtWidgets import QApplication, QWidget
-from PySide2.QtCore import Qt, QPointF, QTimer
-from PySide2.QtGui import QPainter, QColor, QPen, QPolygonF, QBrush
+
 
 class IndicatorWindow(QWidget):
     def __init__(self, parent=None, x=30, y=-30):
         super().__init__(parent)
         self.setWindowFlags(
-            Qt.FramelessWindowHint |
-            Qt.WindowStaysOnTopHint |
-            Qt.X11BypassWindowManagerHint |
-            Qt.Tool |
-            Qt.WindowDoesNotAcceptFocus |
-            Qt.WindowTransparentForInput
+            Qt.FramelessWindowHint
+            | Qt.WindowStaysOnTopHint
+            | Qt.X11BypassWindowManagerHint
+            | Qt.Tool
+            | Qt.WindowDoesNotAcceptFocus
+            | Qt.WindowTransparentForInput
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
@@ -69,13 +70,17 @@ class IndicatorWindow(QWidget):
 
         # 油门轴平滑
         if abs(self.current_throttle - self.target_throttle) > 0.001:
-            self.current_throttle += (self.target_throttle - self.current_throttle) * smooth_factor
+            self.current_throttle += (
+                self.target_throttle - self.current_throttle
+            ) * smooth_factor
         else:
             self.current_throttle = self.target_throttle
 
         # 方向舵轴平滑
         if abs(self.current_rudder - self.target_rudder) > 0.001:
-            self.current_rudder += (self.target_rudder - self.current_rudder) * smooth_factor
+            self.current_rudder += (
+                self.target_rudder - self.current_rudder
+            ) * smooth_factor
         else:
             self.current_rudder = self.target_rudder
 
@@ -106,7 +111,9 @@ class IndicatorWindow(QWidget):
         # 背景框位置基于传入的x、y坐标
         painter.setBrush(QBrush(QColor(255, 0, 0, 50)))
         painter.setPen(Qt.NoPen)
-        painter.drawRect(self.bg_square_x, self.bg_square_y, self.bg_square_size, self.bg_square_size)
+        painter.drawRect(
+            self.bg_square_x, self.bg_square_y, self.bg_square_size, self.bg_square_size
+        )
 
     def draw_throttle_axis(self, painter, value):
         # 所有坐标基于背景框左上角（bg_square_x, bg_square_y）计算
@@ -123,7 +130,12 @@ class IndicatorWindow(QWidget):
         pen.setWidth(1)
         painter.setPen(pen)
         painter.drawLine(base_x - 7, base_y, base_x + 7, base_y)
-        painter.drawLine(base_x - 7, base_y - line_height * 0.75, base_x + 7, base_y - line_height * 0.75)
+        painter.drawLine(
+            base_x - 7,
+            base_y - line_height * 0.75,
+            base_x + 7,
+            base_y - line_height * 0.75,
+        )
 
         # 指示器横线
         indicator_y = base_y - value * line_height
@@ -165,8 +177,12 @@ class IndicatorWindow(QWidget):
         # 十字线
         pen = QPen(QColor(255, 0, 0, 128), 2)
         painter.setPen(pen)
-        painter.drawLine(center_x - cross_size, center_y, center_x + cross_size, center_y)
-        painter.drawLine(center_x, center_y - cross_size, center_x, center_y + cross_size)
+        painter.drawLine(
+            center_x - cross_size, center_y, center_x + cross_size, center_y
+        )
+        painter.drawLine(
+            center_x, center_y - cross_size, center_x, center_y + cross_size
+        )
 
         # 菱形位置计算
         ball_x = center_x + (x_value - 0.5) * 2 * cross_size
@@ -176,7 +192,7 @@ class IndicatorWindow(QWidget):
             QPointF(ball_x, ball_y - 6.5),
             QPointF(ball_x + 5, ball_y),
             QPointF(ball_x, ball_y + 6.5),
-            QPointF(ball_x - 5, ball_y)
+            QPointF(ball_x - 5, ball_y),
         ]
 
         # 绘制菱形
