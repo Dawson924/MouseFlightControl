@@ -3,6 +3,7 @@
 
 # Environment
 .venv/
+.ruff_cache/
 
 # Output
 build/
