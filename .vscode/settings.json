@@ -1,4 +1,13 @@
 {
+    "Lua.diagnostics.globals": [
+        "Init",
+        "Update",
+        "camera",
+        "control",
+        "input",
+        "mouse",
+        "screen"
+    ],
     "Lua.diagnostics.disable": [
         "missing-return"
     ],

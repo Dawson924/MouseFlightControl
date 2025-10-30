@@ -11,7 +11,7 @@ mouse = Mouse
 -- 相机全局变量：控制视角
 ---@class Camera
 ---@field active boolean 是否激活自由视角（true=激活，false=未激活）
----@field fov number 视野角度（范围：0-180，数值越大视角越广）
+---@field fov number 视野角度（范围：0-120，数值越大视角越广）
 local Camera = {}
 camera = Camera
 
