@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "MouseFlightControl"
-version = "0.13.2"
+version = "0.15.0"
 description = "Mouse flight control for DCS World"
 authors = ["Dawson <bendawson0924@gmail.com>"]
 classifiers = [
@@ -46,6 +46,7 @@ pydirectinput = "^1.0.4"
 lupa = "^2.5"
 ruff = "^0.14.2"
 psutil = "^7.1.2"
+vgamepad = "^0.1.0"
 
 [tool.poetry.build]
 generate-setup-file = false

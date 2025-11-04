@@ -6,7 +6,7 @@ import subprocess
 def main():
     folders_to_copy = ['assets', 'locales', 'presets', 'scripts']
     source_dir = os.getcwd()
-    target_dir = os.path.join(source_dir, 'dist', 'MouseFlightControl')
+    target_dir = os.path.join(source_dir, 'dist')
 
     try:
         print('开始执行打包...')

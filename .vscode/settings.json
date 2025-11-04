@@ -16,5 +16,9 @@
     ],
     "Lua.diagnostics.unusedLocalExclude": ["_*"],
     "Lua.runtime.version": "Lua 5.1",
-    "Lua.workspace.checkThirdParty": false
+    "Lua.workspace.checkThirdParty": false,
+    "files.associations": {
+        "*.ts": "xml",
+        "*.spec": "python",
+    }
 }

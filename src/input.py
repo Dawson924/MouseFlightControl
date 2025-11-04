@@ -1,4 +1,5 @@
 import threading
+import time
 
 import pydirectinput
 import win32api
@@ -289,6 +290,7 @@ class InputStateMonitor:
         try:
             for _ in range(self.retry):
                 pydirectinput.moveTo(pos(x), pos(y), duration=0)
+                time.sleep(self.pause)
             self._update_mouse_position()
         except Exception as e:
             print(e)

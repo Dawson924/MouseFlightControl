@@ -8,20 +8,33 @@ import time
 from types import SimpleNamespace
 
 import psutil
-import pyvjoy
 import win32api
-from calc import map_to_vjoy
 from lupa import LuaRuntime
 from PySide2 import QtCore, QtGui, QtWidgets
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QFont
 
 from app import App
-from common.fs import choose_single_file
+from common.constants import BINARY_DIR
 from controller.base import BaseController
 from controller.control import FixedWingController, HelicopterController
 from controller.manager import ControllerManager
 from input import InputStateMonitor
+from lib.fs import choose_single_file
+from lib.joystick import (
+    AXIS_CENTER,
+    AXIS_LENGTH,
+    AXIS_MAX,
+    AXIS_MIN,
+    HID_RX,
+    HID_RY,
+    HID_RZ,
+    HID_SLIDER,
+    HID_X,
+    HID_Y,
+    HID_Z,
+    VJoyDevice,
+)
 from script_engine.runtime import load_lua_scripts
 from type.widget import OptionWidget
 from ui.MainWindow import Ui_MainWindow
@@ -29,22 +42,6 @@ from ui.overlay.CursorGraph import CursorGraph
 from ui.overlay.HintLabel import HintLabel
 from ui.overlay.IndicatorWindow import IndicatorWindow
 from utils import check_overflow, wheel_step
-
-# 初始化vJoy设备
-vjoy_device = None
-try:
-    vjoy_device = pyvjoy.VJoyDevice(1)
-    vjoy_device.set_axis(pyvjoy.HID_USAGE_Z, 0x8000)
-    vjoy_device.set_axis(pyvjoy.HID_USAGE_RZ, 0x4000)
-except Exception as e:
-    app = QtWidgets.QApplication(sys.argv)
-    error_msg = QtWidgets.QMessageBox()
-    error_msg.setIcon(QtWidgets.QMessageBox.Critical)
-    error_msg.setText('Failed to initialize vJoy Device')
-    error_msg.setInformativeText(f'{str(e)}\n')
-    error_msg.setWindowTitle('Error')
-    error_msg.exec_()
-    sys.exit(1)
 
 # Windows API常量
 SPI_SETMOUSESPEED = 113
@@ -88,23 +85,10 @@ CONFIG = {
 controllers = ControllerManager()
 
 
-class vjoyAxis:
+class AxisPos:
     def __init__(self, x, y, th, rd):
         self.x, self.y, self.th, self.rd = x, y, th, rd
         self.vx, self.vy, self.vz = 0, 0, 0
-
-
-class vjoyState:
-    def __init__(self, stick, th):
-        self.stick = stick
-        self.th = th
-
-
-class vjoySensitive:
-    def __init__(self, mou, x, y, th):
-        self.mou = mou
-        self.x, self.y = x, y
-        self.th = th
 
 
 # 全局控制变量
@@ -113,14 +97,13 @@ taxi_mode = False
 stop_thread = False  # 控制子线程退出
 
 # 全局变量初始化
-axis_max = 32767
-axis_min = -axis_max
-center_axis_x = 0
-center_axis_y = 0
+axis_max = AXIS_MAX
+axis_min = AXIS_MIN
+axis_length = AXIS_LENGTH
+axis_center = AXIS_CENTER
 axis_step = int(axis_max * 2 / 120)
 
-Axis = vjoyAxis(0, 0, axis_max, 0)
-Sens = vjoySensitive(15.0, 0.7, 0.9, 1.9)
+Axis = AxisPos(0, 0, axis_max, 0)
 
 screen_width = win32api.GetSystemMetrics(0)
 screen_height = win32api.GetSystemMetrics(1)
@@ -162,27 +145,36 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 程序状态
         self.main_thread = None
+        self.debug = False
         self.running = False
-        self.original_mouse_speed = get_mouse_speed()
-        self.pause = 0.004
-        self.attempts = 2
         self.process = psutil.Process(os.getpid())
-        self.indicator_x = 30
-        self.indicator_y = -30
+        self.original_mouse_speed = get_mouse_speed()
+        self.target_fps = 250
+        self.frame_interval = 1.0 / self.target_fps
+        self.pause = 0.004
 
         # 其他状态
+        self.attempts = 3
+        self.indicator_x = 30
+        self.indicator_y = -30
+        self.indicator_bg_color = (255, 90, 0, 50)
+        self.indicator_line_color = (255, 0, 0, 255)
+        self.axis_speed = 15
+        self.damp_x = 0.7
+        self.damp_y = 0.9
+
+        # 脚本初始化和运行
         self.lua_globals = self.lua.globals()
         self.lua_inits, self.lua_funcs = load_lua_scripts(self.lua, './scripts/')
         for k, v in self.lua_inits.items():
             self._set_attr_value(k, v)
         self.lua_lock = threading.Lock()
         self.lua.execute("""
-            -- Lua侧创建全局表，后续仅更新字段
             mouse = {speed=0, pos={0,0}, deltaX=0, deltaY=0}
             input = {}
             control = {active=false, steering=false}
             camera = {active=false, fov=0}
-            screen = {renderMessage = function(text, color, duration) end}  -- 占位，后续绑定
+            screen = {renderMessage = function(text, color, duration) end}
         """)
         self.lua_globals.screen.renderMessage = (
             lambda text, color, duration: self.interface_show.emit(
@@ -211,6 +203,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 加载所有配置
         self.load_config()
+
+        # 创建设备
+        self.joystick = VJoyDevice(1, os.path.join(BINARY_DIR, 'joystickinput.dll'))
+        self.joystick.set_axis(HID_Z, axis_max)
+        self.joystick.set_axis(HID_SLIDER, self.camera_fov * axis_step)
 
         # 加载配置的语言
         translator = QtCore.QTranslator()
@@ -276,7 +273,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.interface_show.connect(self.interface.show_message)
         self.pointer = CursorGraph(self)
         self.pointer_show.connect(self.pointer.show_cursor)
-        self.indicator = IndicatorWindow(self, self.indicator_x, self.indicator_y)
+        self.indicator = IndicatorWindow(
+            self,
+            self.indicator_x,
+            self.indicator_y,
+            self.indicator_bg_color,
+            self.indicator_line_color,
+        )
         self.indicator_show.connect(self.indicator.show_overlay)
         self.indicator_update.connect(self.update_indicator)
 
@@ -296,7 +299,7 @@ class MainWindow(QtWidgets.QMainWindow):
             {
                 'name': self.tr('FixedWingMode'),
                 'options': [
-                    ('throttle_speed', OptionWidget.SpinBox, 300),
+                    ('throttle_speed', OptionWidget.SpinBox, 100),
                     ('increase_throttle_speed', OptionWidget.LineEdit, 'shift'),
                     ('decrease_throttle_speed', OptionWidget.LineEdit, 'ctrl'),
                 ],
@@ -838,7 +841,7 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             Class = controllers.get_class(self.controller)
             if Class:
-                controller = Class(vjoy_device)
+                controller = Class(self.joystick)
             else:
                 controller = None
 
@@ -848,11 +851,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self.lua_globals.input.pressing = input.is_pressing
             self.lua_globals.input.released = input.is_released
 
-            map_to_percentage = (
-                lambda value, rev=False: map_to_vjoy(int(value)) / 0x8000
-                if not rev
-                else 1 - map_to_vjoy(int(value)) / 0x8000
-            )
+            def map_to_percentage(value, reverse=False):
+                clamped = max(-32767, min(32767, value))
+                return (
+                    (clamped + 32767) / 65534
+                    if not reverse
+                    else 1 - (clamped + 32767) / 65534
+                )
 
             prev_x, prev_y = screen_center_x, screen_center_y
             stick_pos = [screen_center_x, screen_center_y]
@@ -860,21 +865,39 @@ class MainWindow(QtWidgets.QMainWindow):
             freelook_on = False
             use_cache = False
 
-            loop_counter = 0
+            if self.debug:
+                loop_counter = 0  # 循环计数器
+                frame_count = 0  # 帧计数器
+                debug_start_time = time.perf_counter()  # 调试计时起点
+
+            last_frame_time = time.perf_counter()  # 上一帧开始时间
 
             while not stop_thread:  # 用stop_thread控制退出
+                current_frame_time = time.perf_counter()
+                target_end_time = last_frame_time + self.frame_interval
+                sleep_time = target_end_time - current_frame_time
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+
+                last_frame_time = target_end_time
+
+                if self.debug:
+                    frame_count += 1
+                    if current_frame_time - debug_start_time >= 1.0:
+                        actual_fps = frame_count / (
+                            current_frame_time - debug_start_time
+                        )
+                        frame_count = 0
+                        debug_start_time = current_frame_time
+                    loop_counter += 1
+                    if loop_counter % 500 == 0:
+                        cpu_usage = self.process.cpu_percent(interval=0.001)
+                        memory_usage = self.process.memory_info().rss / 1024 / 1024
+                        print(
+                            f'FPS: {actual_fps:.1f} | CPU: {cpu_usage:.1f}% | Memory: {memory_usage:.2f}MB (objects: {len(gc.get_objects())})'
+                        )
+
                 input.update()
-                loop_counter += 1
-                if loop_counter % 500 == 0:
-                    cpu_usage = self.process.cpu_percent(interval=0.001)  # 低开销采样
-                    memory_usage = (
-                        self.process.memory_info().rss / 1024 / 1024
-                    )  # 内存占用（MB）
-                    print(
-                        f'循环次数: {loop_counter} | CPU: {cpu_usage:.1f}% | 内存: {memory_usage:.2f}MB'
-                    )
-                if loop_counter % 500 == 0:
-                    print(f'Python对象总数: {len(gc.get_objects())}')
 
                 if input.is_hotkey_pressed(self.key_toggle):
                     _flag = not enabled
@@ -913,25 +936,25 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 if enabled and self.button_mapping and not freelook_on:
                     if input.is_pressing('LMB'):
-                        vjoy_device.set_button(1, True)
+                        self.joystick.set_button(1, True)
                     else:
-                        vjoy_device.set_button(1, False)
+                        self.joystick.set_button(1, False)
                     if input.is_pressing('RMB'):
-                        vjoy_device.set_button(2, True)
+                        self.joystick.set_button(2, True)
                     else:
-                        vjoy_device.set_button(2, False)
+                        self.joystick.set_button(2, False)
                     if input.is_pressing('MMB'):
-                        vjoy_device.set_button(3, True)
+                        self.joystick.set_button(3, True)
                     else:
-                        vjoy_device.set_button(3, False)
+                        self.joystick.set_button(3, False)
                     if input.is_pressing('XMB1'):
-                        vjoy_device.set_button(4, True)
+                        self.joystick.set_button(4, True)
                     else:
-                        vjoy_device.set_button(4, False)
+                        self.joystick.set_button(4, False)
                     if input.is_pressing('XMB2'):
-                        vjoy_device.set_button(5, True)
+                        self.joystick.set_button(5, True)
                     else:
-                        vjoy_device.set_button(5, False)
+                        self.joystick.set_button(5, False)
 
                 if enabled:
                     if input.is_pressed(self.key_freelook):
@@ -961,8 +984,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     delta_y = curr_y - prev_y
 
                     if input.is_pressing(self.key_freelook) and freelook_on:
-                        Axis.vx += delta_x * Sens.x * Sens.mou * 0.48
-                        Axis.vy += delta_y * Sens.y * Sens.mou
+                        Axis.vx += delta_x * self.axis_speed * self.damp_x * 0.48
+                        Axis.vy += delta_y * self.axis_speed * self.damp_y
 
                         x_percent = Axis.vx / axis_max
                         y_percent = Axis.vy / axis_max
@@ -976,8 +999,8 @@ class MainWindow(QtWidgets.QMainWindow):
                         Axis.vz += wheel_step(axis_step * 10, -input.get_wheel_delta())
                         Axis.vz = check_overflow(Axis.vz, axis_min, axis_max)
                     else:
-                        Axis.x += delta_x * Sens.x * Sens.mou * 0.48
-                        Axis.y += delta_y * Sens.y * Sens.mou
+                        Axis.x += delta_x * self.axis_speed * self.damp_x * 0.48
+                        Axis.y += delta_y * self.axis_speed * self.damp_y
 
                         x_percent = Axis.x / axis_max
                         y_percent = Axis.y / axis_max
@@ -992,15 +1015,13 @@ class MainWindow(QtWidgets.QMainWindow):
                             Axis.rd = Axis.x
 
                 if enabled:
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_X, map_to_vjoy(int(Axis.x)))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_Y, map_to_vjoy(int(Axis.y)))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_Z, map_to_vjoy(int(Axis.th)))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RZ, map_to_vjoy(int(Axis.rd)))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RX, map_to_vjoy(int(Axis.vx)))
-                    vjoy_device.set_axis(pyvjoy.HID_USAGE_RY, map_to_vjoy(int(Axis.vy)))
-                    vjoy_device.set_axis(
-                        pyvjoy.HID_USAGE_SL0, map_to_vjoy(int(Axis.vz))
-                    )
+                    self.joystick.set_axis(HID_X, int(Axis.x))
+                    self.joystick.set_axis(HID_Y, int(Axis.y))
+                    self.joystick.set_axis(HID_Z, int(Axis.th))
+                    self.joystick.set_axis(HID_RZ, int(Axis.rd))
+                    self.joystick.set_axis(HID_RX, int(Axis.vx))
+                    self.joystick.set_axis(HID_RY, int(Axis.vy))
+                    self.joystick.set_axis(HID_SLIDER, int(Axis.vz))
 
                 if controller is not None and isinstance(controller, BaseController):
                     controller.update(
@@ -1008,7 +1029,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             Axis=Axis,
                             axis_min=axis_min,
                             axis_max=axis_max,
-                            vjoy=vjoy_device,
+                            vjoy=self.joystick,
                             enabled=enabled,
                             input=input,
                             options=self.__external__,
@@ -1046,8 +1067,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 input.reset_wheel_delta()
 
-                time.sleep(self.pause)
-
         except KeyboardInterrupt as e:
             print(f'Keyboard interrupt: {e}')
         except Exception as e:
@@ -1057,7 +1076,7 @@ class MainWindow(QtWidgets.QMainWindow):
             traceback.print_exc()
         finally:
             set_mouse_speed(self.original_mouse_speed)
-            vjoy_device.reset()
+            self.joystick.reset()
             input.cleanup()
             del input
 

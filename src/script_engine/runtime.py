@@ -6,18 +6,19 @@ from lupa import LuaRuntime
 
 # 配置规则
 CONFIG_RULES = {
-    'indicator_x': (int, 30),  # 包含类型、默认值、最小值、最大值
-    'indicator_y': (int, -30),
+    'attempts': (int, 1, None),
+    'debug': (bool,),
+    'indicator_x': (int,),
+    'indicator_y': (int,),
+    'indicator_bg_color': (list,),
+    'indicator_line_color': (list,),
+    'axis_speed': (int, 1, 20),
+    'damp_x': (float, 0.1, 1),
+    'damp_y': (float, 0.1, 1),
 }
-
-# 从规则中提取默认配置（自动生成DEFAULT_CONFIG）
-DEFAULT_CONFIG = {key: rule[1] for key, rule in CONFIG_RULES.items()}
 
 
 def load_lua_scripts(runtime: LuaRuntime, dir: str):
-    if not os.path.isdir(dir):
-        return DEFAULT_CONFIG.copy(), []
-
     lua_paths = glob.glob(os.path.join(dir, '*.lua'))
     abs_dir = os.path.abspath(dir)
     additional_paths = [
@@ -52,8 +53,6 @@ def load_lua_scripts(runtime: LuaRuntime, dir: str):
                 if isinstance(py_config, dict):
                     validate_config(py_config, path)
                     script_configs.append(py_config)
-                else:
-                    print(f'脚本 {path} 的Init返回非表类型，已忽略')
 
             # 处理Update函数
             update_func = globals.Update
@@ -61,15 +60,14 @@ def load_lua_scripts(runtime: LuaRuntime, dir: str):
                 update_functions.append(update_func)
 
         except Exception as e:
-            print(f'加载脚本 {path} 失败：{str(e)}')
+            print(f'unable to load script: {str(e)}')
             continue
 
-    # 合并所有脚本配置和默认配置
-    merged_config = DEFAULT_CONFIG.copy()
+    init_configs = {}
     for cfg in script_configs:
-        merged_config.update(cfg)
+        init_configs.update(cfg)
 
-    return merged_config, update_functions
+    return init_configs, update_functions
 
 
 def lua_table_to_python(lua_obj) -> Any:
@@ -97,27 +95,27 @@ def validate_config(config: Dict[str, Any], script_path: str) -> None:
     """校验配置项的合法性（键名、类型、范围）"""
     for key, value in config.items():
         if key not in CONFIG_RULES:
-            valid_keys = list(CONFIG_RULES.keys())
             raise ValueError(
-                f'脚本 {script_path} 包含无效配置项：{key}（合法项：{valid_keys}）'
+                f"Invalid value: '{key}={value}' at {script_path} ({key} does not exist)"
             )
 
-        # 解析规则：(类型, 默认值, [最小值, 最大值])
         rule = CONFIG_RULES[key]
         expected_type = rule[0]
 
-        # 校验类型
         if not isinstance(value, expected_type):
             raise TypeError(
-                f'脚本 {script_path} 配置 {key} 类型错误：'
-                f'期望 {expected_type.__name__}，实际 {type(value).__name__}'
+                f"Invalid type: '{key}: {type(value).__name__}' at {script_path}"
+                f'Use {expected_type.__name__} instead'
             )
 
-        # 校验范围（如果规则中包含范围参数）
-        if len(rule) >= 4:  # 存在最小值和最大值（规则长度为4）
-            min_val, max_val = rule[2], rule[3]
-            if not (min_val <= value <= max_val):
+        if len(rule) >= 3:
+            min_val, max_val = rule[1], rule[2]
+            valid = True
+            if min_val is not None:
+                valid &= value >= min_val
+            if max_val is not None:
+                valid &= value <= max_val
+            if not valid:
                 raise ValueError(
-                    f'脚本 {script_path} 配置 {key} 超出范围：'
-                    f'[{min_val}, {max_val}]，实际 {value}'
+                    f"Invalid value: '{key}={value}' at {script_path} (out of range: {min_val}~{max_val})"
                 )
