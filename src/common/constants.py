@@ -7,6 +7,6 @@ else:
     DLL_PATH = os.path.join(os.curdir, 'dist')
 
 if hasattr(sys, 'frozen'):
-    LUA_LIBS_PATH = os.path.join(DLL_PATH, 'lua_libs')
+    LIB_PATH = os.path.join(DLL_PATH, 'lib')
 else:
-    LUA_LIBS_PATH = os.path.join(os.curdir, 'lua_libs')
+    LIB_PATH = os.path.join(os.curdir, 'lib')

@@ -187,7 +187,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 加载配置的语言
         translator = QtCore.QTranslator()
-        if translator.load(f'locales/{self.language}.qm'):
+        if translator.load(f'i18n/{self.language}.qm'):
             QtWidgets.QApplication.instance().installTranslator(translator)
             QtWidgets.QApplication.instance().translators.append(translator)
 
@@ -646,7 +646,7 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QApplication.instance().removeTranslator(translator)
 
         translator = QtCore.QTranslator()
-        if translator.load(f'locales/{language_code}.qm'):
+        if translator.load(f'i18n/{language_code}.qm'):
             QtWidgets.QApplication.instance().installTranslator(translator)
             QtWidgets.QApplication.instance().translators.append(translator)
 
@@ -1040,7 +1040,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             stick_pos=stick_pos,
                             cam_pos=cam_pos,
                         ),
-                        self,
+                        self
                     )
 
                 with self.lua_lock:
@@ -1108,19 +1108,19 @@ class MainWindow(QtWidgets.QMainWindow):
 if __name__ == '__main__':
     app = App(sys.argv)
 
-    if not os.path.exists('locales'):
+    if not os.path.exists('i18n'):
         error_msg = QtWidgets.QMessageBox()
         error_msg.setIcon(QtWidgets.QMessageBox.Critical)
         error_msg.setText('Missing locale files')
         error_msg.setInformativeText(
-            "Cannot find 'locales' directory. Please verify the program's files are installed correctly."
+            "Cannot find 'i18n' directory. Please verify the program's files are installed correctly."
         )
         error_msg.setWindowTitle('PATH NOT FOUND')
         error_msg.exec_()
         sys.exit(1)
 
     translator = QtCore.QTranslator()
-    if translator.load('locales/en_US.qm'):
+    if translator.load('i18n/en_US.qm'):
         app.installTranslator(translator)
         app.translators.append(translator)
 

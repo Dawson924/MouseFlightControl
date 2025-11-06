@@ -1,2 +1,2 @@
 @echo off
-lrelease.exe ./locales/en_US.ts ./locales/zh_CN.ts ./locales/ru_RU.ts
+lrelease.exe ./i18n/en_US.ts ./i18n/zh_CN.ts ./i18n/ru_RU.ts

@@ -5,7 +5,7 @@ project(Extensions)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(JOYSTICK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extensions/joystick")
+set(JOYSTICK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extension/joystick")
 
 file(GLOB JOYSTICK_SOURCE "${JOYSTICK_DIR}/src/*.c")
 

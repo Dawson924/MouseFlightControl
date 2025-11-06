@@ -4,7 +4,7 @@ import subprocess
 
 
 def main():
-    folders_to_copy = ['assets', 'locales', 'presets', 'scripts', 'lua_libs']
+    folders_to_copy = ['assets', 'i18n', 'Presets', 'scripts', 'lib', 'Joycons']
     source_dir = os.getcwd()
     target_dir = os.path.join(source_dir, 'dist')
 

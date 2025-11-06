@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 
 from lupa import LuaRuntime
 
-from common.constants import LUA_LIBS_PATH
+from common.constants import LIB_PATH
 
 # 配置规则
 CONFIG_RULES = {
@@ -34,17 +34,17 @@ def load_lua_scripts(runtime: LuaRuntime, dir: str):
         f'{abs_dir}/?.lua',
         f'{abs_dir}/?/?.lua',
         f'{abs_dir}/?/init.lua',
-        f'{LUA_LIBS_PATH}/?.lua',
-        f'{LUA_LIBS_PATH}/?/?.lua',
-        f'{LUA_LIBS_PATH}/?/init.lua',
+        f'{LIB_PATH}/?.lua',
+        f'{LIB_PATH}/?/?.lua',
+        f'{LIB_PATH}/?/init.lua',
     ]
 
     lua_globals.package.path = ';'.join(additional_paths) + ';' + lua_path
 
     # Lua C 路径
     additional_paths = [
-        f'{LUA_LIBS_PATH}/socket/core.dll',
-        f'{LUA_LIBS_PATH}/mime/core.dll',
+        f'{LIB_PATH}/socket/core.dll',
+        f'{LIB_PATH}/mime/core.dll',
     ]
     lua_globals.package.cpath = ';'.join(additional_paths) + ';' + lua_cpath
 

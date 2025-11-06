@@ -9,7 +9,7 @@ class FixedWingController(BaseController):
     def __init__(self, device):
         super().__init__(device)
 
-    def update(self, state):
+    def update(self, state, _):
         if state.enabled:
             f = 10
             if state.input.alt_ctrl_shift(shift=True):
