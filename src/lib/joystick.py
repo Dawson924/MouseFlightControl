@@ -1,7 +1,10 @@
 import ctypes
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from os import path
+from typing import Any, Dict, Literal
+
+from common.constants import DLL_PATH
 
 AXIS_MAX = 32767
 AXIS_MIN = -32768
@@ -16,6 +19,16 @@ HID_RY = 0x34  # Y旋转轴
 HID_RZ = 0x35  # Z旋转轴
 HID_SLIDER = 0x36  # 滑块1
 HID_WHEEL = 0x38  # 滚轮
+
+
+DeviceType = Literal['vjoy', 'xbox']
+
+
+def get_joystick_device(device: DeviceType):
+    if device == 'vjoy':
+        return VJoyDevice(1, path.join(DLL_PATH, 'joystickinput.dll'))
+    elif device == 'xbox':
+        return XboxDevice(path.join(DLL_PATH, 'joystickinput.dll'))
 
 
 class JoystickInput:
@@ -85,9 +98,9 @@ class JoystickDevice(ABC):
 
     def set_axis(self, axis: int, value: int) -> bool:
         if axis not in self.axis_mapping:
-            logging.warning(
-                f'Unsupported axis ID {axis} (device type: {self.__class__.__name__})'
-            )
+            # logging.warning(
+            #     f'Unsupported axis ID {axis} (device type: {self.__class__.__name__})'
+            # )
             return False
 
         try:
@@ -175,23 +188,22 @@ class VJoyDevice(JoystickDevice):
 class XboxDevice(JoystickDevice):
     def __init__(self, dll_path: str):
         try:
-            from vgamepad import XUSB_BUTTON, VGamepadException, VX360Gamepad
+            from vgamepad import XUSB_BUTTON, VX360Gamepad
 
             self._vgamepad_cls = VX360Gamepad
             self._xusb_button = XUSB_BUTTON
-            self._vgamepad_exception = VGamepadException
         except ImportError as e:
             raise RuntimeError(f'Failed to import vgamepad module: {e}') from e
         super().__init__(dll_path)
+        self.left_joystick = [AXIS_CENTER, AXIS_CENTER]
+        self.right_joystick = [AXIS_CENTER, AXIS_CENTER]
 
     def get_axis_mapping(self) -> Dict[int, str]:
         return {
-            HID_X: 'left_joystick_x',
-            HID_Y: 'left_joystick_y',
-            HID_RX: 'right_joystick_x',
-            HID_RY: 'right_joystick_y',
-            HID_Z: 'left_trigger',
-            HID_RZ: 'right_trigger',
+            HID_X: ('left_joystick', 'x'),  # 左摇杆X轴
+            HID_Y: ('left_joystick', 'y'),  # 左摇杆Y轴
+            HID_Z: ('right_joystick', 'y'),  # 右摇杆Y轴
+            HID_RZ: ('right_joystick', 'x'),  # 右摇杆X轴
         }
 
     def get_button_mapping(self) -> Dict[int, Any]:
@@ -213,21 +225,28 @@ class XboxDevice(JoystickDevice):
             return
         try:
             self.device = self._vgamepad_cls()
-        except self._vgamepad_exception as e:
+        except Exception as e:
             raise RuntimeError(
                 f'Xbox controller initialization failed (ViGEmBus driver not installed): {str(e)}\n'
                 'Solution: Install ViGEmBus driver (https://github.com/ViGEm/ViGEmBus/releases) and restart'
             ) from e
 
-    def convert(self, axis_id: int, value: int) -> float:
-        clamped = max(-32767, min(32767, value))
-        if axis_id in (HID_Z, HID_RZ):
-            return (clamped + 32767) / (2 * 32767)
-        else:
-            return clamped / 32767
+    def convert(self, _: int, value: int) -> float:
+        clamped = max(AXIS_MIN, min(AXIS_MAX, value))
+        return clamped
 
     def _set_axis(self, axis: str, value: float) -> None:
-        setattr(self.device, axis, value)
+        axis_type, dir = axis
+        if axis_type == 'left_joystick':
+            self.left_joystick[0 if dir == 'x' else 1] = value if dir == 'x' else -value
+            self.device.left_joystick(self.left_joystick[0], self.left_joystick[1])
+        elif axis_type == 'right_joystick':
+            self.right_joystick[0 if dir == 'x' else 1] = (
+                value if dir == 'x' else -value
+            )
+            self.device.right_joystick(self.right_joystick[0], self.right_joystick[1])
+
+        # 必须调用update同步状态
         self.device.update()
 
     def _set_button(self, target_btn: Any, pressed: bool) -> None:

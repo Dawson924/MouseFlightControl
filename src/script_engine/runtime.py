@@ -4,6 +4,8 @@ from typing import Any, Dict, List
 
 from lupa import LuaRuntime
 
+from common.constants import LUA_LIBS_PATH
+
 # 配置规则
 CONFIG_RULES = {
     'attempts': (int, 1, None),
@@ -12,6 +14,8 @@ CONFIG_RULES = {
     'indicator_y': (int,),
     'indicator_bg_color': (list,),
     'indicator_line_color': (list,),
+    'device': (str,),
+    'device_id': (int, 1, None),
     'axis_speed': (int, 1, 20),
     'damp_x': (float, 0.1, 1),
     'damp_y': (float, 0.1, 1),
@@ -21,14 +25,28 @@ CONFIG_RULES = {
 def load_lua_scripts(runtime: LuaRuntime, dir: str):
     lua_paths = glob.glob(os.path.join(dir, '*.lua'))
     abs_dir = os.path.abspath(dir)
+    lua_globals = runtime.globals()
+    lua_path = lua_globals.package.path
+    lua_cpath = lua_globals.package.cpath
+
+    # Lua 路径
     additional_paths = [
         f'{abs_dir}/?.lua',
         f'{abs_dir}/?/?.lua',
         f'{abs_dir}/?/init.lua',
+        f'{LUA_LIBS_PATH}/?.lua',
+        f'{LUA_LIBS_PATH}/?/?.lua',
+        f'{LUA_LIBS_PATH}/?/init.lua',
     ]
-    lua_globals = runtime.globals()
-    current_path = lua_globals.package.path
-    lua_globals.package.path = ';'.join(additional_paths) + ';' + current_path
+
+    lua_globals.package.path = ';'.join(additional_paths) + ';' + lua_path
+
+    # Lua C 路径
+    additional_paths = [
+        f'{LUA_LIBS_PATH}/socket/core.dll',
+        f'{LUA_LIBS_PATH}/mime/core.dll',
+    ]
+    lua_globals.package.cpath = ';'.join(additional_paths) + ';' + lua_cpath
 
     script_configs: List[Dict[str, Any]] = []
     update_functions: List[Any] = []
@@ -60,7 +78,8 @@ def load_lua_scripts(runtime: LuaRuntime, dir: str):
                 update_functions.append(update_func)
 
         except Exception as e:
-            print(f'unable to load script: {str(e)}')
+            # TODO 完善报错提示
+            print(e)
             continue
 
     init_configs = {}
@@ -100,15 +119,22 @@ def validate_config(config: Dict[str, Any], script_path: str) -> None:
             )
 
         rule = CONFIG_RULES[key]
-        expected_type = rule[0]
+        expected_type = None
+        is_tuple = False
+
+        if isinstance(rule, tuple):
+            expected_type = rule[0]
+            is_tuple = True
+        elif isinstance(rule, type):
+            expected_type = rule
 
         if not isinstance(value, expected_type):
             raise TypeError(
-                f"Invalid type: '{key}: {type(value).__name__}' at {script_path}"
+                f'Invalid type: {type(value).__name__} at {script_path}\n'
                 f'Use {expected_type.__name__} instead'
             )
 
-        if len(rule) >= 3:
+        if is_tuple and len(rule) >= 3:
             min_val, max_val = rule[1], rule[2]
             valid = True
             if min_val is not None:

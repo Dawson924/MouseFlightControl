@@ -125,7 +125,7 @@ class IndicatorWindow(QWidget):
     def draw_throttle_axis(self, painter, value):
         base_x = self.bg_square_x + 20
         base_y = self.bg_square_y + 190
-        line_height = 180
+        line_height = 172.5
 
         fg_r = self._foreground_color.red()
         fg_g = self._foreground_color.green()
@@ -140,11 +140,11 @@ class IndicatorWindow(QWidget):
         # 辅助横线
         pen.setWidth(self.base_line)
         painter.setPen(pen)
-        painter.drawLine(base_x - 7.5, base_y, base_x + 7.5, base_y)
+        painter.drawLine(base_x - 5, base_y, base_x + 5, base_y)
         painter.drawLine(
-            base_x - 7.5,
+            base_x - 5,
             base_y - line_height * 0.75,
-            base_x + 7.5,
+            base_x + 5,
             base_y - line_height * 0.75,
         )
 
@@ -157,9 +157,9 @@ class IndicatorWindow(QWidget):
 
     # 绘制方向舵轴
     def draw_rudder_axis(self, painter, value):
-        base_x = self.bg_square_x + 35
+        base_x = self.bg_square_x + 40
         base_y = self.bg_square_y + 190
-        line_length = 150
+        line_length = 140
 
         # 提取前景色分量
         fg_r = self._foreground_color.red()
@@ -179,7 +179,7 @@ class IndicatorWindow(QWidget):
         painter.drawLine(mid_x, base_y - 5, mid_x, base_y + 5)
 
         # 指示器竖线
-        indicator_x = base_x + value * line_length
+        indicator_x = base_x + value * line_length + 0.1
         pen.setColor(self._foreground_color)
         pen.setWidth(self.shifted_line)
         painter.setPen(pen)
@@ -188,7 +188,7 @@ class IndicatorWindow(QWidget):
     # 绘制十字象限
     def draw_quadrant_cross(self, painter, x_value, y_value):
         center_x = self.bg_square_x + 110
-        center_y = self.bg_square_y + 90
+        center_y = self.bg_square_y + 95
         cross_size = 80
 
         fg_r = self._foreground_color.red()
