@@ -37,7 +37,7 @@
 
 ## 联系方式
 
-如有任何问题或反馈，请联系开发者：[bendawson0924@gmail.com](mailto:bendawson0924@gmail.com) 或 [bilibili](https://space.bilibili.com/1738605283)。
+如有任何问题或反馈，请联系开发者：[bendawson0924@gmail.com](mailto:bendawson0924@gmail.com) 或 QQ群[1072150466](https://qm.qq.com/q/scbAJ5Ve1w)。
 
 
 ---
