@@ -12,9 +12,9 @@ class FixedWingController(BaseController):
     def update(self, state, _):
         if state.enabled:
             f = 10
-            if state.input.alt_ctrl_shift(shift=True):
+            if state.input.is_pressing(state.options.increase_throttle_speed):
                 f = 50
-            elif state.input.alt_ctrl_shift(ctrl=True):
+            elif state.input.is_pressing(state.options.decrease_throttle_speed):
                 f = 5
 
             state.Axis.th += wheel_step(
