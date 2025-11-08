@@ -111,8 +111,8 @@
     </message>
     <message>
         <location filename="main.py" line="685"/>
-        <source>EnableFreelook</source>
-        <translation>Enable Freelook</translation>
+        <source>EnableFreecam</source>
+        <translation>Enable Freecam</translation>
     </message>
     <message>
         <location filename="main.py" line="663"/>
@@ -151,13 +151,13 @@
     </message>
     <message>
         <location filename="main.py" line="708"/>
-        <source>FreelookAutoCenter</source>
-        <translation>Freelook Auto Center</translation>
+        <source>FreecamAutoCenter</source>
+        <translation>Freecam Auto Center</translation>
     </message>
     <message>
         <location filename="main.py" line="689"/>
         <source>CameraFov</source>
-        <translation>Freelook Field of View</translation>
+        <translation>Freecam Field of View</translation>
     </message>
     <message>
         <location filename="main.py" line="687"/>

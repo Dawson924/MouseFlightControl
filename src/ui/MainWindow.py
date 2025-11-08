@@ -211,25 +211,25 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.centerControlLayout)
 
-        self.enableFreelookLayout = QHBoxLayout()
-        self.enableFreelookLayout.setSpacing(10)
-        self.enableFreelookLayout.setObjectName(u"enableFreelookLayout")
-        self.enableFreelookLabel = QLabel(self.centralWidget)
-        self.enableFreelookLabel.setObjectName(u"enableFreelookLabel")
+        self.enableFreecamLayout = QHBoxLayout()
+        self.enableFreecamLayout.setSpacing(10)
+        self.enableFreecamLayout.setObjectName(u"enableFreecamLayout")
+        self.enableFreecamLabel = QLabel(self.centralWidget)
+        self.enableFreecamLabel.setObjectName(u"enableFreecamLabel")
 
-        self.enableFreelookLayout.addWidget(self.enableFreelookLabel)
+        self.enableFreecamLayout.addWidget(self.enableFreecamLabel)
 
         self.spacerItem2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.enableFreelookLayout.addItem(self.spacerItem2)
+        self.enableFreecamLayout.addItem(self.spacerItem2)
 
-        self.enableFreelookKey = QLineEdit(self.centralWidget)
-        self.enableFreelookKey.setObjectName(u"enableFreelookKey")
+        self.enableFreecamKey = QLineEdit(self.centralWidget)
+        self.enableFreecamKey.setObjectName(u"enableFreecamKey")
 
-        self.enableFreelookLayout.addWidget(self.enableFreelookKey)
+        self.enableFreecamLayout.addWidget(self.enableFreecamKey)
 
 
-        self.verticalLayout.addLayout(self.enableFreelookLayout)
+        self.verticalLayout.addLayout(self.enableFreecamLayout)
 
         self.viewCenterLayout = QHBoxLayout()
         self.viewCenterLayout.setSpacing(10)
@@ -457,20 +457,20 @@ class Ui_MainWindow(object):
         self.hboxLayout6 = QHBoxLayout()
         self.hboxLayout6.setSpacing(10)
         self.hboxLayout6.setObjectName(u"hboxLayout6")
-        self.freelookAutoCenterLabel = QLabel(self.centralWidget)
-        self.freelookAutoCenterLabel.setObjectName(u"freelookAutoCenterLabel")
+        self.freecamAutoCenterLabel = QLabel(self.centralWidget)
+        self.freecamAutoCenterLabel.setObjectName(u"freecamAutoCenterLabel")
 
-        self.hboxLayout6.addWidget(self.freelookAutoCenterLabel)
+        self.hboxLayout6.addWidget(self.freecamAutoCenterLabel)
 
         self.spacerItem12 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.hboxLayout6.addItem(self.spacerItem12)
 
-        self.freelookAutoCenterOption = QCheckBox(self.centralWidget)
-        self.freelookAutoCenterOption.setObjectName(u"freelookAutoCenterOption")
-        self.freelookAutoCenterOption.setChecked(False)
+        self.freecamAutoCenterOption = QCheckBox(self.centralWidget)
+        self.freecamAutoCenterOption.setObjectName(u"freecamAutoCenterOption")
+        self.freecamAutoCenterOption.setChecked(False)
 
-        self.hboxLayout6.addWidget(self.freelookAutoCenterOption)
+        self.hboxLayout6.addWidget(self.freecamAutoCenterOption)
 
 
         self.vboxLayout2.addLayout(self.hboxLayout6)
@@ -512,8 +512,8 @@ class Ui_MainWindow(object):
         self.toggleEnabledKey.setText("")
         self.centerControlLabel.setText("")
         self.centerControlKey.setText("")
-        self.enableFreelookLabel.setText("")
-        self.enableFreelookKey.setText("")
+        self.enableFreecamLabel.setText("")
+        self.enableFreecamKey.setText("")
         self.viewCenterLabel.setText("")
         self.viewCenterKey.setText("")
         self.cameraFovLabel.setText("")
@@ -527,7 +527,7 @@ class Ui_MainWindow(object):
         self.showIndicatorLabel.setText("")
         self.buttonMappingLabel.setText("")
         self.memorizeAxisPosLabel.setText("")
-        self.freelookAutoCenterLabel.setText("")
+        self.freecamAutoCenterLabel.setText("")
         self.startBtn.setText("")
         self.statusLabel.setText("")
         pass

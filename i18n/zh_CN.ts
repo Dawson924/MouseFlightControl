@@ -112,7 +112,7 @@
     </message>
     <message>
         <location filename="main.py" line="685"/>
-        <source>EnableFreelook</source>
+        <source>EnableFreecam</source>
         <translation>启用自由视角</translation>
     </message>
     <message>
@@ -152,7 +152,7 @@
     </message>
     <message>
         <location filename="main.py" line="708"/>
-        <source>FreelookAutoCenter</source>
+        <source>FreecamAutoCenter</source>
         <translation>自由视角自动回中</translation>
     </message>
     <message>

@@ -285,12 +285,12 @@
 
                 <!-- 启用自由视角 -->
                 <item>
-                    <layout class="QHBoxLayout" name="enableFreelookLayout">
+                    <layout class="QHBoxLayout" name="enableFreecamLayout">
                         <property name="spacing">
                             <number>10</number>
                         </property>
                         <item>
-                            <widget class="QLabel" name="enableFreelookLabel">
+                            <widget class="QLabel" name="enableFreecamLabel">
                                 <property name="text">
                                     <string></string>
                                 </property>
@@ -310,7 +310,7 @@
                             </spacer>
                         </item>
                         <item>
-                            <widget class="QLineEdit" name="enableFreelookKey">
+                            <widget class="QLineEdit" name="enableFreecamKey">
                                 <property name="text">
                                     <string></string>
                                 </property>
@@ -717,7 +717,7 @@
                                     <number>10</number>
                                 </property>
                                 <item>
-                                    <widget class="QLabel" name="freelookAutoCenterLabel">
+                                    <widget class="QLabel" name="freecamAutoCenterLabel">
                                         <property name="text">
                                             <string></string>
                                         </property>
@@ -737,7 +737,7 @@
                                     </spacer>
                                 </item>
                                 <item>
-                                    <widget class="QCheckBox" name="freelookAutoCenterOption">
+                                    <widget class="QCheckBox" name="freecamAutoCenterOption">
                                         <property name="checked">
                                             <bool>false</bool>
                                         </property>

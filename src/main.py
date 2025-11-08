@@ -58,7 +58,7 @@ CONFIG = {
         'controller': (int),
         'key_toggle': (str),
         'key_center': (str),
-        'key_freelook': (str),
+        'key_freecam': (str),
         'key_view_center': (str),
         'camera_fov': (int),
         'key_taxi': (str),
@@ -69,7 +69,7 @@ CONFIG = {
         'show_indicator': (bool),
         'button_mapping': (bool),
         'memorize_axis_pos': (bool),
-        'freelook_auto_center': (bool),
+        'freecam_auto_center': (bool),
     },
     'Window': {
         'w_size': (int),
@@ -164,7 +164,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mouse_speed = 5
         self.key_toggle = '`'
         self.key_center = 'MMB'
-        self.key_freelook = 'tab'
+        self.key_freecam = 'tab'
         self.key_view_center = 'capslock'
         self.camera_fov = 75
         self.key_taxi = 'alt + `'
@@ -174,7 +174,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show_indicator = False
         self.button_mapping = True
         self.memorize_axis_pos = True
-        self.freelook_auto_center = False
+        self.freecam_auto_center = False
         self.__external__ = SimpleNamespace()
 
         # 加载所有配置
@@ -237,8 +237,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.centerControlKey.textChanged.connect(
             lambda text: self.update('key_center', text)
         )
-        self.ui.enableFreelookKey.textChanged.connect(
-            lambda text: self.update('key_freelook', text)
+        self.ui.enableFreecamKey.textChanged.connect(
+            lambda text: self.update('key_freecam', text)
         )
         self.ui.viewCenterKey.textChanged.connect(
             lambda text: self.update('key_view_center', text)
@@ -267,8 +267,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.memorizeAxisPosOption.stateChanged.connect(
             lambda state: self.update('memorize_axis_pos', bool(state))
         )
-        self.ui.freelookAutoCenterOption.stateChanged.connect(
-            lambda state: self.update('freelook_auto_center', bool(state))
+        self.ui.freecamAutoCenterOption.stateChanged.connect(
+            lambda state: self.update('freecam_auto_center', bool(state))
         )
 
         # 创建界面绘制信号
@@ -682,8 +682,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.toggleEnabledKey.setText(self.key_toggle)
         self.ui.centerControlLabel.setText(self.tr('CenterControl'))
         self.ui.centerControlKey.setText(self.key_center)
-        self.ui.enableFreelookLabel.setText(self.tr('EnableFreelook'))
-        self.ui.enableFreelookKey.setText(self.key_freelook)
+        self.ui.enableFreecamLabel.setText(self.tr('EnableFreecam'))
+        self.ui.enableFreecamKey.setText(self.key_freecam)
         self.ui.viewCenterLabel.setText(self.tr('ViewCenter'))
         self.ui.viewCenterKey.setText(self.key_view_center)
         self.ui.cameraFovLabel.setText(self.tr('CameraFov'))
@@ -705,8 +705,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.buttonMappingOption.setChecked(self.button_mapping)
         self.ui.memorizeAxisPosLabel.setText(self.tr('MemorizeAxisPos'))
         self.ui.memorizeAxisPosOption.setChecked(self.memorize_axis_pos)
-        self.ui.freelookAutoCenterLabel.setText(self.tr('FreelookAutoCenter'))
-        self.ui.freelookAutoCenterOption.setChecked(self.freelook_auto_center)
+        self.ui.freecamAutoCenterLabel.setText(self.tr('FreecamAutoCenter'))
+        self.ui.freecamAutoCenterOption.setChecked(self.freecam_auto_center)
 
     def on_speed_changed(self, value):
         self.mouse_speed = value
@@ -750,7 +750,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.toggleEnabledKey.setDisabled(disabled)
         self.ui.centerControlKey.setDisabled(disabled)
         self.ui.controllerComboBox.setDisabled(disabled)
-        self.ui.enableFreelookKey.setDisabled(disabled)
+        self.ui.enableFreecamKey.setDisabled(disabled)
         self.ui.viewCenterKey.setDisabled(disabled)
         self.ui.taxiModeKey.setDisabled(disabled)
         self.ui.controlModeDescription.setHidden(not self.captions)
@@ -766,7 +766,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.showIndicatorOption.setDisabled(disabled)
         self.ui.buttonMappingOption.setDisabled(disabled)
         self.ui.memorizeAxisPosOption.setDisabled(disabled)
-        self.ui.freelookAutoCenterOption.setDisabled(disabled)
+        self.ui.freecamAutoCenterOption.setDisabled(disabled)
         self.ui.cameraFovSpinBox.setDisabled(disabled)
 
         self.ui.verticalLayout.invalidate()
@@ -868,7 +868,7 @@ class MainWindow(QtWidgets.QMainWindow):
             prev_x, prev_y = screen_center_x, screen_center_y
             stick_pos = [screen_center_x, screen_center_y]
             cam_pos = [screen_center_x, screen_center_y]
-            freelook_on = False
+            freecam_on = False
             use_cache = False
 
             if self.debug:
@@ -936,11 +936,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 if enabled and input.is_hotkey_pressed(self.key_view_center):
                     Axis.vz = AXIS_MIN + self.camera_fov * axis_step
-                    if not freelook_on:
+                    if not freecam_on:
                         Axis.vx, Axis.vy = 0, 0
                         cam_pos[0], cam_pos[1] = screen_center_x, screen_center_y
 
-                if enabled and self.button_mapping and not freelook_on:
+                if enabled and self.button_mapping and not freecam_on:
                     if input.is_pressing('LMB'):
                         self.joystick.set_button(1, True)
                     else:
@@ -963,20 +963,20 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.joystick.set_button(5, False)
 
                 if enabled:
-                    if input.is_pressed(self.key_freelook):
-                        freelook_on = True
+                    if input.is_pressed(self.key_freecam):
+                        freecam_on = True
                         stick_pos[0], stick_pos[1] = prev_x, prev_y
-                        if self.freelook_auto_center:
+                        if self.freecam_auto_center:
                             Axis.vx, Axis.vy = 0, 0
                             prev_x, prev_y = screen_center_x, screen_center_y
                             use_cache = True
                         else:
                             prev_x, prev_y = cam_pos[0], cam_pos[1]
                             use_cache = True
-                    if input.is_released(self.key_freelook):
-                        freelook_on = False
+                    if input.is_released(self.key_freecam):
+                        freecam_on = False
                         cam_pos[0], cam_pos[1] = prev_x, prev_y
-                        if self.freelook_auto_center:
+                        if self.freecam_auto_center:
                             Axis.vx, Axis.vy = 0, 0
                         prev_x, prev_y = stick_pos[0], stick_pos[1]
                         use_cache = True
@@ -989,7 +989,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     delta_x = curr_x - prev_x
                     delta_y = curr_y - prev_y
 
-                    if input.is_pressing(self.key_freelook) and freelook_on:
+                    if input.is_pressing(self.key_freecam) and freecam_on:
                         Axis.vx += delta_x * self.axis_speed * self.damp_x * 0.48
                         Axis.vy += delta_y * self.axis_speed * self.damp_y
 
@@ -1054,11 +1054,11 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.lua_globals.Mouse.pos[2] = prev_y
                     self.lua_globals.Mouse.deltaX = curr_x - prev_x
                     self.lua_globals.Mouse.deltaY = curr_y - prev_y
-                    self.lua_globals.Control['active'] = enabled and not freelook_on
+                    self.lua_globals.Control['active'] = enabled and not freecam_on
                     self.lua_globals.Control['steering'] = (
-                        enabled and not freelook_on and taxi_mode
+                        enabled and not freecam_on and taxi_mode
                     )
-                    self.lua_globals.Camera['active'] = enabled and freelook_on
+                    self.lua_globals.Camera['active'] = enabled and freecam_on
                     self.lua_globals.Camera['fov'] = (Axis.vz - AXIS_MIN) / axis_step
 
                 for i, func in enumerate(self.lua_funcs):

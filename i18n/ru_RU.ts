@@ -111,7 +111,7 @@
     </message>
     <message>
         <location filename="main.py" line="685"/>
-        <source>EnableFreelook</source>
+        <source>EnableFreecam</source>
         <translation>Включить свободный обзор</translation>
     </message>
     <message>
@@ -151,7 +151,7 @@
     </message>
     <message>
         <location filename="main.py" line="708"/>
-        <source>FreelookAutoCenter</source>
+        <source>FreecamAutoCenter</source>
         <translation>Автоматическое центрирование свободного обзора</translation>
     </message>
     <message>
