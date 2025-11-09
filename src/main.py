@@ -195,7 +195,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lua_globals = self.lua.globals()
         self.lua_globals.SetAttribute = self._set_attr_value
         self.lua_globals.GetAttribute = self._get_attr_value
-        self.lua_inits, self.lua_funcs = load_lua_scripts(self.lua, 'scripts')
+        self.lua_inits, self.lua_funcs = load_lua_scripts(self.lua, 'Scripts')
         for k, v in self.lua_inits.items():
             self._set_attr_value(k, v)
         self.lua_lock = threading.Lock()
@@ -631,7 +631,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.running:
             self.stop_main_thread()
 
-        file_path = choose_single_file(self, self.tr('ImportPreset'), './presets')
+        file_path = choose_single_file(self, self.tr('ImportPreset'), 'Inputs')
         if not file_path:
             return
 
@@ -1040,7 +1040,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             stick_pos=stick_pos,
                             cam_pos=cam_pos,
                         ),
-                        self
+                        self,
                     )
 
                 with self.lua_lock:
@@ -1111,7 +1111,7 @@ if __name__ == '__main__':
     if not os.path.exists('i18n'):
         error_msg = QtWidgets.QMessageBox()
         error_msg.setIcon(QtWidgets.QMessageBox.Critical)
-        error_msg.setText('Missing locale files')
+        error_msg.setText('Missing translation files')
         error_msg.setInformativeText(
             "Cannot find 'i18n' directory. Please verify the program's files are installed correctly."
         )
