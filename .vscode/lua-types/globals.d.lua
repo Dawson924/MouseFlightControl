@@ -5,6 +5,7 @@
 ---@field rd number
 ---@field vx number
 ---@field vy number
+---@field vz number
 ---@field min number
 ---@field max number
 ---@field len number

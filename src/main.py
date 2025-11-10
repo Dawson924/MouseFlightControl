@@ -200,7 +200,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self._set_attr_value(k, v)
         self.lua_lock = threading.Lock()
         self.lua.execute("""
-            Axis = {x=0, y=0, th=0, rd=0, vx=0, xy=0}
+            Axis = {x=0, y=0, th=0, rd=0, vx=0, vy=0, vz=0}
             Mouse = {speed=0, pos={0,0}, deltaX=0, deltaY=0}
             Input = {}
             Control = {active=false, steering=false}
@@ -1050,6 +1050,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.lua_globals.Axis['rd'] = Axis.rd
                     self.lua_globals.Axis['vx'] = Axis.vx
                     self.lua_globals.Axis['vy'] = Axis.vy
+                    self.lua_globals.Axis['vz'] = Axis.vz
                     self.lua_globals.Mouse.pos[1] = prev_x
                     self.lua_globals.Mouse.pos[2] = prev_y
                     self.lua_globals.Mouse.deltaX = curr_x - prev_x
