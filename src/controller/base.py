@@ -6,5 +6,5 @@ class BaseController(ABC):
         self.device = device
 
     @abstractmethod
-    def update(self, state, context):
+    def update(self, Axis, options, input, state, context):
         return

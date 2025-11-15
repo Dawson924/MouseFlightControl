@@ -10,3 +10,5 @@ if hasattr(sys, 'frozen'):
     LUA_PATH = os.path.join(DLL_PATH, 'Lua')
 else:
     LUA_PATH = os.path.join(os.curdir, 'Lua')
+
+FOV_RANGE = (0, 160)

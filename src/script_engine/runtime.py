@@ -8,12 +8,13 @@ from common.constants import LUA_PATH
 
 # 配置规则
 CONFIG_RULES = {
+    'target_fps': (int, 60, 500),
     'attempts': (int, 1, None),
-    'debug': (bool,),
-    'indicator_x': (int,),
-    'indicator_y': (int,),
-    'indicator_bg_color': (list,),
-    'indicator_line_color': (list,),
+    'debug': (bool),
+    'indicator_x': (int),
+    'indicator_y': (int),
+    'indicator_bg_color': (list),
+    'indicator_line_color': (list),
     'device': (str,),
     'device_id': (int, 1, None),
     'axis_speed': (int, 1, 20),

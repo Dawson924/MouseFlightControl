@@ -1,6 +1,5 @@
 import configparser
 import ctypes
-import gc
 import os
 import sys
 import threading
@@ -39,7 +38,7 @@ from ui.MainWindow import Ui_MainWindow
 from ui.overlay.CursorGraph import CursorGraph
 from ui.overlay.HintLabel import HintLabel
 from ui.overlay.IndicatorWindow import IndicatorWindow
-from utils import check_overflow, wheel_step
+from utils import axis2fov, check_overflow, fov, wheel_step
 
 # Windows API常量
 SPI_SETMOUSESPEED = 113
@@ -95,7 +94,6 @@ taxi_mode = False
 stop_thread = False  # 控制子线程退出
 
 # 全局变量初始化
-axis_step = int(AXIS_MAX * 2 / 120)
 Axis = AxisPos(0, 0, AXIS_MAX, 0)
 
 screen_width = win32api.GetSystemMetrics(0)
@@ -183,7 +181,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # 创建设备
         self.joystick = get_joystick_device(self.device)
         self.joystick.set_axis(HID_Z, AXIS_MAX)
-        self.joystick.set_axis(HID_SLIDER, self.camera_fov * axis_step)
 
         # 加载配置的语言
         translator = QtCore.QTranslator()
@@ -874,6 +871,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.debug:
                 loop_counter = 0  # 循环计数器
                 frame_count = 0  # 帧计数器
+                actual_fps = None
                 debug_start_time = time.perf_counter()  # 调试计时起点
 
             last_frame_time = time.perf_counter()  # 上一帧开始时间
@@ -882,8 +880,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 current_frame_time = time.perf_counter()
                 target_end_time = last_frame_time + self.frame_interval
                 sleep_time = target_end_time - current_frame_time
+                delta_time = self.frame_interval
                 if sleep_time > 0:
-                    time.sleep(sleep_time)
+                    ctypes.windll.kernel32.Sleep(int(sleep_time * 1000 + 0.5))
 
                 last_frame_time = target_end_time
 
@@ -895,12 +894,13 @@ class MainWindow(QtWidgets.QMainWindow):
                         )
                         frame_count = 0
                         debug_start_time = current_frame_time
+
                     loop_counter += 1
-                    if loop_counter % 500 == 0:
+                    if loop_counter % 500 == 0 and actual_fps:
                         cpu_usage = self.process.cpu_percent(interval=0.001)
                         memory_usage = self.process.memory_info().rss / 1024 / 1024
                         print(
-                            f'FPS: {actual_fps:.1f} | CPU: {cpu_usage:.1f}% | Memory: {memory_usage:.2f}MB (objects: {len(gc.get_objects())})'
+                            f'FPS: {actual_fps:.1f} | CPU: {cpu_usage:.1f}% | Memory: {memory_usage:.2f}MB'
                         )
 
                 input.update()
@@ -935,7 +935,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     use_cache = True
 
                 if enabled and input.is_hotkey_pressed(self.key_view_center):
-                    Axis.vz = AXIS_MIN + self.camera_fov * axis_step
+                    Axis.vz = fov(self.camera_fov)
                     if not freecam_on:
                         Axis.vx, Axis.vy = 0, 0
                         cam_pos[0], cam_pos[1] = screen_center_x, screen_center_y
@@ -1002,7 +1002,9 @@ class MainWindow(QtWidgets.QMainWindow):
                         Axis.vx = check_overflow(Axis.vx, AXIS_MIN, AXIS_MAX)
                         Axis.vy = check_overflow(Axis.vy, AXIS_MIN, AXIS_MAX)
 
-                        Axis.vz += wheel_step(axis_step * 10, -input.get_wheel_delta())
+                        Axis.vz += wheel_step(
+                            fov(10, abs=False), -input.get_wheel_delta()
+                        )
                         Axis.vz = check_overflow(Axis.vz, AXIS_MIN, AXIS_MAX)
                     else:
                         Axis.x += delta_x * self.axis_speed * self.damp_x * 0.48
@@ -1031,15 +1033,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 if controller is not None and isinstance(controller, BaseController):
                     controller.update(
-                        SimpleNamespace(
-                            Axis=Axis,
-                            device=self.joystick,
-                            enabled=enabled,
-                            input=input,
-                            options=self.__external__,
-                            stick_pos=stick_pos,
-                            cam_pos=cam_pos,
-                        ),
+                        Axis,
+                        self.__external__,
+                        input,
+                        SimpleNamespace(enabled=enabled, dt=delta_time),
                         self,
                     )
 
@@ -1060,13 +1057,13 @@ class MainWindow(QtWidgets.QMainWindow):
                         enabled and not freecam_on and taxi_mode
                     )
                     self.lua_globals.Camera['active'] = enabled and freecam_on
-                    self.lua_globals.Camera['fov'] = (Axis.vz - AXIS_MIN) / axis_step
+                    self.lua_globals.Camera['fov'] = axis2fov(Axis.vz)
 
                 for i, func in enumerate(self.lua_funcs):
                     try:
-                        func()
+                        func(delta_time)
                     except Exception as e:
-                        print(f'Lua func {i} error: {e}')
+                        print(f'Lua func {i} error: \n{e}')
 
                 if self.show_indicator:
                     x_val = map_to_percentage(Axis.x)
