@@ -26,7 +26,7 @@ class CursorGraph(QWidget):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_position)
-        self.timer.setInterval(16)  # ~60Hz更新频率
+        self.timer.setInterval(8)  # ~60Hz更新频率
 
         self.blank_cursor = QCursor(QBitmap(1, 1), QBitmap(1, 1))  # 1x1透明光标
 
@@ -55,7 +55,7 @@ class CursorGraph(QWidget):
         # 将坐标系原点移动到窗口中心
         painter.translate(self.width() / 2, self.height() / 2)
 
-        pen = QPen(QColor(255, 255, 255), 2)
+        pen = QPen(QColor(255, 255, 0), 2)
         painter.setPen(pen)
 
         # 绘制十字
