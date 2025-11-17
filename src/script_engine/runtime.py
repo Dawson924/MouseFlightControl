@@ -24,8 +24,10 @@ CONFIG_RULES = {
 
 
 def load_lua_scripts(runtime: LuaRuntime, dir: str):
-    lua_paths = glob.glob(os.path.join(dir, '*.lua'))
+    dir = os.path.abspath(dir)
     abs_dir = os.path.abspath(dir)
+
+    lua_paths = glob.glob(os.path.join(dir, '*.lua'))
     lua_globals = runtime.globals()
     lua_path = lua_globals.package.path
     lua_cpath = lua_globals.package.cpath

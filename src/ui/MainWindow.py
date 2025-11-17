@@ -266,8 +266,8 @@ class Ui_MainWindow(object):
         self.cameraFovSpinBox = QSpinBox(self.centralWidget)
         self.cameraFovSpinBox.setObjectName(u"cameraFovSpinBox")
         self.cameraFovSpinBox.setValue(0)
-        self.cameraFovSpinBox.setMinimum(60)
-        self.cameraFovSpinBox.setMaximum(120)
+        self.cameraFovSpinBox.setMinimum(40)
+        self.cameraFovSpinBox.setMaximum(160)
 
         self.cameraFovLayout.addWidget(self.cameraFovSpinBox)
 

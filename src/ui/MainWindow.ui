@@ -387,10 +387,10 @@
                                     <number></number>
                                 </property>
                                 <property name="minimum">
-                                    <number>60</number>
+                                    <number>40</number>
                                 </property>
                                 <property name="maximum">
-                                    <number>120</number>
+                                    <number>160</number>
                                 </property>
                             </widget>
                         </item>

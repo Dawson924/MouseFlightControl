@@ -120,10 +120,8 @@ def get_mouse_speed():
 
 class MainWindow(QtWidgets.QMainWindow):
     dynamic_widgets = {}
-    pointer_show = QtCore.Signal(bool)
-    interface_show = QtCore.Signal(str, str, int)
-    indicator_show = QtCore.Signal(bool)
-    indicator_update = QtCore.Signal(float, float, float, float)
+    showCursor = QtCore.Signal(bool)
+    showMessage = QtCore.Signal(str, str, int)
     lua = LuaRuntime(encoding='utf-8', unpack_returned_tuples=True)
 
     def __init__(self):
@@ -209,7 +207,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lua_globals.Axis.len = AXIS_LENGTH
         self.lua_globals.Axis.setValue = lambda axis, value: setattr(Axis, axis, value)
         self.lua_globals.Screen.renderMessage = (
-            lambda text, color, duration: self.interface_show.emit(
+            lambda text, color, duration: self.showMessage.emit(
                 text, color, duration
             )
         )
@@ -269,10 +267,10 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         # 创建界面绘制信号
-        self.interface = HintLabel(self)
-        self.interface_show.connect(self.interface.show_message)
-        self.pointer = CursorGraph(self)
-        self.pointer_show.connect(self.pointer.show_cursor)
+        self.hintLabel = HintLabel(self)
+        self.showMessage.connect(self.hintLabel.show_message)
+        self.cursorGraph = CursorGraph(self)
+        self.showCursor.connect(self.cursorGraph.show_cursor)
         self.indicator = IndicatorWindow(
             self,
             self.indicator_x,
@@ -280,8 +278,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.indicator_bg_color,
             self.indicator_line_color,
         )
-        self.indicator_show.connect(self.indicator.show_overlay)
-        self.indicator_update.connect(self.update_indicator)
 
         self.show()
 
@@ -800,7 +796,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.indicator.show_overlay(False)
 
         self.main_thread = None
-        self.pointer_show.emit(False)
+        self.showCursor.emit(False)
 
     def closeEvent(self, event):
         """停止子线程"""
@@ -825,14 +821,14 @@ class MainWindow(QtWidgets.QMainWindow):
         if flag:
             set_mouse_speed(self.mouse_speed)
             if self.show_cursor:
-                self.pointer_show.emit(True)
+                self.showCursor.emit(True)
             if self.show_hint:
-                self.interface_show.emit(self.tr('Controlled'), 'green', 1000)
+                self.showMessage.emit(self.tr('Controlled'), 'green', 1000)
         else:
             set_mouse_speed(self.original_mouse_speed)
-            self.pointer_show.emit(False)
+            self.showCursor.emit(False)
             if self.show_hint:
-                self.interface_show.emit(self.tr('NoControl'), 'red', 1000)
+                self.showMessage.emit(self.tr('NoControl'), 'red', 1000)
 
         self.retranslate_ui()
 
@@ -921,12 +917,12 @@ class MainWindow(QtWidgets.QMainWindow):
                         Axis.rd = 0
                         if taxi_mode:
                             if self.show_hint:
-                                self.interface_show.emit(
+                                self.showMessage.emit(
                                     self.tr('TaxiModeOn'), 'green', 1000
                                 )
                         else:
                             if self.show_hint:
-                                self.interface_show.emit(
+                                self.showMessage.emit(
                                     self.tr('TaxiModeOff'), 'red', 1000
                                 )
 
@@ -1070,7 +1066,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     y_val = map_to_percentage(Axis.y)
                     throttle_val = map_to_percentage(Axis.th, True)
                     rudder_val = map_to_percentage(Axis.rd)
-                    self.indicator_update.emit(x_val, y_val, throttle_val, rudder_val)
+                    self.update_indicator(x_val, y_val, throttle_val, rudder_val)
 
                 input.reset_wheel_delta()
 
