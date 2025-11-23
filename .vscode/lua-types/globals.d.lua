@@ -77,3 +77,7 @@ function GetAttribute(attr) end
 ---@param attr string
 ---@param value any
 function SetAttribute(attr, value) end
+
+---@param id string
+---@return any
+function GetConfig(id) end

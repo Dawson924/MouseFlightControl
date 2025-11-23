@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 from types import SimpleNamespace
+from typing import Dict
 
 import psutil
 import win32api
@@ -14,11 +15,13 @@ from PySide2.QtCore import Qt
 from PySide2.QtGui import QFont
 
 from app import App
+from common.constants import SCRIPT_INI_PATH, VERSION
 from controller.base import BaseController
 from controller.control import FixedWingController, HelicopterController
 from controller.manager import ControllerManager
 from input import InputStateMonitor
-from lib.fs import choose_single_file
+from lib.config import load_config, save_config
+from lib.fs import choose_single_file, open_directory
 from lib.joystick import (
     AXIS_LENGTH,
     AXIS_MAX,
@@ -32,12 +35,15 @@ from lib.joystick import (
     HID_Z,
     get_joystick_device,
 )
+from lib.logger import get_logger, init_logger, logger
+from lib.script import get_default
 from script_engine.runtime import load_lua_scripts
 from type.widget import OptionWidget
 from ui.MainWindow import Ui_MainWindow
 from ui.overlay.CursorGraph import CursorGraph
 from ui.overlay.HintLabel import HintLabel
 from ui.overlay.IndicatorWindow import IndicatorWindow
+from ui.window.ScriptWindow import ScriptWindow
 from utils import axis2fov, check_overflow, fov, wheel_step
 
 # Windows API常量
@@ -188,12 +194,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 脚本初始化和运行
         self.lua_globals = self.lua.globals()
+        self.lua_lock = threading.Lock()
         self.lua_globals.SetAttribute = self._set_attr_value
         self.lua_globals.GetAttribute = self._get_attr_value
-        self.lua_inits, self.lua_funcs = load_lua_scripts(self.lua, 'Scripts')
-        for k, v in self.lua_inits.items():
-            self._set_attr_value(k, v)
-        self.lua_lock = threading.Lock()
+        self.lua_globals.GetLogger = get_logger
         self.lua.execute("""
             Axis = {x=0, y=0, th=0, rd=0, vx=0, vy=0, vz=0}
             Mouse = {speed=0, pos={0,0}, deltaX=0, deltaY=0}
@@ -207,11 +211,26 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lua_globals.Axis.len = AXIS_LENGTH
         self.lua_globals.Axis.setValue = lambda axis, value: setattr(Axis, axis, value)
         self.lua_globals.Screen.renderMessage = (
-            lambda text, color, duration: self.showMessage.emit(
-                text, color, duration
-            )
+            lambda text, color, duration: self.showMessage.emit(text, color, duration)
         )
         self.lua_globals.Mouse.speed = self.mouse_speed
+        self.lua_inits, self.lua_funcs, self.scripts = load_lua_scripts(
+            self.lua, 'scripts', self.language
+        )
+        for k, v in self.lua_inits.items():
+            self._set_attr_value(k, v)
+
+        self.script_configs = {}
+        for script in self.scripts:
+            if hasattr(script, 'options'):
+                config = load_config(
+                    SCRIPT_INI_PATH, script.id, get_default(script.options)
+                )
+                self.script_configs.update({script.id: config})
+                if script.init:
+                    script.init(self.script_configs.get(script.id, {}))
+
+        self.lua_globals.GetConfig = lambda id: self.script_configs.get(id, {})
 
         self.create_menu()
 
@@ -280,6 +299,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         self.show()
+        init_logger(self.tr('MouseFlightControl'), VERSION, self.debug)
 
     def setup_ui(self):
         self.ui.setupUi(self)
@@ -497,6 +517,16 @@ class MainWindow(QtWidgets.QMainWindow):
         # 删除布局本身
         layout.deleteLater()
 
+    def get_script(self, id: str):
+        arr = [scripts for scripts in self.scripts if scripts.id == id]
+        i = len(arr)
+        if i == 1:
+            return arr[0]
+        elif i >= 2:
+            raise RuntimeError(f'Duplicate namespace: {id}')
+        else:
+            raise RuntimeError(f"'{id}' not found")
+
     def load_config(self, file: str = CONFIG_FILE):
         """从配置文件加载设置"""
         config = configparser.ConfigParser()
@@ -531,7 +561,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                     self._set_attr_value(option, value)
                 return True
             except Exception as e:
-                print(f'加载配置文件失败: {e}')
+                logger.error(f'加载配置文件失败: {e}')
         return False
 
     def save_config(self):
@@ -552,9 +582,9 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             with open(CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
-            print('配置文件保存成功')
+            logger.success('配置文件保存成功')
         except Exception as e:
-            print(f'保存配置文件失败: {e}')
+            logger.error(f'保存配置文件失败: {e}')
 
     def _get_attr_value(self, attr_path):
         parts = attr_path.split('.')
@@ -581,6 +611,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def create_menu(self):
         self.general_menu = self.menuBar().addMenu('')
         self.language_menu = self.menuBar().addMenu('')
+        self.script_menu = self.menuBar().addMenu('')
 
         # 打开预设
         self.import_action = QtWidgets.QAction('', self)
@@ -620,6 +651,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.language_menu.addAction(self.russian_action)
         self.russian_action.setChecked(self.language == 'ru_RU')
 
+        # 插件相关
+        self.script_action = QtWidgets.QAction('', self)
+        self.script_action.triggered.connect(lambda: open_directory('scripts'))
+        self.script_menu.addAction(self.script_action)
+        self.script_menu.addSeparator()
+        self._script_actions: Dict[str, QtWidgets.QAction] = {}
+        for script in self.scripts:
+            self._script_actions[script.id] = QtWidgets.QAction(script.name, self)
+            self._script_actions[script.id].triggered.connect(
+                lambda *_, s=script: self.open_script_config(s)
+            )
+            self.script_menu.addAction(self._script_actions[script.id])
+
     def open_preset(self):
         if self.running:
             self.stop_main_thread()
@@ -648,6 +692,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setup_controllers()
         self.create_controller_widgets(self.controller)
 
+    def open_script_config(self, script):
+        window = ScriptWindow(script, self)
+        window.show()
+
     def retranslate_ui(self):
         """重新翻译UI文本"""
         # 窗口标题
@@ -656,6 +704,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tip_action.setText(self.tr('ShowCaptions'))
         self.import_action.setText(self.tr('ImportPreset'))
         self.language_menu.setTitle(self.tr('Language'))
+        self.script_menu.setTitle(self.tr('Script'))
+        self.script_action.setText(
+            self.tr('Installed') + f' ({self.scripts.__len__()})'
+        )
+
+        for id, action in self._script_actions.items():
+            script = self.get_script(id)
+            script.set_language(self.language)
+            action.setText(script.name)
 
         # 按钮文本
         self.ui.startBtn.setText(
@@ -808,6 +865,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.w_size = self.size().width()
         self.save_config()
+        save_config(SCRIPT_INI_PATH, self.script_configs)
 
         event.accept()
 
@@ -895,7 +953,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     if loop_counter % 500 == 0 and actual_fps:
                         cpu_usage = self.process.cpu_percent(interval=0.001)
                         memory_usage = self.process.memory_info().rss / 1024 / 1024
-                        print(
+                        logger.debug(
                             f'FPS: {actual_fps:.1f} | CPU: {cpu_usage:.1f}% | Memory: {memory_usage:.2f}MB'
                         )
 
@@ -1071,9 +1129,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 input.reset_wheel_delta()
 
         except KeyboardInterrupt as e:
-            print(f'Keyboard interrupt: {e}')
+            logger.warning(f'Keyboard interrupt: {e}')
         except Exception as e:
-            print(f'Main thread exception: {e}')
+            logger.error(f'Main thread exception: {e}')
             import traceback
 
             traceback.print_exc()

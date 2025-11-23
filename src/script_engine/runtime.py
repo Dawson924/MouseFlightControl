@@ -1,10 +1,12 @@
 import glob
 import os
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, NoReturn
 
 from lupa import LuaRuntime
 
 from common.constants import LUA_PATH
+from lib.logger import logger
+from type.script import ScriptModule
 
 # 配置规则
 CONFIG_RULES = {
@@ -23,7 +25,7 @@ CONFIG_RULES = {
 }
 
 
-def load_lua_scripts(runtime: LuaRuntime, dir: str):
+def load_lua_scripts(runtime: LuaRuntime, dir: str, language: str):
     dir = os.path.abspath(dir)
     abs_dir = os.path.abspath(dir)
 
@@ -51,45 +53,34 @@ def load_lua_scripts(runtime: LuaRuntime, dir: str):
     ]
     lua_globals.package.cpath = ';'.join(additional_paths) + ';' + lua_cpath
 
-    script_configs: List[Dict[str, Any]] = []
-    update_functions: List[Any] = []
+    init_objs: List[Dict[str, Any]] = []
+    update_funcs: List[Callable[[float], NoReturn]] = []
+    modules: List[ScriptModule] = []
 
     for path in lua_paths:
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 script_content = f.read()
 
-            runtime.execute(script_content)
-            globals = runtime.globals()
-
-            # 处理Init函数（收集配置）
-            init_func = globals.Init
-            if init_func is not None and callable(init_func):
-                lua_config = init_func()  # 调用Lua的Init，返回键值对表（或nil）
-                py_config = (
-                    lua_table_to_python(lua_config) if lua_config is not None else {}
-                )
-
-                # 校验配置合法性
-                if isinstance(py_config, dict):
-                    validate_config(py_config, path)
-                    script_configs.append(py_config)
-
-            # 处理Update函数
-            update_func = globals.Update
-            if update_func is not None and callable(update_func):
-                update_functions.append(update_func)
+            result = runtime.execute(script_content)
+            if result is not None:
+                object = lua_table_to_python(result)
+                module = ScriptModule(language, **object)
+                if hasattr(module, 'data'):
+                    init_objs.append(module.data)
+                if hasattr(module, 'update'):
+                    update_funcs.append(module.update)
+                modules.append(module)
 
         except Exception as e:
-            # TODO 完善报错提示
-            print(e)
+            logger.exception(e)
             continue
 
     init_configs = {}
-    for cfg in script_configs:
+    for cfg in init_objs:
         init_configs.update(cfg)
 
-    return init_configs, update_functions
+    return init_configs, update_funcs, modules
 
 
 def lua_table_to_python(lua_obj) -> Any:

@@ -9,6 +9,7 @@
 build/
 dist/
 config.ini
+scripts.ini
 *.egg-info/
 *.pyc
 *.qm
