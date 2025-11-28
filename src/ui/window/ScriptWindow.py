@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import (
@@ -18,13 +18,13 @@ from type.script import ScriptModule
 
 
 class ScriptWindow(QMainWindow):
-    def __init__(self, script: ScriptModule, parent: QMainWindow):
+    def __init__(self, script: ScriptModule, config: Dict, parent: QMainWindow):
         super().__init__(parent)
-        self.setWindowTitle(script.name)
+        self.setWindowTitle(parent.tr('OptionsTitle'))
         self.init_style()
 
         self.script = script
-        self.config = parent.script_configs[script.id]
+        self.config = config
         self.widget = self.init_widget()
         self.setCentralWidget(self.widget)
         self.create_options(script.options)
@@ -155,7 +155,7 @@ class ScriptWindow(QMainWindow):
         main_layout.setContentsMargins(15, 10, 15, 15)
         main_layout.setSpacing(10)
 
-        controls_title = QLabel(self.parent().tr('OptionsTitle'))
+        controls_title = QLabel(self.script.name)
         controls_title.setObjectName('controlsTitleLabel')
         controls_title.setAlignment(Qt.AlignCenter)
         controls_title.setStyleSheet(

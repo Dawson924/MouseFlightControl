@@ -21,8 +21,7 @@ def main():
 
         # 检查目标目录是否存在
         if not os.path.exists(target_dir):
-            print(f'错误: 目标目录 {target_dir} 不存在，打包可能失败。')
-            return
+            os.mkdir(target_dir)
 
         # 复制文件夹
         for folder in folders_to_copy:

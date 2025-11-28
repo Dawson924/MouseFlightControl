@@ -10,7 +10,9 @@ class ScriptModule:
     name: str
     options: Optional[List[ScriptOption]] = []
     i18n: Optional[I18nDict] = {}
+    data: Optional[Dict[str, Any]] = None
     init: Optional[Callable[[Dict], NoReturn]] = None
+    update: Optional[Callable[[float], NoReturn]] = None
 
     _language = 'en_US'
 

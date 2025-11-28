@@ -20,9 +20,9 @@ class HintLabel(QLabel):
             Qt.FramelessWindowHint
             | Qt.WindowStaysOnTopHint
             | Qt.X11BypassWindowManagerHint
-            | Qt.Tool  # 工具窗口（不在任务栏显示）
-            | Qt.WindowDoesNotAcceptFocus  # 不接受焦点（避免任务栏激活）
-            | Qt.WindowTransparentForInput  # 鼠标穿透（不拦截输入事件）
+            | Qt.Tool
+            | Qt.WindowDoesNotAcceptFocus
+            | Qt.WindowTransparentForInput
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)

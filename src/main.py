@@ -8,19 +8,20 @@ from types import SimpleNamespace
 from typing import Dict
 
 import psutil
-import win32api
 from lupa import LuaRuntime
 from PySide2 import QtCore, QtGui, QtWidgets
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QFont
+from PySide2.QtCore import QCoreApplication, Qt
+from PySide2.QtGui import QFont, QScreen
 
 from app import App
-from common.constants import SCRIPT_INI_PATH, VERSION
+from common.config import CONFIG, CONFIG_FILE
+from common.constants import APP_VERSION, SCRIPT_INI_PATH
 from controller.base import BaseController
 from controller.control import FixedWingController, HelicopterController
 from controller.manager import ControllerManager
 from input import InputStateMonitor
-from lib.config import load_config, save_config
+from lib.config import load_config, save_config, validate_config
+from lib.event import EventEmitter
 from lib.fs import choose_single_file, open_directory
 from lib.joystick import (
     AXIS_LENGTH,
@@ -37,7 +38,15 @@ from lib.joystick import (
 )
 from lib.logger import get_logger, init_logger, logger
 from lib.script import get_default
+from lib.win32 import (
+    get_mouse_speed,
+    get_process_dpi_awareness,
+    set_mouse_speed,
+    set_process_dpi_awareness,
+)
+from script_engine.database import ScriptDatabase
 from script_engine.runtime import load_lua_scripts
+from type.script import ScriptModule
 from type.widget import OptionWidget
 from ui.MainWindow import Ui_MainWindow
 from ui.overlay.CursorGraph import CursorGraph
@@ -45,44 +54,6 @@ from ui.overlay.HintLabel import HintLabel
 from ui.overlay.IndicatorWindow import IndicatorWindow
 from ui.window.ScriptWindow import ScriptWindow
 from utils import axis2fov, check_overflow, fov, wheel_step
-
-# Windows API常量
-SPI_SETMOUSESPEED = 113
-SPI_GETMOUSESPEED = 112
-MOUSE_SPEED_DEFAULT = 10  # Windows默认灵敏度(1-20)
-
-# 配置选项存储
-CONFIG_FILE = 'config.ini'
-CONFIG = {
-    'General': {
-        'language': (str),
-        'captions': (bool),
-    },
-    'Controls': {
-        'mouse_speed': (int),
-        'controller': (int),
-        'key_toggle': (str),
-        'key_center': (str),
-        'key_freecam': (str),
-        'key_view_center': (str),
-        'camera_fov': (int),
-        'key_taxi': (str),
-    },
-    'Options': {
-        'show_cursor': (bool),
-        'show_hint': (bool),
-        'show_indicator': (bool),
-        'button_mapping': (bool),
-        'memorize_axis_pos': (bool),
-        'freecam_auto_center': (bool),
-    },
-    'Window': {
-        'w_size': (int),
-        'min_w_size': (int),
-        'max_w_size': (int),
-    },
-    'External': {},
-}
 
 # 控制器管理
 controllers = ControllerManager()
@@ -102,26 +73,9 @@ stop_thread = False  # 控制子线程退出
 # 全局变量初始化
 Axis = AxisPos(0, 0, AXIS_MAX, 0)
 
-screen_width = win32api.GetSystemMetrics(0)
-screen_height = win32api.GetSystemMetrics(1)
-screen_center_x = screen_width / 2
-screen_center_y = screen_height / 2
-
 # 输入状态跟踪
 delta_x = 0
 delta_y = 0
-
-
-def set_mouse_speed(speed):
-    ctypes.windll.user32.SystemParametersInfoW(SPI_SETMOUSESPEED, 0, speed, 0)
-
-
-def get_mouse_speed():
-    speed = ctypes.c_int()
-    ctypes.windll.user32.SystemParametersInfoW(
-        SPI_GETMOUSESPEED, 0, ctypes.byref(speed), 0
-    )
-    return speed.value
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -133,10 +87,16 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = Ui_MainWindow()
+        (
+            self.screen_width,
+            self.screen_height,
+            self.center_x,
+            self.center_y,
+            self.scale,
+        ) = self.get_screen_geometry(self.screen())
         self.w_size = 350
-        self.min_w_size = 300
-        self.max_w_size = 500
-        self.setup_ui()
+        self.min_w_size = self.px(300)
+        self.max_w_size = self.px(500)
 
         # 程序状态
         self.main_thread = None
@@ -154,6 +114,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.indicator_y = -30
         self.indicator_bg_color = (255, 90, 0, 50)
         self.indicator_line_color = (255, 0, 0, 255)
+        self.indicator_size = 200
         self.device = 'vjoy'
         self.device_id = 1
         self.axis_speed = 15
@@ -162,13 +123,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 配置默认值
         self.language = 'en_US'
-        self.captions = True
         self.mouse_speed = 5
         self.key_toggle = '`'
         self.key_center = 'MMB'
         self.key_freecam = 'tab'
         self.key_view_center = 'capslock'
-        self.camera_fov = 75
+        self.camera_fov = 90
         self.key_taxi = 'alt + `'
         self.controller = 0
         self.show_cursor = False
@@ -181,6 +141,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 加载所有配置
         self.load_config()
+
+        self.setup_ui()
 
         # 创建设备
         self.joystick = get_joystick_device(self.device)
@@ -195,9 +157,14 @@ class MainWindow(QtWidgets.QMainWindow):
         # 脚本初始化和运行
         self.lua_globals = self.lua.globals()
         self.lua_lock = threading.Lock()
+        self.lua_event = EventEmitter()
         self.lua_globals.SetAttribute = self._set_attr_value
         self.lua_globals.GetAttribute = self._get_attr_value
         self.lua_globals.GetLogger = get_logger
+        self.lua_globals.AddEventHandler = lambda event, handler: self.lua_event.on(
+            event, handler
+        )
+        self.lua_globals.RemoveEventHandler = lambda event: self.lua_event.off(event)
         self.lua.execute("""
             Axis = {x=0, y=0, th=0, rd=0, vx=0, vy=0, vz=0}
             Mouse = {speed=0, pos={0,0}, deltaX=0, deltaY=0}
@@ -214,23 +181,29 @@ class MainWindow(QtWidgets.QMainWindow):
             lambda text, color, duration: self.showMessage.emit(text, color, duration)
         )
         self.lua_globals.Mouse.speed = self.mouse_speed
-        self.lua_inits, self.lua_funcs, self.scripts = load_lua_scripts(
-            self.lua, 'scripts', self.language
-        )
-        for k, v in self.lua_inits.items():
-            self._set_attr_value(k, v)
-
-        self.script_configs = {}
+        self.scripts = load_lua_scripts(self.lua, 'scripts', self.language)
+        self.script_db = ScriptDatabase()
         for script in self.scripts:
             if hasattr(script, 'options'):
                 config = load_config(
                     SCRIPT_INI_PATH, script.id, get_default(script.options)
                 )
-                self.script_configs.update({script.id: config})
-                if script.init:
-                    script.init(self.script_configs.get(script.id, {}))
+                self.script_db.add(script.id, config)
 
-        self.lua_globals.GetConfig = lambda id: self.script_configs.get(id, {})
+        self.lua_globals.GetConfig = lambda id: self.script_db.get(id)
+        self.lua_funcs = []
+        for script in self.scripts:
+            if script.data:
+                validate_config(script.data)
+                for k, v in script.data.items():
+                    self._set_attr_value(k, v)
+            if script.init:
+                try:
+                    script.init(self.script_db)
+                except:
+                    logger.exception(f"Script '{script.id}' has occured critical error")
+            if script.update:
+                self.lua_funcs.append(script.update)
 
         self.create_menu()
 
@@ -285,7 +258,6 @@ class MainWindow(QtWidgets.QMainWindow):
             lambda state: self.update('freecam_auto_center', bool(state))
         )
 
-        # 创建界面绘制信号
         self.hintLabel = HintLabel(self)
         self.showMessage.connect(self.hintLabel.show_message)
         self.cursorGraph = CursorGraph(self)
@@ -296,16 +268,28 @@ class MainWindow(QtWidgets.QMainWindow):
             self.indicator_y,
             self.indicator_bg_color,
             self.indicator_line_color,
+            self.indicator_size,
+            self.scale,
         )
 
         self.show()
-        init_logger(self.tr('MouseFlightControl'), VERSION, self.debug)
+        self.move(self.center_x - self.w_size / 2, self.center_y - self.height() / 2)
+        init_logger(
+            self.tr('MouseFlightControl'), APP_VERSION, self.show_startup_message
+        )
 
     def setup_ui(self):
         self.ui.setupUi(self)
+        self.w_size = self.px(self.w_size)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
         self.setMinimumWidth(self.min_w_size)
         self.setMaximumWidth(self.max_w_size)
+
+        font = QFont()
+        font.setFamilies(['Segoe UI', 'Microsoft YaHei'])
+        font.setPointSize(int(9 * self.scale))
+        font.setWeight(QFont.Normal)
+        QtWidgets.QApplication.instance().setFont(font)
 
     def setup_controllers(self):
         controllers.register(0, None, {'name': self.tr('None')})
@@ -364,10 +348,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def create_controller_widgets(self, id):
         """根据控制器元数据创建动态控件"""
-        # 清除现有的动态控件
         self.clear_controller_widgets()
 
-        # 获取控制器元数据
         metadata = controllers.get_metadata(id)
         if not metadata or 'options' not in metadata:
             return
@@ -383,7 +365,7 @@ class MainWindow(QtWidgets.QMainWindow):
             text = metadata.get('i18n', {}).get(option, {}).get(self.language, option)
             label = QtWidgets.QLabel(text)
             label.setObjectName(f'{option}Label')
-            label.setMinimumWidth(150)
+            label.setMinimumWidth(self.px(150))
             h_layout.addWidget(label)
 
             # 添加水平弹簧
@@ -427,16 +409,14 @@ class MainWindow(QtWidgets.QMainWindow):
                 # 创建文本输入
                 line_edit = QtWidgets.QLineEdit()
                 line_edit.setObjectName(f'{option}Option')
-                line_edit.setFixedWidth(100)  # 设置固定宽度
+                line_edit.setFixedWidth(self.px(100))
 
-                # 从配置或默认值获取当前值
                 if hasattr(self.__external__, option):
                     value = getattr(self.__external__, option)
                 else:
                     value = default
                     setattr(self.__external__, option, value)
 
-                # 设置验证器根据值的类型
                 if isinstance(value, int):
                     line_edit.setValidator(QtGui.QIntValidator())
                 elif isinstance(value, float):
@@ -460,7 +440,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 # 创建数值选择器
                 spin_box = QtWidgets.QSpinBox()
                 spin_box.setObjectName(f'{option}Option')
-                spin_box.setFixedWidth(100)
+                spin_box.setFixedWidth(self.px(100))
                 spin_box.setMinimum(0)
                 spin_box.setMaximum(1000000)
 
@@ -617,14 +597,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.import_action = QtWidgets.QAction('', self)
         self.import_action.triggered.connect(self.open_preset)
         self.general_menu.addAction(self.import_action)
-        # 开关提示
-        self.tip_action = QtWidgets.QAction('', self)
-        self.tip_action.setCheckable(True)
-        self.tip_action.setChecked(self.captions)
-        self.tip_action.triggered.connect(
-            lambda: self.update('captions', not self.captions)
-        )
-        self.general_menu.addAction(self.tip_action)
 
         # 添加语言选项
         self.language_group = QtWidgets.QActionGroup(self)
@@ -692,16 +664,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setup_controllers()
         self.create_controller_widgets(self.controller)
 
-    def open_script_config(self, script):
-        window = ScriptWindow(script, self)
+    def open_script_config(self, script: ScriptModule):
+        window = ScriptWindow(script, self.script_db.get(script.id), self)
         window.show()
 
     def retranslate_ui(self):
         """重新翻译UI文本"""
-        # 窗口标题
         self.setWindowTitle(self.tr('Title'))
         self.general_menu.setTitle(self.tr('General'))
-        self.tip_action.setText(self.tr('ShowCaptions'))
         self.import_action.setText(self.tr('ImportPreset'))
         self.language_menu.setTitle(self.tr('Language'))
         self.script_menu.setTitle(self.tr('Script'))
@@ -714,12 +684,9 @@ class MainWindow(QtWidgets.QMainWindow):
             script.set_language(self.language)
             action.setText(script.name)
 
-        # 按钮文本
         self.ui.startBtn.setText(
             self.tr('Start') if not self.running else self.tr('Stop')
         )
-
-        # 标签文本
         self.ui.controlsTitleLabel.setText(self.tr('ControlsTitle'))
         self.ui.statusLabel.setText(
             self.tr('StatusStopped') if not enabled else self.tr('StatusWorking')
@@ -740,7 +707,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.cameraFovSpinBox.setValue(self.camera_fov)
         self.ui.taxiModeLabel.setText(self.tr('TaxiMode'))
         self.ui.taxiModeKey.setText(self.key_taxi)
-        self.ui.controlModeDescription.setText(self.tr('ControlModeTip'))
         self.ui.controllerLabel.setText(self.tr('Controller'))
         self.ui.controllerComboBox.setCurrentIndex(self.controller)
         self.ui.controllerComboBox.setCurrentText(controllers.get_name(self.controller))
@@ -803,7 +769,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.enableFreecamKey.setDisabled(disabled)
         self.ui.viewCenterKey.setDisabled(disabled)
         self.ui.taxiModeKey.setDisabled(disabled)
-        self.ui.controlModeDescription.setHidden(not self.captions)
         for option, controls in self.dynamic_widgets.items():
             if 'checkbox' in controls:
                 controls['checkbox'].setDisabled(disabled)
@@ -822,7 +787,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.verticalLayout.invalidate()
         self.ui.verticalLayout.activate()
         QtWidgets.QApplication.processEvents()
-        self.setMinimumHeight(self.minimumSizeHint().height())
         self.resize(self.w_size, self.minimumSizeHint().height())
 
     def start_main_thread(self):
@@ -863,9 +827,9 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.main_thread:
             self.main_thread.join()
 
-        self.w_size = self.size().width()
+        self.w_size = int(self.size().width() / self.scale)
         self.save_config()
-        save_config(SCRIPT_INI_PATH, self.script_configs)
+        save_config(SCRIPT_INI_PATH, self.script_db.to_dict())
 
         event.accept()
 
@@ -900,7 +864,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 controller = None
 
             input = InputStateMonitor(self.pause, self.attempts)
-            input.set_mouse_position(screen_center_x, screen_center_y)
+            input.set_mouse_position(self.center_x, self.center_y)
             self.lua_globals.Input.pressed = input.is_pressed
             self.lua_globals.Input.pressing = input.is_pressing
             self.lua_globals.Input.released = input.is_released
@@ -916,9 +880,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     else 1 - (clamped + AXIS_MAX) / AXIS_LENGTH
                 )
 
-            prev_x, prev_y = screen_center_x, screen_center_y
-            stick_pos = [screen_center_x, screen_center_y]
-            cam_pos = [screen_center_x, screen_center_y]
+            prev_x, prev_y = self.center_x, self.center_y
+            stick_pos = [self.center_x, self.center_y]
+            cam_pos = [self.center_x, self.center_y]
             freecam_on = False
             use_cache = False
 
@@ -985,14 +949,14 @@ class MainWindow(QtWidgets.QMainWindow):
                                 )
 
                 if enabled and input.is_hotkey_pressed(self.key_center):
-                    prev_x, prev_y = screen_center_x, screen_center_y
+                    prev_x, prev_y = self.center_x, self.center_y
                     use_cache = True
 
                 if enabled and input.is_hotkey_pressed(self.key_view_center):
                     Axis.vz = fov(self.camera_fov)
                     if not freecam_on:
                         Axis.vx, Axis.vy = 0, 0
-                        cam_pos[0], cam_pos[1] = screen_center_x, screen_center_y
+                        cam_pos[0], cam_pos[1] = self.center_x, self.center_y
 
                 if enabled and self.button_mapping and not freecam_on:
                     if input.is_pressing('LMB'):
@@ -1022,7 +986,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         stick_pos[0], stick_pos[1] = prev_x, prev_y
                         if self.freecam_auto_center:
                             Axis.vx, Axis.vy = 0, 0
-                            prev_x, prev_y = screen_center_x, screen_center_y
+                            prev_x, prev_y = self.center_x, self.center_y
                             use_cache = True
                         else:
                             prev_x, prev_y = cam_pos[0], cam_pos[1]
@@ -1049,8 +1013,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
                         x_percent = Axis.vx / AXIS_MAX
                         y_percent = Axis.vy / AXIS_MAX
-                        screen_x = screen_center_x + x_percent * (screen_width / 2)
-                        screen_y = screen_center_y + y_percent * (screen_height / 2)
+                        screen_x = self.center_x + x_percent * (self.screen_width / 2)
+                        screen_y = self.center_y + y_percent * (self.screen_height / 2)
                         prev_x, prev_y = screen_x, screen_y
 
                         Axis.vx = check_overflow(Axis.vx, AXIS_MIN, AXIS_MAX)
@@ -1066,8 +1030,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
                         x_percent = Axis.x / AXIS_MAX
                         y_percent = Axis.y / AXIS_MAX
-                        screen_x = screen_center_x + x_percent * (screen_width / 2)
-                        screen_y = screen_center_y + y_percent * (screen_height / 2)
+                        screen_x = self.center_x + x_percent * (self.screen_width / 2)
+                        screen_y = self.center_y + y_percent * (self.screen_height / 2)
                         prev_x, prev_y = screen_x, screen_y
 
                         Axis.x = check_overflow(Axis.x, AXIS_MIN, AXIS_MAX)
@@ -1141,23 +1105,59 @@ class MainWindow(QtWidgets.QMainWindow):
             input.cleanup()
             del input
 
+    def get_screen_geometry(self, screen: QScreen):
+        if not screen:
+            screen = QtWidgets.QApplication.primaryScreen()
+
+        logical_rect = screen.geometry()
+        width = logical_rect.width()
+        height = logical_rect.height()
+        center_x = width / 2
+        center_y = height / 2
+
+        scale = 1.0
+        if os.name == 'nt':
+            try:
+                user32 = ctypes.windll.user32
+                hwnd = self.winId()
+                dpi_x = user32.GetDpiForWindow(hwnd)
+                scale = dpi_x / 96.0
+            except:
+                scale = screen.devicePixelRatio()
+
+        return width, height, center_x, center_y, scale
+
+    def px(self, pt: int):
+        return int(pt * self.scale)
+
     def axis_to_screen(self, axis_x, axis_y):
         x_percent = axis_x / AXIS_MAX
         y_percent = axis_y / AXIS_MAX
 
-        screen_x = screen_center_x + x_percent * (screen_width / 2)
-        screen_y = screen_center_y + y_percent * (screen_height / 2)
+        screen_x = self.center_x + x_percent * (self.screen_width / 2)
+        screen_y = self.center_y + y_percent * (self.screen_height / 2)
 
         return screen_x, screen_y
 
     def update_indicator(self, x, y, throttle, rudder):
-        """在主线程中更新IndicatorWindow的显示"""
         self.indicator.set_xy_values(x, y)
         self.indicator.set_throttle_value(throttle)
         self.indicator.set_rudder_value(rudder)
 
+    def show_startup_message(self, logger):
+        dpi_aware = get_process_dpi_awareness()
+        logger.opt(colors=True).info(
+            f'<green>屏幕信息：</green> 分辨率: {self.screen_width}x{self.screen_height} | 缩放: {self.scale} | {dpi_aware[1]}'
+        )
+        if self.debug:
+            logger.info('')
+            logger.opt(colors=True).info('<yellow>调试模式已启用</yellow>')
+
 
 if __name__ == '__main__':
+    set_process_dpi_awareness(2)
+    QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
     app = App(sys.argv)
 
     if not os.path.exists('i18n'):
@@ -1175,9 +1175,6 @@ if __name__ == '__main__':
     if translator.load('i18n/en_US.qm'):
         app.installTranslator(translator)
         app.translators.append(translator)
-
-    font = QFont('Arial', 9)
-    app.setFont(font)
 
     window = MainWindow()
 

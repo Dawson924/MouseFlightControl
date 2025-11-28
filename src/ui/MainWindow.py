@@ -294,13 +294,6 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.taxiModeLayout)
 
-        self.controlModeDescription = QLabel(self.centralWidget)
-        self.controlModeDescription.setObjectName(u"controlModeDescription")
-        self.controlModeDescription.setStyleSheet(u"color: #505050; font-size: 9pt;")
-        self.controlModeDescription.setWordWrap(True)
-
-        self.verticalLayout.addWidget(self.controlModeDescription)
-
         self.vboxLayout1 = QVBoxLayout()
         self.vboxLayout1.setSpacing(5)
         self.vboxLayout1.setObjectName(u"vboxLayout1")
@@ -519,7 +512,6 @@ class Ui_MainWindow(object):
         self.cameraFovLabel.setText("")
         self.taxiModeLabel.setText("")
         self.taxiModeKey.setText("")
-        self.controlModeDescription.setText("")
         self.controllerLabel.setText("")
         self.optionsTitleLabel.setText("")
         self.showCursorLabel.setText("")

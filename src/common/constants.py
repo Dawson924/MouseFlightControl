@@ -1,21 +1,18 @@
 import os
 import sys
 
-import importlib_metadata
 
-VERSION = importlib_metadata.version("MouseFlightControl")
+APP_NAME = 'MouseFlightControl'
+APP_VERSION = '0.16.1'
+
 IS_FROZEN = hasattr(sys, 'frozen')
 
-if IS_FROZEN:
-    DLL_PATH = os.path.dirname(os.path.abspath(sys.executable))
-else:
-    DLL_PATH = os.path.join(os.curdir, 'dist')
-
-if IS_FROZEN:
-    LUA_PATH = os.path.join(DLL_PATH, 'Lua')
-else:
-    LUA_PATH = os.path.join(os.curdir, 'Lua')
-
+DLL_PATH = (
+    os.path.dirname(os.path.abspath(sys.executable))
+    if IS_FROZEN
+    else os.path.join(os.curdir, 'dist')
+)
+LUA_PATH = os.path.join(DLL_PATH if IS_FROZEN else os.curdir, 'Lua')
 SCRIPT_PATH = 'scripts'
 SCRIPT_INI_PATH = 'scripts.ini'
 

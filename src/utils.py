@@ -39,5 +39,5 @@ def axis2fov(val):
     return (val - AXIS_MIN) / int(AXIS_LENGTH / FOV_RANGE[1])
 
 
-def equal(c1, c2):
-    return set(c1.keys()) == set(c2.keys())
+def similar(d1, d2):
+    return set(d1.keys()) == set(d2.keys())

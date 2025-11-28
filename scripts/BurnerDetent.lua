@@ -1,8 +1,7 @@
 local mod = {}
-
 mod.id = 'burner_detent'
 mod.options = {
-    {'key_detent', 1, 'ctrl'}
+    {'key_detent', 1, ''}
 }
 mod.i18n = {
     name = {
@@ -15,14 +14,14 @@ mod.i18n = {
     }
 }
 
-local key = ''
+local config
 
-function mod.init(data)
-    key = data.key_detent
+function mod.init(database)
+    config = database.get(mod.id)
 end
 
 function mod.update()
-    if Input.pressing(key) then
+    if Input.pressing(config.key_detent) and GetAttribute('controller') == 1 then
         local detent = Axis.min * 0.5
         if Axis.th < detent then
             Axis.setValue('th', detent)

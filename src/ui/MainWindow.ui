@@ -433,20 +433,6 @@
                     </layout>
                 </item>
 
-                <item>
-                    <widget class="QLabel" name="controlModeDescription">
-                        <property name="text">
-                            <string></string>
-                        </property>
-                        <property name="styleSheet">
-                            <string notr="true">color: #505050; font-size: 9pt;</string>
-                        </property>
-                        <property name="wordWrap">
-                            <bool>true</bool>
-                        </property>
-                    </widget>
-                </item>
-
                 <!-- 控制器选择 -->
                 <item>
                     <layout class="QVBoxLayout">

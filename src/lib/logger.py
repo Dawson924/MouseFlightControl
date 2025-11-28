@@ -45,7 +45,8 @@ def get_logger():
     else:
         return logger
 
-def init_logger(app_name: str, app_version: str, debug: bool=True):
+
+def init_logger(app_name: str, app_version: str, handler):
     logger.remove()
 
     logger.add(
@@ -76,17 +77,20 @@ def init_logger(app_name: str, app_version: str, debug: bool=True):
     python_version = sys.version.split()[0]
     pid = os.getpid()
     cwd = os.getcwd()
-    startup_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")[:-3]
+    startup_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')[:-3]
 
-    logger.opt(colors=True).info(f"<bold><green>{'='*80}</green></bold>")
-    logger.opt(colors=True).info(f"<bold><green>🚀 {app_name} - 启动成功</green></bold>")
-    logger.opt(colors=True).info(f"<green>版本信息：</green> v{app_version}")
-    logger.opt(colors=True).info(f"<green>启动时间：</green> {startup_time}")
-    logger.opt(colors=True).info(f"<green>运行环境：</green> {system_info.system} {system_info.release} ({system_info.machine}) | Python {python_version} | PID: {pid} | 工作目录: {cwd}")
-    logger.opt(colors=True).info(f"<green>日志文件：</green> {LOG_FILE}")
-    logger.opt(colors=True).info(f"<bold><green>{'='*80}</green></bold>\n")
-    if debug:
-        logger.opt(colors=True).warning('<red>调试模式已开启</red>')
+    logger.opt(colors=True).info(f'<bold><green>{"=" * 80}</green></bold>')
+    logger.opt(colors=True).info(
+        f'<bold><green>🚀 {app_name} - 启动成功</green></bold>'
+    )
+    logger.opt(colors=True).info(f'<green>版本信息：</green> v{app_version}')
+    logger.opt(colors=True).info(f'<green>启动时间：</green> {startup_time}')
+    logger.opt(colors=True).info(
+        f'<green>运行环境：</green> {system_info.system} {system_info.release} ({system_info.machine}) | Python {python_version} | PID: {pid} | 工作目录: {cwd}'
+    )
+    logger.opt(colors=True).info(f'<green>日志文件：</green> {LOG_FILE}')
+    handler(logger)
+    logger.opt(colors=True).info(f'<bold><green>{"=" * 80}</green></bold>\n')
 
     _init = True
 

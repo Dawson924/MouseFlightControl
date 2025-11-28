@@ -3,191 +3,191 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="main.py" line="706"/>
+        <location filename="main.py" line="676"/>
         <source>Language</source>
         <translation>Language</translation>
     </message>
     <message>
-        <location filename="main.py" line="302"/>
+        <location filename="main.py" line="278"/>
         <source>MouseFlightControl</source>
-        <translation type="unfinished">Mouse Flight Control</translation>
+        <translation>Mouse Flight Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="794"/>
+        <location filename="main.py" line="760"/>
         <source>Start</source>
         <translation>Start</translation>
     </message>
     <message>
-        <location filename="main.py" line="702"/>
+        <location filename="main.py" line="673"/>
         <source>Title</source>
         <translation>Mouse Flight Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="798"/>
+        <location filename="main.py" line="764"/>
         <source>StatusStopped</source>
         <translation>Status:stopped</translation>
     </message>
     <message>
-        <location filename="main.py" line="797"/>
+        <location filename="main.py" line="763"/>
         <source>StatusWorking</source>
         <translation>Status:working</translation>
     </message>
     <message>
-        <location filename="main.py" line="729"/>
+        <location filename="main.py" line="696"/>
         <source>CurrentValue</source>
-        <translation type="unfinished">Current value</translation>
+        <translation>Current value</translation>
     </message>
     <message>
-        <location filename="main.py" line="795"/>
+        <location filename="main.py" line="761"/>
         <source>Stop</source>
         <translation>Stop</translation>
     </message>
     <message>
-        <location filename="main.py" line="727"/>
+        <location filename="main.py" line="694"/>
         <source>Sensitive</source>
         <translation>Sensitive</translation>
     </message>
     <message>
-        <location filename="main.py" line="731"/>
+        <location filename="main.py" line="698"/>
         <source>ToggleEnabled</source>
         <translation>Toggle Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="733"/>
+        <location filename="main.py" line="700"/>
         <source>CenterControl</source>
         <translation>Center Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="748"/>
+        <location filename="main.py" line="714"/>
         <source>ShowCursor</source>
         <translation>Show Cursor</translation>
     </message>
     <message>
-        <location filename="main.py" line="750"/>
+        <location filename="main.py" line="716"/>
         <source>HintOverlay</source>
         <translation>Hint Overlay</translation>
     </message>
     <message>
-        <location filename="main.py" line="754"/>
+        <location filename="main.py" line="720"/>
         <source>ButtonMapping</source>
         <translation>Mouse Button Mapping</translation>
     </message>
     <message>
-        <location filename="main.py" line="756"/>
+        <location filename="main.py" line="722"/>
         <source>MemorizeAxisPos</source>
         <translation>Maintain Axis Position</translation>
     </message>
     <message>
-        <location filename="main.py" line="723"/>
+        <location filename="main.py" line="690"/>
         <source>ControlsTitle</source>
-        <translation>Controls</translation>
+        <translation>CONTROLS</translation>
     </message>
     <message>
-        <location filename="main.py" line="747"/>
+        <location filename="main.py" line="713"/>
         <source>OptionsTitle</source>
-        <translation>Options</translation>
+        <translation>OPTIONS</translation>
     </message>
     <message>
-        <location filename="main.py" line="744"/>
+        <location filename="main.py" line="710"/>
         <source>Controller</source>
-        <translation type="unfinished">Game Controller</translation>
+        <translation>Game Controller</translation>
     </message>
     <message>
-        <location filename="main.py" line="316"/>
+        <location filename="main.py" line="300"/>
         <source>FixedWingMode</source>
         <translation type="unfinished">Plane Mode</translation>
     </message>
     <message>
-        <location filename="main.py" line="342"/>
+        <location filename="main.py" line="326"/>
         <source>HelicopterMode</source>
         <translation type="unfinished">Helicopter Mode</translation>
     </message>
     <message>
-        <location filename="main.py" line="743"/>
+        <location filename="main.py" line="752"/>
         <source>ControlModeTip</source>
-        <translation>In the following control modes:
+        <translation type="obsolete">In the following control modes:
 - Fixed-wing mode uses wheel to control throttle
 - Helicopter mode uses WASD to control collective and pedals</translation>
     </message>
     <message>
-        <location filename="main.py" line="735"/>
+        <location filename="main.py" line="702"/>
         <source>EnableFreecam</source>
         <translation>Enable Freecam</translation>
     </message>
     <message>
-        <location filename="main.py" line="704"/>
+        <location filename="main.py" line="703"/>
         <source>ShowCaptions</source>
-        <translation>Captions</translation>
+        <translation type="obsolete">Captions</translation>
     </message>
     <message>
-        <location filename="main.py" line="703"/>
+        <location filename="main.py" line="674"/>
         <source>General</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="main.py" line="741"/>
+        <location filename="main.py" line="708"/>
         <source>TaxiMode</source>
         <translation>Taxi Mode</translation>
     </message>
     <message>
-        <location filename="main.py" line="884"/>
+        <location filename="main.py" line="848"/>
         <source>Controlled</source>
         <translation>Controlled</translation>
     </message>
     <message>
-        <location filename="main.py" line="889"/>
+        <location filename="main.py" line="853"/>
         <source>NoControl</source>
         <translation>No Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="979"/>
+        <location filename="main.py" line="943"/>
         <source>TaxiModeOn</source>
         <translation>Taxi mode: On</translation>
     </message>
     <message>
-        <location filename="main.py" line="984"/>
+        <location filename="main.py" line="948"/>
         <source>TaxiModeOff</source>
         <translation>Taxi mode: Off</translation>
     </message>
     <message>
-        <location filename="main.py" line="758"/>
+        <location filename="main.py" line="724"/>
         <source>FreecamAutoCenter</source>
         <translation>Freecam Auto Center</translation>
     </message>
     <message>
-        <location filename="main.py" line="739"/>
+        <location filename="main.py" line="706"/>
         <source>CameraFov</source>
         <translation>Freecam Field of View</translation>
     </message>
     <message>
-        <location filename="main.py" line="737"/>
+        <location filename="main.py" line="704"/>
         <source>ViewCenter</source>
         <translation>View Center</translation>
     </message>
     <message>
-        <location filename="main.py" line="752"/>
+        <location filename="main.py" line="718"/>
         <source>ShowIndicator</source>
         <translation>Controls Indicator</translation>
     </message>
     <message>
-        <location filename="main.py" line="705"/>
+        <location filename="main.py" line="675"/>
         <source>ImportPreset</source>
         <translation>Import...</translation>
     </message>
     <message>
-        <location filename="main.py" line="311"/>
+        <location filename="main.py" line="295"/>
         <source>None</source>
-        <translation type="unfinished">None</translation>
+        <translation>None</translation>
     </message>
     <message>
-        <location filename="main.py" line="707"/>
+        <location filename="main.py" line="677"/>
         <source>Script</source>
         <translation>Script</translation>
     </message>
     <message>
-        <location filename="main.py" line="709"/>
+        <location filename="main.py" line="679"/>
         <source>Installed</source>
-        <translation type="unfinished">Installed</translation>
+        <translation>Installed</translation>
     </message>
 </context>
 </TS>

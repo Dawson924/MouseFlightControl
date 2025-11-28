@@ -4,7 +4,9 @@ from PySide2.QtWidgets import QApplication, QWidget
 
 
 class IndicatorWindow(QWidget):
-    def __init__(self, parent, x, y, bg_color, line_color):
+    def __init__(
+        self, parent, x, y, bg_color, line_color, bg_square_size=200, scale=1.0
+    ):
         super().__init__(parent)
         self.setWindowFlags(
             Qt.FramelessWindowHint
@@ -17,7 +19,6 @@ class IndicatorWindow(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
 
-        # 目标值：接收外部传入值
         self.target_throttle = 0.0
         self.target_rudder = 0.5
         self.target_x = 0.5
@@ -27,16 +28,14 @@ class IndicatorWindow(QWidget):
         self.current_x = self.target_x
         self.current_y = self.target_y
 
-        # 固定刷新定时器
         self.refresh_timer = QTimer(self)
         self.refresh_timer.setInterval(4)
         self.refresh_timer.timeout.connect(self._smooth_update_and_paint)
         self.refresh_timer.start()
 
-        # 屏幕与窗口参数
         self.screen_rect = QApplication.primaryScreen().geometry()
         self.setGeometry(self.screen_rect)
-        self.bg_square_size = 200
+        self.bg_square_size = bg_square_size * scale
         if x < 0:
             self.bg_square_x = self.screen_rect.width() - self.bg_square_size - abs(x)
         else:
@@ -46,8 +45,9 @@ class IndicatorWindow(QWidget):
         else:
             self.bg_square_y = y
 
-        self.base_line = 1.2
-        self.shifted_line = 3.8
+        # 线条宽度基于背景尺寸比例计算
+        self.base_line = 0.006 * self.bg_square_size
+        self.shifted_line = 0.019 * self.bg_square_size
 
         self._background_color = QColor(*bg_color)
         self._foreground_color = QColor(*line_color)
@@ -75,6 +75,12 @@ class IndicatorWindow(QWidget):
     def set_position(self, x, y):
         self.bg_square_x = x
         self.bg_square_y = y
+        self.update()
+
+    def set_bg_size(self, size):
+        self.bg_square_size = size
+        self.base_line = 0.006 * self.bg_square_size
+        self.shifted_line = 0.019 * self.bg_square_size
         self.update()
 
     def _smooth_update_and_paint(self):
@@ -123,9 +129,17 @@ class IndicatorWindow(QWidget):
         )
 
     def draw_throttle_axis(self, painter, value):
-        base_x = self.bg_square_x + 20
-        base_y = self.bg_square_y + 190
-        line_height = 172.5
+        base_x_ratio = 0.1
+        base_y_ratio = 0.95
+        line_height_ratio = 0.8625
+        aux_line_offset_ratio = 0.025
+        indicator_offset_ratio = 0.05
+
+        base_x = self.bg_square_x + base_x_ratio * self.bg_square_size
+        base_y = self.bg_square_y + base_y_ratio * self.bg_square_size
+        line_height = line_height_ratio * self.bg_square_size
+        aux_offset = aux_line_offset_ratio * self.bg_square_size
+        indicator_offset = indicator_offset_ratio * self.bg_square_size
 
         fg_r = self._foreground_color.red()
         fg_g = self._foreground_color.green()
@@ -140,11 +154,11 @@ class IndicatorWindow(QWidget):
         # 辅助横线
         pen.setWidth(self.base_line)
         painter.setPen(pen)
-        painter.drawLine(base_x - 5, base_y, base_x + 5, base_y)
+        painter.drawLine(base_x - aux_offset, base_y, base_x + aux_offset, base_y)
         painter.drawLine(
-            base_x - 5,
+            base_x - aux_offset,
             base_y - line_height * 0.75,
-            base_x + 5,
+            base_x + aux_offset,
             base_y - line_height * 0.75,
         )
 
@@ -153,13 +167,25 @@ class IndicatorWindow(QWidget):
         pen.setColor(self._foreground_color)
         pen.setWidth(self.shifted_line)
         painter.setPen(pen)
-        painter.drawLine(base_x - 10, indicator_y, base_x + 10, indicator_y)
+        painter.drawLine(
+            base_x - indicator_offset,
+            indicator_y,
+            base_x + indicator_offset,
+            indicator_y,
+        )
 
     # 绘制方向舵轴
     def draw_rudder_axis(self, painter, value):
-        base_x = self.bg_square_x + 40
-        base_y = self.bg_square_y + 190
-        line_length = 140
+        # 所有位置基于背景尺寸比例计算
+        base_x_ratio = 0.2  # 原40 → 200*0.2
+        base_y_ratio = 0.95  # 原190 → 200*0.95
+        line_length_ratio = 0.7  # 原140 → 200*0.7
+        aux_line_offset_ratio = 0.025  # 原5 → 200*0.025
+
+        base_x = self.bg_square_x + base_x_ratio * self.bg_square_size
+        base_y = self.bg_square_y + base_y_ratio * self.bg_square_size
+        line_length = line_length_ratio * self.bg_square_size
+        aux_offset = aux_line_offset_ratio * self.bg_square_size
 
         # 提取前景色分量
         fg_r = self._foreground_color.red()
@@ -176,20 +202,33 @@ class IndicatorWindow(QWidget):
         pen.setWidth(self.base_line)
         painter.setPen(pen)
         mid_x = base_x + line_length / 2
-        painter.drawLine(mid_x, base_y - 5, mid_x, base_y + 5)
+        painter.drawLine(mid_x, base_y - aux_offset, mid_x, base_y + aux_offset)
 
         # 指示器竖线
         indicator_x = base_x + value * line_length + 0.1
         pen.setColor(self._foreground_color)
         pen.setWidth(self.shifted_line)
         painter.setPen(pen)
-        painter.drawLine(indicator_x, base_y - 5, indicator_x, base_y + 5)
+        painter.drawLine(
+            indicator_x, base_y - aux_offset, indicator_x, base_y + aux_offset
+        )
 
     # 绘制十字象限
     def draw_quadrant_cross(self, painter, x_value, y_value):
-        center_x = self.bg_square_x + 110
-        center_y = self.bg_square_y + 95
-        cross_size = 80
+        # 所有位置基于背景尺寸比例计算
+        center_x_ratio = 0.55  # 原110 → 200*0.55
+        center_y_ratio = 0.475  # 原95 → 200*0.475
+        cross_size_ratio = 0.4  # 原80 → 200*0.4
+        diamond_vert_ratio = 0.0325  # 原6.5 → 200*0.0325
+        diamond_horiz_ratio = 0.025  # 原5 → 200*0.025
+        diamond_pen_ratio = 0.01  # 原2 → 200*0.01
+
+        center_x = self.bg_square_x + center_x_ratio * self.bg_square_size
+        center_y = self.bg_square_y + center_y_ratio * self.bg_square_size
+        cross_size = cross_size_ratio * self.bg_square_size
+        diamond_vert = diamond_vert_ratio * self.bg_square_size
+        diamond_horiz = diamond_horiz_ratio * self.bg_square_size
+        diamond_pen = diamond_pen_ratio * self.bg_square_size
 
         fg_r = self._foreground_color.red()
         fg_g = self._foreground_color.green()
@@ -210,14 +249,14 @@ class IndicatorWindow(QWidget):
         ball_x = center_x + (x_value - 0.5) * 2 * cross_size
         ball_y = center_y + (y_value - 0.5) * 2 * cross_size
         diamond_points = [
-            QPointF(ball_x, ball_y - 6.5),
-            QPointF(ball_x + 5, ball_y),
-            QPointF(ball_x, ball_y + 6.5),
-            QPointF(ball_x - 5, ball_y),
+            QPointF(ball_x, ball_y - diamond_vert),
+            QPointF(ball_x + diamond_horiz, ball_y),
+            QPointF(ball_x, ball_y + diamond_vert),
+            QPointF(ball_x - diamond_horiz, ball_y),
         ]
 
         pen.setColor(self._foreground_color)
-        pen.setWidth(2)
+        pen.setWidth(diamond_pen)
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
         painter.drawPolygon(QPolygonF(diamond_points))
