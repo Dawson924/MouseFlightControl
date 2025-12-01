@@ -287,7 +287,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         font = QFont()
         font.setFamilies(['Segoe UI', 'Microsoft YaHei'])
-        font.setPointSize(int(9 * self.scale))
+        font.setPointSize(10)
         font.setWeight(QFont.Normal)
         QtWidgets.QApplication.instance().setFont(font)
 
