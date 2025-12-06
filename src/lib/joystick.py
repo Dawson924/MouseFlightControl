@@ -24,15 +24,15 @@ HID_WHEEL = 0x38  # 滚轮
 DeviceType = Literal['vjoy', 'xbox']
 
 
-def get_joystick_device(device: DeviceType):
+def get_joystick_device(device: DeviceType, device_id: int = 1):
     if device == 'vjoy':
-        return VJoyDevice(1, path.join(DLL_PATH, 'joystickinput.dll'))
+        return VJoyDevice(device_id, path.join(DLL_PATH, 'joystickinput.dll'))
     elif device == 'xbox':
         return XboxDevice(path.join(DLL_PATH, 'joystickinput.dll'))
 
 
 class JoystickInput:
-    def __init__(self, dll_path: str = 'joystickinput.dll'):
+    def __init__(self, dll_path: str):
         try:
             self.dll = ctypes.CDLL(dll_path)
             self.dll_path = dll_path
@@ -109,6 +109,8 @@ class JoystickDevice(ABC):
             axis = self.axis_mapping[axis]
             self._set_axis(axis, value)
             return True
+        except RuntimeError as e:
+            raise e
         except Exception as e:
             logging.error(f'Failed to set axis {axis}: {str(e)}')
             return False
@@ -131,7 +133,7 @@ class JoystickDevice(ABC):
 
 
 class VJoyDevice(JoystickDevice):
-    def __init__(self, device_id: int = 1, dll_path: str = 'joystickinput.dll'):
+    def __init__(self, device_id: int, dll_path: str):
         self.device_id = device_id
         try:
             import pyvjoy

@@ -39,6 +39,7 @@ from lib.joystick import (
 from lib.logger import get_logger, init_logger, logger
 from lib.script import get_default
 from lib.win32 import (
+    MessageBox,
     get_mouse_speed,
     get_process_dpi_awareness,
     set_mouse_speed,
@@ -86,6 +87,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
+        init_logger(
+            self.tr('MouseFlightControl'), APP_VERSION, self.show_startup_message
+        )
         (
             self.screen_width,
             self.screen_height,
@@ -99,6 +103,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.input_width = 100
         self.apply_stylesheet()
         self.ui = Ui_MainWindow()
+        self.message_box = MessageBox(self)
 
         # 程序状态
         self.main_thread = None
@@ -145,10 +150,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.load_config()
 
         self.setup_ui()
-
-        # 创建设备
-        self.joystick = get_joystick_device(self.device)
-        self.joystick.set_axis(HID_Z, AXIS_MAX)
 
         # 加载配置的语言
         translator = QtCore.QTranslator()
@@ -213,6 +214,14 @@ class MainWindow(QtWidgets.QMainWindow):
                     logger.exception(f"Script '{script.id}' has occured critical error")
             if script.update:
                 self.lua_funcs.append(script.update)
+
+        # 创建设备
+        try:
+            self.joystick = get_joystick_device(self.device, self.device_id)
+            self.joystick.set_axis(HID_Z, AXIS_MAX)
+        except RuntimeError as e:
+            logger.error(str(e))
+            self.message_box.error(self.tr('Error'), self.tr('DeviceNotFoundMessage'))
 
         self.create_menu()
 
@@ -283,9 +292,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.show()
         self.move(self.center_x - self.w_size / 2, self.center_y - self.height() / 2)
-        init_logger(
-            self.tr('MouseFlightControl'), APP_VERSION, self.show_startup_message
-        )
+        logger.done()
 
     def get_stylesheet(self):
         assets_dir = 'assets/'

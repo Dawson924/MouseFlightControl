@@ -19,7 +19,6 @@ def get_format(record, console=True):
         return (
             '<cyan>{time:YYYY-MM-DD HH:mm:ss}</cyan> | '
             f'<level>{record["level"].name}</level> - '
-            '<yellow>{name}.{function}:{line}</yellow>: '
             '<level>{message}</level>\n{exception}' + end
         )
     else:
@@ -79,20 +78,22 @@ def init_logger(app_name: str, app_version: str, handler):
     cwd = os.getcwd()
     startup_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')[:-3]
 
-    logger.opt(colors=True).info(f'<bold><green>{"=" * 80}</green></bold>')
-    logger.opt(colors=True).info(
-        f'<bold><green>🚀 {app_name} - 启动成功</green></bold>'
-    )
-    logger.opt(colors=True).info(f'<green>版本信息：</green> v{app_version}')
-    logger.opt(colors=True).info(f'<green>启动时间：</green> {startup_time}')
-    logger.opt(colors=True).info(
-        f'<green>运行环境：</green> {system_info.system} {system_info.release} ({system_info.machine}) | Python {python_version} | PID: {pid} | 工作目录: {cwd}'
-    )
-    logger.opt(colors=True).info(f'<green>日志文件：</green> {LOG_FILE}')
-    handler(logger)
-    logger.opt(colors=True).info(f'<bold><green>{"=" * 80}</green></bold>\n')
+    def func():
+        logger.opt(colors=True).info(f'<bold><green>{"=" * 80}</green></bold>')
+        logger.opt(colors=True).info(
+            f'<bold><green>🚀 {app_name} - 启动成功</green></bold>'
+        )
+        logger.opt(colors=True).info(f'<green>版本信息：</green> v{app_version}')
+        logger.opt(colors=True).info(f'<green>启动时间：</green> {startup_time}')
+        logger.opt(colors=True).info(
+            f'<green>运行环境：</green> {system_info.system} {system_info.release} ({system_info.machine}) | Python {python_version} | PID: {pid} | 工作目录: {cwd}'
+        )
+        logger.opt(colors=True).info(f'<green>日志文件：</green> {LOG_FILE}')
+        handler(logger)
+        logger.opt(colors=True).info(f'<bold><green>{"=" * 80}</green></bold>\n')
 
     _init = True
+    logger.done = func
 
 
 __all__ = ['logger', 'get_logger']

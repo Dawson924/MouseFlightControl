@@ -17,5 +17,8 @@ return {
     options = {
         {'damping_h', 'float', 0.7},
         {'damping_v', 'float', 0.9}
+    },
+    data = {
+        device_id = 1
     }
 }

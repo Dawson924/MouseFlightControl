@@ -1,5 +1,8 @@
 import ctypes
 from ctypes import wintypes
+from typing import Callable, Optional
+
+from PySide2.QtWidgets import QMessageBox, QWidget
 
 from common.win32 import SPI_GETMOUSESPEED, SPI_SETMOUSESPEED
 
@@ -64,3 +67,124 @@ def set_process_dpi_awareness(mode):
             return False, f'错误码：{hr}, 系统错误码：{error_code}'
     except Exception as e:
         return False, f'异常：{str(e)}'
+
+
+class MessageBox:
+    def __init__(self, parent: Optional[QWidget] = None):
+        self.parent = parent
+
+    def set_parent(self, parent: QWidget):
+        self.parent = parent
+
+    def info(
+        self,
+        title: str = 'INFO',
+        text: str = '',
+        detail: str = '',
+        buttons: QMessageBox.StandardButtons = QMessageBox.Ok,
+        default_button: QMessageBox.StandardButton = QMessageBox.Ok,
+    ) -> QMessageBox.StandardButton:
+        return self._create_msgbox(
+            icon=QMessageBox.Information,
+            title=title,
+            text=text,
+            detail=detail,
+            buttons=buttons,
+            default_button=default_button,
+        )
+
+    def warning(
+        self,
+        title: str = 'WARNING',
+        text: str = '',
+        detail: str = '',
+        buttons: QMessageBox.StandardButtons = QMessageBox.Ok,
+        default_button: QMessageBox.StandardButton = QMessageBox.Ok,
+    ) -> QMessageBox.StandardButton:
+        return self._create_msgbox(
+            icon=QMessageBox.Warning,
+            title=title,
+            text=text,
+            detail=detail,
+            buttons=buttons,
+            default_button=default_button,
+        )
+
+    def error(
+        self,
+        title: str = 'ERROR',
+        text: str = '',
+        detail: str = '',
+        buttons: QMessageBox.StandardButtons = QMessageBox.Ok,
+        default_button: QMessageBox.StandardButton = QMessageBox.Ok,
+    ) -> QMessageBox.StandardButton:
+        return self._create_msgbox(
+            icon=QMessageBox.Critical,
+            title=title,
+            text=text,
+            detail=detail,
+            buttons=buttons,
+            default_button=default_button,
+        )
+
+    def question(
+        self,
+        title: str = 'CONFIRM',
+        text: str = '',
+        detail: str = '',
+        buttons: QMessageBox.StandardButtons = QMessageBox.Yes | QMessageBox.No,
+        default_button: QMessageBox.StandardButton = QMessageBox.Yes,
+    ) -> QMessageBox.StandardButton:
+        return self._create_msgbox(
+            icon=QMessageBox.Question,
+            title=title,
+            text=text,
+            detail=detail,
+            buttons=buttons,
+            default_button=default_button,
+        )
+
+    def custom(
+        self,
+        icon: QMessageBox.Icon,
+        title: str,
+        text: str,
+        detail: str = '',
+        buttons: QMessageBox.StandardButtons = QMessageBox.Ok,
+        default_button: QMessageBox.StandardButton = QMessageBox.Ok,
+        callback: Optional[Callable[[QMessageBox.StandardButton], None]] = None,
+    ) -> QMessageBox.StandardButton:
+        result = self._create_msgbox(
+            icon=icon,
+            title=title,
+            text=text,
+            detail=detail,
+            buttons=buttons,
+            default_button=default_button,
+        )
+        if callback:
+            callback(result)
+        return result
+
+    def _create_msgbox(
+        self,
+        icon: QMessageBox.Icon,
+        title: str,
+        text: str,
+        detail: str,
+        buttons: QMessageBox.StandardButtons,
+        default_button: QMessageBox.StandardButton,
+    ) -> QMessageBox.StandardButton:
+        msg_box = QMessageBox(self.parent)
+        msg_box.setIcon(icon)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(text)
+
+        if detail:
+            msg_box.setDetailedText(detail)
+
+        msg_box.setStandardButtons(buttons)
+        msg_box.setDefaultButton(default_button)
+
+        result = msg_box.exec_()
+        return result
