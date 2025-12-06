@@ -38,6 +38,6 @@ CONFIGURABLE = {
     'device': (str,),
     'device_id': (int, 1, None),
     'axis_speed': (int, 1, 20),
-    'damp_x': (float, 0.1, 1),
-    'damp_y': (float, 0.1, 1),
+    'damping_h': (float, 0.01, 1),
+    'damping_v': (float, 0.01, 1),
 }

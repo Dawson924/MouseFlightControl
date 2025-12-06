@@ -4,7 +4,7 @@ local mod = {}
 local config
 mod.id = 'zoom_camera'
 mod.options = {
-    {'key_zoom', 1, ''}
+    {'key_zoom', 'string', ''}
 }
 mod.i18n = {
     name = {

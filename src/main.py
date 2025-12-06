@@ -86,7 +86,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.ui = Ui_MainWindow()
         (
             self.screen_width,
             self.screen_height,
@@ -97,6 +96,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.w_size = 350
         self.min_w_size = self.px(300)
         self.max_w_size = self.px(500)
+        self.input_width = 100
+        self.apply_stylesheet()
+        self.ui = Ui_MainWindow()
 
         # 程序状态
         self.main_thread = None
@@ -118,8 +120,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.device = 'vjoy'
         self.device_id = 1
         self.axis_speed = 15
-        self.damp_x = 0.7
-        self.damp_y = 0.9
+        self.damping_h = 1.0
+        self.damping_v = 1.0
 
         # 配置默认值
         self.language = 'en_US'
@@ -193,10 +195,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lua_globals.GetConfig = lambda id: self.script_db.get(id)
         self.lua_funcs = []
         for script in self.scripts:
-            if script.data:
-                validate_config(script.data)
-                for k, v in script.data.items():
+            script_config = self.script_db.get(script.id)
+            if script_config:
+                for k, v in validate_config(script_config, True).items():
                     self._set_attr_value(k, v)
+            if script.data:
+                try:
+                    validate_config(script.data)
+                    for k, v in script.data.items():
+                        self._set_attr_value(k, v)
+                except (TypeError, ValueError) as e:
+                    logger.exception(str(e))
             if script.init:
                 try:
                     script.init(self.script_db)
@@ -277,6 +286,137 @@ class MainWindow(QtWidgets.QMainWindow):
         init_logger(
             self.tr('MouseFlightControl'), APP_VERSION, self.show_startup_message
         )
+
+    def get_stylesheet(self):
+        assets_dir = 'assets/'
+        if not os.path.exists(assets_dir):
+            raise FileExistsError(
+                "Cannot find 'assets' directory. Please verify the program's files are installed correctly."
+            )
+
+        self.input_width = self.px(self.input_width)
+
+        return f"""
+            QMainWindow {{
+                background-color: #F0F0F0;
+                font-size: 9pt;
+            }}
+            QWidget {{
+                background-color: #F0F0F0;
+            }}
+            QLabel {{
+                color: #000000;
+            }}
+            QPushButton {{
+                background-color: #E1E1E1;
+                border: 1px solid #A0A0A0;
+                border-radius: 3px;
+                padding: 5px;
+                min-width: 80px;
+            }}
+            QPushButton:hover {{
+                background-color: #D0D0D0;
+            }}
+            QPushButton:pressed {{
+                background-color: #C0C0C0;
+                border: 1px solid #707070;
+            }}
+            QSlider::groove:horizontal {{
+                border: 1px solid #A0A0A0;
+                height: 6px;
+                background: #D0D0D0;
+                margin: 2px 0;
+            }}
+            QSlider::handle:horizontal {{
+                background: #E1E1E1;
+                border: 1px solid #707070;
+                width: 16px;
+                margin: -4px 0;
+                border-radius: 3px;
+            }}
+            QSlider::handle:horizontal:hover {{
+                background: #F0F0F0;
+            }}
+            QSlider::add-page:horizontal {{
+                background: #B0B0B0;
+            }}
+            QSlider::sub-page:horizontal {{
+                background: #0078D7;
+            }}
+            QLineEdit {{
+                border: 1px solid #A0A0A0;
+                border-radius: 3px;
+                padding: 4px;
+                background: white;
+                min-width: {self.input_width}px;
+                max-width: {self.input_width}px;
+            }}
+            QSpinBox {{
+                border: 1px solid #A0A0A0;
+                border-radius: 3px;
+                padding: 4px;
+                background: white;
+                min-width: {self.input_width}px;
+                max-width: {self.input_width}px;
+            }}
+            QSpinBox::up-button, QSpinBox::down-button {{
+                background: transparent;
+                border: none;
+                width: 16px;
+            }}
+            QSpinBox::up-arrow {{
+                image: url({os.path.join(assets_dir, 'up_arrow.svg')});
+                width: 16px;
+                height: 16px;
+            }}
+            QSpinBox::down-arrow {{
+                image: url({os.path.join(assets_dir, 'down_arrow.svg')});
+                width: 16px;
+                height: 16px;
+            }}
+            #controllerComboBox {{
+                border: 1px solid #A0A0A0;
+                border-radius: 3px;
+                padding: 4px;
+                background: white;
+                min-width: 120px;
+            }}
+            #controllerComboBox::drop-down {{
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 20px;
+                border-left-width: 1px;
+                border-left-color: #A0A0A0;
+                border-left-style: solid;
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }}
+            #controllerComboBox::down-arrow {{
+                image: url({os.path.join(assets_dir, 'down_arrow.svg')});
+                width: 16px;
+                height: 16px;
+            }}
+            #controllerComboBox QAbstractItemView {{
+                border: 1px solid #A0A0A0;
+                background: white;
+                selection-background-color: #E1E1E1;
+            }}
+            #controlsTitleLabel, #optionsTitleLabel {{
+                font-size: 14pt;
+                font-weight: bold;
+                color: #000000;
+            }}
+            #speedValueLabel {{
+                color: #505050;
+                font-size: 9pt;
+                min-width: 30px;
+            }}
+        """
+
+    def apply_stylesheet(self):
+        """应用动态样式表"""
+        stylesheet = self.get_stylesheet()
+        self.setStyleSheet(stylesheet)
 
     def setup_ui(self):
         self.ui.setupUi(self)
@@ -409,7 +549,17 @@ class MainWindow(QtWidgets.QMainWindow):
                 # 创建文本输入
                 line_edit = QtWidgets.QLineEdit()
                 line_edit.setObjectName(f'{option}Option')
-                line_edit.setFixedWidth(self.px(100))
+                # 应用动态宽度样式
+                line_edit.setStyleSheet(f"""
+                    QLineEdit {{
+                        border: 1px solid #A0A0A0;
+                        border-radius: 3px;
+                        padding: 4px;
+                        background: white;
+                        min-width: {self.input_width}px;
+                        max-width: {self.input_width}px;
+                    }}
+                """)
 
                 if hasattr(self.__external__, option):
                     value = getattr(self.__external__, option)
@@ -440,7 +590,22 @@ class MainWindow(QtWidgets.QMainWindow):
                 # 创建数值选择器
                 spin_box = QtWidgets.QSpinBox()
                 spin_box.setObjectName(f'{option}Option')
-                spin_box.setFixedWidth(self.px(100))
+                # 应用动态宽度样式
+                spin_box.setStyleSheet(f"""
+                    QSpinBox {{
+                        border: 1px solid #A0A0A0;
+                        border-radius: 3px;
+                        padding: 4px;
+                        background: white;
+                        min-width: {self.input_width}px;
+                        max-width: {self.input_width}px;
+                    }}
+                    QSpinBox::up-button, QSpinBox::down-button {{
+                        background: transparent;
+                        border: none;
+                        width: 16px;
+                    }}
+                """)
                 spin_box.setMinimum(0)
                 spin_box.setMaximum(1000000)
 
@@ -1008,8 +1173,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     delta_y = curr_y - prev_y
 
                     if input.is_pressing(self.key_freecam) and freecam_on:
-                        Axis.vx += delta_x * self.axis_speed * self.damp_x * 0.48
-                        Axis.vy += delta_y * self.axis_speed * self.damp_y
+                        Axis.vx += delta_x * self.axis_speed * self.damping_h
+                        Axis.vy += delta_y * self.axis_speed * self.damping_v
 
                         x_percent = Axis.vx / AXIS_MAX
                         y_percent = Axis.vy / AXIS_MAX
@@ -1025,8 +1190,8 @@ class MainWindow(QtWidgets.QMainWindow):
                         )
                         Axis.vz = check_overflow(Axis.vz, AXIS_MIN, AXIS_MAX)
                     else:
-                        Axis.x += delta_x * self.axis_speed * self.damp_x * 0.48
-                        Axis.y += delta_y * self.axis_speed * self.damp_y
+                        Axis.x += delta_x * self.axis_speed * self.damping_h
+                        Axis.y += delta_y * self.axis_speed * self.damping_v
 
                         x_percent = Axis.x / AXIS_MAX
                         y_percent = Axis.y / AXIS_MAX

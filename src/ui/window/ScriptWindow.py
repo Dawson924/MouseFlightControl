@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Tuple
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import (
     QCheckBox,
+    QDoubleSpinBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -86,7 +87,7 @@ class ScriptWindow(QMainWindow):
                 min-width: 100px;
                 max-width: 100px;
             }
-            QSpinBox {
+            QSpinBox, QDoubleSpinBox {
                 border: 1px solid #A0A0A0;
                 border-radius: 3px;
                 padding: 4px;
@@ -94,7 +95,7 @@ class ScriptWindow(QMainWindow):
                 min-width: 100px;
                 max-width: 100px;
             }
-            QSpinBox::up-button, QSpinBox::down-button {
+            QSpinBox::up-button, QSpinBox::down-button, QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
                 background: transparent;
                 border: none;
                 width: 16px;
@@ -182,7 +183,7 @@ class ScriptWindow(QMainWindow):
         self.config[key] = value
 
     def add_config_row(
-        self, name: str, label: str, widget_type: int, default: Any
+        self, name: str, label: str, widget_type: int, value: Any
     ) -> QHBoxLayout:
         row_layout = QHBoxLayout()
         row_layout.setSpacing(10)
@@ -194,23 +195,44 @@ class ScriptWindow(QMainWindow):
             QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         )
 
-        if widget_type == 0:
+        if widget_type == 'bool':
             widget = QCheckBox()
-            widget.setChecked(default if isinstance(default, bool) else False)
+            widget.setChecked(value if isinstance(value, bool) else False)
             widget.stateChanged.connect(
                 lambda checked, key=name: self.set_config(key, checked)
             )
-        elif widget_type == 1:
+        elif widget_type == 'string':
             widget = QLineEdit()
-            widget.setText(str(default) if default is not None else '')
+            widget.setText(str(value) if value is not None else '')
             widget.textChanged.connect(
                 lambda text, key=name: self.set_config(key, text)
             )
-        elif widget_type == 2:
+        elif widget_type == 'int':
             widget = QSpinBox()
-            widget.setMinimum(40)
-            widget.setMaximum(160)
-            widget.setValue(int(default) if isinstance(default, (int, float)) else 0)
+            widget.setMinimum(-1000000)
+            widget.setMaximum(1000000)
+            widget.setValue(value)
+            widget.valueChanged.connect(
+                lambda value, key=name: self.set_config(key, value)
+            )
+        elif widget_type == 'uint':
+            widget = QSpinBox()
+            widget.setMinimum(0)
+            widget.setMaximum(1000000)
+            widget.setValue(value)
+            widget.valueChanged.connect(
+                lambda value, key=name: self.set_config(key, value)
+            )
+        elif widget_type == 'float':
+            widget = QDoubleSpinBox()
+            widget.setDecimals(3)
+            widget.setSingleStep(0.001)
+            widget.setMinimum(0.0)
+            widget.setMaximum(100.0)
+            widget.setValue(value)
+            widget.valueChanged.connect(
+                lambda value, key=name: self.set_config(key, value)
+            )
         else:
             widget = QLabel('Invalid')
             widget.setStyleSheet('color: red;')
@@ -218,11 +240,11 @@ class ScriptWindow(QMainWindow):
         row_layout.addWidget(widget)
         return row_layout
 
-    def create_options(self, list: List[Tuple[str, int, Any]]):
+    def create_options(self, list: List[Tuple[str, str, Any]]):
         for option in list:
             if len(option) != 3:
                 continue
-            name, widget, default = option
+            name, type, default = option
             if hasattr(self.script, 'i18n'):
                 language = (
                     self.parent().language
@@ -235,7 +257,7 @@ class ScriptWindow(QMainWindow):
             row_layout = self.add_config_row(
                 name,
                 label,
-                widget,
+                type,
                 self.config[name] if name in self.config else default,
             )
             self.config_layout.addLayout(row_layout)

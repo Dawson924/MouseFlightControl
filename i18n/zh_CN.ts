@@ -3,102 +3,102 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="main.py" line="676"/>
+        <location filename="main.py" line="839"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
     <message>
-        <location filename="main.py" line="278"/>
+        <location filename="main.py" line="287"/>
         <source>MouseFlightControl</source>
         <translation>鼠标飞行控制软件</translation>
     </message>
     <message>
-        <location filename="main.py" line="760"/>
+        <location filename="main.py" line="923"/>
         <source>Start</source>
         <translation>开始</translation>
     </message>
     <message>
-        <location filename="main.py" line="673"/>
+        <location filename="main.py" line="836"/>
         <source>Title</source>
         <translation>鼠标飞行控制（免费软件）</translation>
     </message>
     <message>
-        <location filename="main.py" line="764"/>
+        <location filename="main.py" line="927"/>
         <source>StatusStopped</source>
         <translation>状态：停止</translation>
     </message>
     <message>
-        <location filename="main.py" line="763"/>
+        <location filename="main.py" line="926"/>
         <source>StatusWorking</source>
         <translation>状态：工作中</translation>
     </message>
     <message>
-        <location filename="main.py" line="696"/>
+        <location filename="main.py" line="859"/>
         <source>CurrentValue</source>
         <translation>当前值</translation>
     </message>
     <message>
-        <location filename="main.py" line="761"/>
+        <location filename="main.py" line="924"/>
         <source>Stop</source>
         <translation>停止</translation>
     </message>
     <message>
-        <location filename="main.py" line="694"/>
+        <location filename="main.py" line="857"/>
         <source>Sensitive</source>
         <translation>鼠标灵敏度</translation>
     </message>
     <message>
-        <location filename="main.py" line="698"/>
+        <location filename="main.py" line="861"/>
         <source>ToggleEnabled</source>
         <translation>开关控制</translation>
     </message>
     <message>
-        <location filename="main.py" line="700"/>
+        <location filename="main.py" line="863"/>
         <source>CenterControl</source>
         <translation>操控回中</translation>
     </message>
     <message>
-        <location filename="main.py" line="714"/>
+        <location filename="main.py" line="877"/>
         <source>ShowCursor</source>
         <translation>展示光标</translation>
     </message>
     <message>
-        <location filename="main.py" line="716"/>
+        <location filename="main.py" line="879"/>
         <source>HintOverlay</source>
         <translation>提示覆盖</translation>
     </message>
     <message>
-        <location filename="main.py" line="720"/>
+        <location filename="main.py" line="883"/>
         <source>ButtonMapping</source>
         <translation>鼠标按钮映射</translation>
     </message>
     <message>
-        <location filename="main.py" line="722"/>
+        <location filename="main.py" line="885"/>
         <source>MemorizeAxisPos</source>
         <translation>维持摇杆位置</translation>
     </message>
     <message>
-        <location filename="main.py" line="690"/>
+        <location filename="main.py" line="853"/>
         <source>ControlsTitle</source>
         <translation>控制</translation>
     </message>
     <message>
-        <location filename="main.py" line="713"/>
+        <location filename="main.py" line="876"/>
         <source>OptionsTitle</source>
         <translation>选项</translation>
     </message>
     <message>
-        <location filename="main.py" line="710"/>
+        <location filename="main.py" line="873"/>
         <source>Controller</source>
         <translation>游戏控制器</translation>
     </message>
     <message>
-        <location filename="main.py" line="300"/>
+        <location filename="main.py" line="438"/>
         <source>FixedWingMode</source>
         <translation type="unfinished">固定翼模式</translation>
     </message>
     <message>
-        <location filename="main.py" line="326"/>
+        <location filename="main.py" line="464"/>
         <source>HelicopterMode</source>
         <translation type="unfinished">直升机模式</translation>
     </message>
@@ -111,7 +111,7 @@
 你可以自定义每一次移动在轴上的步长</translation>
     </message>
     <message>
-        <location filename="main.py" line="702"/>
+        <location filename="main.py" line="865"/>
         <source>EnableFreecam</source>
         <translation>启用自由视角</translation>
     </message>
@@ -121,72 +121,72 @@
         <translation type="obsolete">展示提示</translation>
     </message>
     <message>
-        <location filename="main.py" line="674"/>
+        <location filename="main.py" line="837"/>
         <source>General</source>
         <translation>通用</translation>
     </message>
     <message>
-        <location filename="main.py" line="708"/>
+        <location filename="main.py" line="871"/>
         <source>TaxiMode</source>
         <translation>地面滑行模式</translation>
     </message>
     <message>
-        <location filename="main.py" line="848"/>
+        <location filename="main.py" line="1011"/>
         <source>Controlled</source>
         <translation>正在控制</translation>
     </message>
     <message>
-        <location filename="main.py" line="853"/>
+        <location filename="main.py" line="1016"/>
         <source>NoControl</source>
         <translation>无控制</translation>
     </message>
     <message>
-        <location filename="main.py" line="943"/>
+        <location filename="main.py" line="1106"/>
         <source>TaxiModeOn</source>
         <translation>地面滑行模式：启用</translation>
     </message>
     <message>
-        <location filename="main.py" line="948"/>
+        <location filename="main.py" line="1111"/>
         <source>TaxiModeOff</source>
         <translation>地面滑行模式：禁用</translation>
     </message>
     <message>
-        <location filename="main.py" line="724"/>
+        <location filename="main.py" line="887"/>
         <source>FreecamAutoCenter</source>
         <translation>自由视角自动回中</translation>
     </message>
     <message>
-        <location filename="main.py" line="706"/>
+        <location filename="main.py" line="869"/>
         <source>CameraFov</source>
         <translation>自由视角视场角度</translation>
     </message>
     <message>
-        <location filename="main.py" line="704"/>
+        <location filename="main.py" line="867"/>
         <source>ViewCenter</source>
         <translation>自由视角归中</translation>
     </message>
     <message>
-        <location filename="main.py" line="718"/>
+        <location filename="main.py" line="881"/>
         <source>ShowIndicator</source>
         <translation>控制指示器</translation>
     </message>
     <message>
-        <location filename="main.py" line="675"/>
+        <location filename="main.py" line="838"/>
         <source>ImportPreset</source>
         <translation>导入...</translation>
     </message>
     <message>
-        <location filename="main.py" line="295"/>
+        <location filename="main.py" line="433"/>
         <source>None</source>
         <translation>未选择</translation>
     </message>
     <message>
-        <location filename="main.py" line="677"/>
+        <location filename="main.py" line="840"/>
         <source>Script</source>
         <translation>脚本</translation>
     </message>
     <message>
-        <location filename="main.py" line="679"/>
+        <location filename="main.py" line="842"/>
         <source>Installed</source>
         <translation>已安装</translation>
     </message>

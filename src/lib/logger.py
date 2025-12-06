@@ -7,7 +7,7 @@ from loguru import logger
 
 from common.constants import IS_FROZEN
 
-_init = True
+_init = False
 
 LOG_FILE = 'full.log'
 MAX_SIZE = 500 * 1024 * 1024

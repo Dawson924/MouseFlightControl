@@ -2,7 +2,7 @@ from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple
 
 from type.i18n import I18nDict
 
-ScriptOption = Tuple[str, int, Any]
+ScriptOption = Tuple[str, str, Any]
 
 
 class ScriptModule:

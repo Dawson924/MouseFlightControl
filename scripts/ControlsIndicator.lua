@@ -4,13 +4,23 @@ return {
         name = {
             en_US = 'Controls Indicator',
             zh_CN = '控制指示器'
-        }
+        },
+        indicator_x = {
+            en_US = 'Horizontal margin',
+            zh_CN = '水平边距'
+        },
+        indicator_y = {
+            en_US = 'Vertical margin',
+            zh_CN = '垂直边距'
+        },
+        indicator_size = {
+            en_US = 'Indicator size',
+            zh_CN = '指示器尺寸'
+        },
     },
-    data = {
-        indicator_x = 30,
-        indicator_y = -30,
-        indicator_bg_color = {255, 90, 0, 50},
-        indicator_line_color = {255, 0, 0, 255},
-        indicator_size = 200,
-    }
+    options = {
+        {'indicator_x', 'int', 30},
+        {'indicator_y', 'int', -30},
+        {'indicator_size', 'uint', 200},
+    },
 }

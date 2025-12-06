@@ -1,7 +1,7 @@
 local mod = {}
 mod.id = 'burner_detent'
 mod.options = {
-    {'key_detent', 1, ''}
+    {'key_detent', 'string', ''}
 }
 mod.i18n = {
     name = {
