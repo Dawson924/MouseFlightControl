@@ -3,47 +3,47 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="main.py" line="848"/>
+        <location filename="main.py" line="847"/>
         <source>Language</source>
         <translation>Язык</translation>
     </message>
     <message>
-        <location filename="main.py" line="91"/>
+        <location filename="main.py" line="90"/>
         <source>MouseFlightControl</source>
         <translation>Управление полетом мышью</translation>
     </message>
     <message>
-        <location filename="main.py" line="932"/>
+        <location filename="main.py" line="931"/>
         <source>Start</source>
         <translation>Старт</translation>
     </message>
     <message>
-        <location filename="main.py" line="845"/>
+        <location filename="main.py" line="844"/>
         <source>Title</source>
         <translation>Управление полетом мышью</translation>
     </message>
     <message>
-        <location filename="main.py" line="936"/>
+        <location filename="main.py" line="935"/>
         <source>StatusStopped</source>
         <translation>Состояние: остановлено</translation>
     </message>
     <message>
-        <location filename="main.py" line="935"/>
+        <location filename="main.py" line="934"/>
         <source>StatusWorking</source>
         <translation>Состояние: работает</translation>
     </message>
     <message>
-        <location filename="main.py" line="868"/>
+        <location filename="main.py" line="867"/>
         <source>CurrentValue</source>
         <translation>Текущее значение</translation>
     </message>
     <message>
-        <location filename="main.py" line="933"/>
+        <location filename="main.py" line="932"/>
         <source>Stop</source>
         <translation>Стоп</translation>
     </message>
     <message>
-        <location filename="main.py" line="866"/>
+        <location filename="main.py" line="865"/>
         <source>Sensitive</source>
         <translation>Чувствительность</translation>
     </message>
@@ -78,7 +78,7 @@
         <translation>Сохранять положение осей</translation>
     </message>
     <message>
-        <location filename="main.py" line="862"/>
+        <location filename="main.py" line="861"/>
         <source>ControlsTitle</source>
         <translation>Управление</translation>
     </message>
@@ -93,12 +93,12 @@
         <translation>Игровой контроллер</translation>
     </message>
     <message>
-        <location filename="main.py" line="447"/>
+        <location filename="main.py" line="446"/>
         <source>FixedWingMode</source>
         <translation>Режим самолета</translation>
     </message>
     <message>
-        <location filename="main.py" line="473"/>
+        <location filename="main.py" line="472"/>
         <source>HelicopterMode</source>
         <translation>Режим вертолета</translation>
     </message>
@@ -120,7 +120,7 @@
         <translation type="obsolete">Показать подсказки</translation>
     </message>
     <message>
-        <location filename="main.py" line="846"/>
+        <location filename="main.py" line="845"/>
         <source>General</source>
         <translation>Основные</translation>
     </message>
@@ -130,22 +130,22 @@
         <translation>Режим таксировки</translation>
     </message>
     <message>
-        <location filename="main.py" line="1020"/>
+        <location filename="main.py" line="1019"/>
         <source>Controlled</source>
         <translation>Управляется</translation>
     </message>
     <message>
-        <location filename="main.py" line="1025"/>
+        <location filename="main.py" line="1024"/>
         <source>NoControl</source>
         <translation>Без управления</translation>
     </message>
     <message>
-        <location filename="main.py" line="1115"/>
+        <location filename="main.py" line="1113"/>
         <source>TaxiModeOn</source>
         <translation>Режим таксировки: Включен</translation>
     </message>
     <message>
-        <location filename="main.py" line="1120"/>
+        <location filename="main.py" line="1116"/>
         <source>TaxiModeOff</source>
         <translation>Режим таксировки: Выключен</translation>
     </message>
@@ -170,32 +170,32 @@
         <translation>Индикатор</translation>
     </message>
     <message>
-        <location filename="main.py" line="847"/>
+        <location filename="main.py" line="846"/>
         <source>ImportPreset</source>
         <translation>Импорт...</translation>
     </message>
     <message>
-        <location filename="main.py" line="442"/>
+        <location filename="main.py" line="441"/>
         <source>None</source>
         <translation>Не выбрано</translation>
     </message>
     <message>
-        <location filename="main.py" line="849"/>
+        <location filename="main.py" line="848"/>
         <source>Script</source>
         <translation>Скрипт</translation>
     </message>
     <message>
-        <location filename="main.py" line="851"/>
+        <location filename="main.py" line="850"/>
         <source>Installed</source>
         <translation>Установлено</translation>
     </message>
     <message>
-        <location filename="main.py" line="224"/>
+        <location filename="main.py" line="223"/>
         <source>Error</source>
         <translation>Исключение</translation>
     </message>
     <message>
-        <location filename="main.py" line="224"/>
+        <location filename="main.py" line="223"/>
         <source>DeviceNotFoundMessage</source>
         <translation>Не найдено доступных устройств vJoy. Пожалуйста, посетите страницу помощи программного обеспечения или официальный сайт vJoy, чтобы найти решения</translation>
     </message>

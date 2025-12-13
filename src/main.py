@@ -68,7 +68,6 @@ class AxisPos:
 
 # 全局控制变量
 enabled = False
-taxi_mode = False
 stop_thread = False  # 控制子线程退出
 
 # 全局变量初始化
@@ -281,7 +280,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.cursorGraph = CursorGraph(self)
         self.showCursor.connect(self.cursorGraph.show_cursor)
         self.indicator = IndicatorWindow(
-            self,
+            None,
             self.indicator_x,
             self.indicator_y,
             self.indicator_bg_color,
@@ -867,6 +866,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.speedValueLabel.setText(
             self.tr('CurrentValue') + f': {str(self.ui.mouseSpeedSlider.value())}'
         )
+        self.ui.mouseSpeedSlider.setValue(self.mouse_speed)
         self.ui.toggleEnabledLabel.setText(self.tr('ToggleEnabled'))
         self.ui.toggleEnabledKey.setText(self.key_toggle)
         self.ui.centerControlLabel.setText(self.tr('CenterControl'))
@@ -901,8 +901,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.speedValueLabel.setText(
             f'{self.tr("CurrentValue")}: {str(self.ui.mouseSpeedSlider.value())}'
         )
-        if self.running:
-            set_mouse_speed(value)
+        self.update_ui_state()
 
     def on_controller_changed(self, value):
         self.controller = value
@@ -1009,7 +1008,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.running:
             return
 
-        global enabled, taxi_mode
+        global enabled
         enabled = flag
 
         if flag:
@@ -1027,7 +1026,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.retranslate_ui()
 
     def main(self):
-        global delta_x, delta_y, enabled, taxi_mode
+        global delta_x, delta_y, enabled
         try:
             Class = controllers.get_class(self.controller)
             if Class:
@@ -1056,6 +1055,7 @@ class MainWindow(QtWidgets.QMainWindow):
             stick_pos = [self.center_x, self.center_y]
             cam_pos = [self.center_x, self.center_y]
             freecam_on = False
+            ground_taxi = False
             use_cache = False
 
             if self.debug:
@@ -1105,20 +1105,15 @@ class MainWindow(QtWidgets.QMainWindow):
                             prev_x, prev_y = stick_pos[0], stick_pos[1]
                             use_cache = True
 
-                if input.is_hotkey_pressed(self.key_taxi):
-                    if enabled:
-                        taxi_mode = not taxi_mode
-                        Axis.rd = 0
-                        if taxi_mode:
-                            if self.show_hint:
-                                self.showMessage.emit(
-                                    self.tr('TaxiModeOn'), 'green', 1000
-                                )
-                        else:
-                            if self.show_hint:
-                                self.showMessage.emit(
-                                    self.tr('TaxiModeOff'), 'red', 1000
-                                )
+                if enabled and input.is_hotkey_pressed(self.key_taxi):
+                    ground_taxi = not ground_taxi
+                    Axis.rd = 0
+                    if ground_taxi:
+                        if self.show_hint:
+                            self.showMessage.emit(self.tr('TaxiModeOn'), 'green', 1000)
+                    else:
+                        if self.show_hint:
+                            self.showMessage.emit(self.tr('TaxiModeOff'), 'red', 1000)
 
                 if enabled and input.is_hotkey_pressed(self.key_center):
                     prev_x, prev_y = self.center_x, self.center_y
@@ -1209,7 +1204,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         Axis.x = check_overflow(Axis.x, AXIS_MIN, AXIS_MAX)
                         Axis.y = check_overflow(Axis.y, AXIS_MIN, AXIS_MAX)
 
-                        if taxi_mode:
+                        if ground_taxi:
                             Axis.rd = Axis.x
 
                 if enabled:
@@ -1244,7 +1239,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.lua_globals.Mouse.deltaY = curr_y - prev_y
                     self.lua_globals.Control['active'] = enabled and not freecam_on
                     self.lua_globals.Control['steering'] = (
-                        enabled and not freecam_on and taxi_mode
+                        enabled and not freecam_on and ground_taxi
                     )
                     self.lua_globals.Camera['active'] = enabled and freecam_on
                     self.lua_globals.Camera['fov'] = axis2fov(Axis.vz)

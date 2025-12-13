@@ -3,47 +3,47 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="main.py" line="848"/>
+        <location filename="main.py" line="847"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
     <message>
-        <location filename="main.py" line="91"/>
+        <location filename="main.py" line="90"/>
         <source>MouseFlightControl</source>
         <translation>鼠标飞行控制软件</translation>
     </message>
     <message>
-        <location filename="main.py" line="932"/>
+        <location filename="main.py" line="931"/>
         <source>Start</source>
         <translation>开始</translation>
     </message>
     <message>
-        <location filename="main.py" line="845"/>
+        <location filename="main.py" line="844"/>
         <source>Title</source>
         <translation>鼠标飞行控制（免费软件）</translation>
     </message>
     <message>
-        <location filename="main.py" line="936"/>
+        <location filename="main.py" line="935"/>
         <source>StatusStopped</source>
         <translation>状态：停止</translation>
     </message>
     <message>
-        <location filename="main.py" line="935"/>
+        <location filename="main.py" line="934"/>
         <source>StatusWorking</source>
         <translation>状态：工作中</translation>
     </message>
     <message>
-        <location filename="main.py" line="868"/>
+        <location filename="main.py" line="867"/>
         <source>CurrentValue</source>
         <translation>当前值</translation>
     </message>
     <message>
-        <location filename="main.py" line="933"/>
+        <location filename="main.py" line="932"/>
         <source>Stop</source>
         <translation>停止</translation>
     </message>
     <message>
-        <location filename="main.py" line="866"/>
+        <location filename="main.py" line="865"/>
         <source>Sensitive</source>
         <translation>鼠标灵敏度</translation>
     </message>
@@ -78,7 +78,7 @@
         <translation>维持摇杆位置</translation>
     </message>
     <message>
-        <location filename="main.py" line="862"/>
+        <location filename="main.py" line="861"/>
         <source>ControlsTitle</source>
         <translation>控制</translation>
     </message>
@@ -93,12 +93,12 @@
         <translation>游戏控制器</translation>
     </message>
     <message>
-        <location filename="main.py" line="447"/>
+        <location filename="main.py" line="446"/>
         <source>FixedWingMode</source>
         <translation>固定翼模式</translation>
     </message>
     <message>
-        <location filename="main.py" line="473"/>
+        <location filename="main.py" line="472"/>
         <source>HelicopterMode</source>
         <translation>直升机模式</translation>
     </message>
@@ -121,7 +121,7 @@
         <translation type="obsolete">展示提示</translation>
     </message>
     <message>
-        <location filename="main.py" line="846"/>
+        <location filename="main.py" line="845"/>
         <source>General</source>
         <translation>通用</translation>
     </message>
@@ -131,22 +131,22 @@
         <translation>地面滑行模式</translation>
     </message>
     <message>
-        <location filename="main.py" line="1020"/>
+        <location filename="main.py" line="1019"/>
         <source>Controlled</source>
         <translation>正在控制</translation>
     </message>
     <message>
-        <location filename="main.py" line="1025"/>
+        <location filename="main.py" line="1024"/>
         <source>NoControl</source>
         <translation>无控制</translation>
     </message>
     <message>
-        <location filename="main.py" line="1115"/>
+        <location filename="main.py" line="1113"/>
         <source>TaxiModeOn</source>
         <translation>地面滑行模式：启用</translation>
     </message>
     <message>
-        <location filename="main.py" line="1120"/>
+        <location filename="main.py" line="1116"/>
         <source>TaxiModeOff</source>
         <translation>地面滑行模式：禁用</translation>
     </message>
@@ -171,32 +171,32 @@
         <translation>控制指示器</translation>
     </message>
     <message>
-        <location filename="main.py" line="847"/>
+        <location filename="main.py" line="846"/>
         <source>ImportPreset</source>
         <translation>导入...</translation>
     </message>
     <message>
-        <location filename="main.py" line="442"/>
+        <location filename="main.py" line="441"/>
         <source>None</source>
         <translation>未选择</translation>
     </message>
     <message>
-        <location filename="main.py" line="849"/>
+        <location filename="main.py" line="848"/>
         <source>Script</source>
         <translation>脚本</translation>
     </message>
     <message>
-        <location filename="main.py" line="851"/>
+        <location filename="main.py" line="850"/>
         <source>Installed</source>
         <translation>已安装</translation>
     </message>
     <message>
-        <location filename="main.py" line="224"/>
+        <location filename="main.py" line="223"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="main.py" line="224"/>
+        <location filename="main.py" line="223"/>
         <source>DeviceNotFoundMessage</source>
         <translation>找不到可用的vJoy设备，请前往软件帮助页或者vJoy官网寻求解决方案</translation>
     </message>

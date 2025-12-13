@@ -18,17 +18,15 @@ class CursorGraph(QWidget):
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        # 增大窗口大小以容纳十字
-        cross_size = 20  # 十字大小
+        cross_size = 20
         self.resize(
             cross_size // self.devicePixelRatio(), cross_size // self.devicePixelRatio()
         )
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_position)
-        self.timer.setInterval(8)  # ~60Hz更新频率
 
-        self.blank_cursor = QCursor(QBitmap(1, 1), QBitmap(1, 1))  # 1x1透明光标
+        self.blank_cursor = QCursor(QBitmap(1, 1), QBitmap(1, 1))
 
         self.hide()
 
@@ -37,7 +35,6 @@ class CursorGraph(QWidget):
         if not self.is_visible:
             return
         global_pos = QCursor.pos()
-        # 计算窗口位置（使图标中心对准鼠标位置）
         x = global_pos.x() - self.width() // 2
         y = global_pos.y() - self.height() // 2
         self.move(x, y)
@@ -49,17 +46,13 @@ class CursorGraph(QWidget):
 
         painter = QPainter(self)
 
-        # 设置抗锯齿渲染
-        painter.setRenderHint(QPainter.Antialiasing)
-
-        # 将坐标系原点移动到窗口中心
         painter.translate(self.width() / 2, self.height() / 2)
 
         pen = QPen(QColor(255, 255, 0), 2)
         painter.setPen(pen)
 
         # 绘制十字
-        size = 8  # 十字大小的一半
+        size = 8
         painter.drawLine(-size, 0, size, 0)  # 水平线
         painter.drawLine(0, -size, 0, size)  # 垂直线
 

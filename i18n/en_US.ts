@@ -3,47 +3,47 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="main.py" line="848"/>
+        <location filename="main.py" line="847"/>
         <source>Language</source>
         <translation>Language</translation>
     </message>
     <message>
-        <location filename="main.py" line="91"/>
+        <location filename="main.py" line="90"/>
         <source>MouseFlightControl</source>
         <translation>Mouse Flight Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="932"/>
+        <location filename="main.py" line="931"/>
         <source>Start</source>
         <translation>Start</translation>
     </message>
     <message>
-        <location filename="main.py" line="845"/>
+        <location filename="main.py" line="844"/>
         <source>Title</source>
         <translation>Mouse Flight Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="936"/>
+        <location filename="main.py" line="935"/>
         <source>StatusStopped</source>
         <translation>Status:stopped</translation>
     </message>
     <message>
-        <location filename="main.py" line="935"/>
+        <location filename="main.py" line="934"/>
         <source>StatusWorking</source>
         <translation>Status:working</translation>
     </message>
     <message>
-        <location filename="main.py" line="868"/>
+        <location filename="main.py" line="867"/>
         <source>CurrentValue</source>
         <translation>Current value</translation>
     </message>
     <message>
-        <location filename="main.py" line="933"/>
+        <location filename="main.py" line="932"/>
         <source>Stop</source>
         <translation>Stop</translation>
     </message>
     <message>
-        <location filename="main.py" line="866"/>
+        <location filename="main.py" line="865"/>
         <source>Sensitive</source>
         <translation>Sensitive</translation>
     </message>
@@ -78,7 +78,7 @@
         <translation>Maintain Axis Position</translation>
     </message>
     <message>
-        <location filename="main.py" line="862"/>
+        <location filename="main.py" line="861"/>
         <source>ControlsTitle</source>
         <translation>CONTROLS</translation>
     </message>
@@ -93,12 +93,12 @@
         <translation>Game Controller</translation>
     </message>
     <message>
-        <location filename="main.py" line="447"/>
+        <location filename="main.py" line="446"/>
         <source>FixedWingMode</source>
         <translation>Plane Mode</translation>
     </message>
     <message>
-        <location filename="main.py" line="473"/>
+        <location filename="main.py" line="472"/>
         <source>HelicopterMode</source>
         <translation>Helicopter Mode</translation>
     </message>
@@ -120,7 +120,7 @@
         <translation type="obsolete">Captions</translation>
     </message>
     <message>
-        <location filename="main.py" line="846"/>
+        <location filename="main.py" line="845"/>
         <source>General</source>
         <translation>General</translation>
     </message>
@@ -130,22 +130,22 @@
         <translation>Taxi Mode</translation>
     </message>
     <message>
-        <location filename="main.py" line="1020"/>
+        <location filename="main.py" line="1019"/>
         <source>Controlled</source>
         <translation>Controlled</translation>
     </message>
     <message>
-        <location filename="main.py" line="1025"/>
+        <location filename="main.py" line="1024"/>
         <source>NoControl</source>
         <translation>No Control</translation>
     </message>
     <message>
-        <location filename="main.py" line="1115"/>
+        <location filename="main.py" line="1113"/>
         <source>TaxiModeOn</source>
         <translation>Taxi mode: On</translation>
     </message>
     <message>
-        <location filename="main.py" line="1120"/>
+        <location filename="main.py" line="1116"/>
         <source>TaxiModeOff</source>
         <translation>Taxi mode: Off</translation>
     </message>
@@ -170,32 +170,32 @@
         <translation>Controls Indicator</translation>
     </message>
     <message>
-        <location filename="main.py" line="847"/>
+        <location filename="main.py" line="846"/>
         <source>ImportPreset</source>
         <translation>Import...</translation>
     </message>
     <message>
-        <location filename="main.py" line="442"/>
+        <location filename="main.py" line="441"/>
         <source>None</source>
         <translation>None</translation>
     </message>
     <message>
-        <location filename="main.py" line="849"/>
+        <location filename="main.py" line="848"/>
         <source>Script</source>
         <translation>Script</translation>
     </message>
     <message>
-        <location filename="main.py" line="851"/>
+        <location filename="main.py" line="850"/>
         <source>Installed</source>
         <translation>Installed</translation>
     </message>
     <message>
-        <location filename="main.py" line="224"/>
+        <location filename="main.py" line="223"/>
         <source>Error</source>
         <translation>Runtime Error</translation>
     </message>
     <message>
-        <location filename="main.py" line="224"/>
+        <location filename="main.py" line="223"/>
         <source>DeviceNotFoundMessage</source>
         <translation>No available vJoy devices were found. Please visit the software&apos;s help page or the official vJoy website to find solutions</translation>
     </message>
