@@ -27,27 +27,37 @@ jobs:
 
       - name: Install dependencies
         run: |
+          chcp 65001
+          set PYTHONIOENCODING=utf-8
           python -m pip install --upgrade pip
           pip install PySide2 pyinstaller lupa
         shell: cmd
 
       - name: Run UI compilation (uic)
         run: |
+          chcp 65001
+          set PYTHONIOENCODING=utf-8
           python ./exec.py uic
         shell: cmd
 
       - name: Update translation files (lupdate)
         run: |
+          chcp 65001
+          set PYTHONIOENCODING=utf-8
           python ./exec.py lupdate
         shell: cmd
 
       - name: Compile translation files (lrelease)
         run: |
+          chcp 65001
+          set PYTHONIOENCODING=utf-8
           python ./exec.py lrelease
         shell: cmd
 
       - name: Package with PyInstaller
         run: |
+          chcp 65001  # UTF-8
+          set PYTHONIOENCODING=utf-8
           python ./pyinstaller.py
         shell: cmd
 
