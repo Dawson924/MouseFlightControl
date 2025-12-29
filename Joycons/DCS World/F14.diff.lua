@@ -5,7 +5,7 @@ local diff = {
 				[1] = {
 					["filter"] = {
 						["curvature"] = {
-							[1] = 0.15,
+							[1] = 0.1,
 						},
 						["deadzone"] = 0,
 						["hardwareDetent"] = false,
@@ -26,7 +26,7 @@ local diff = {
 				[1] = {
 					["filter"] = {
 						["curvature"] = {
-							[1] = 0.15,
+							[1] = 0.1,
 						},
 						["deadzone"] = 0,
 						["hardwareDetent"] = false,
@@ -61,7 +61,7 @@ local diff = {
 					["key"] = "JOY_RX",
 				},
 			},
-			["name"] = "Absolute Camera Horizontal View",
+			["name"] = "Horizontal View",
 		},
 		["a2011cdnil"] = {
 			["added"] = {
@@ -82,7 +82,7 @@ local diff = {
 					["key"] = "JOY_RY",
 				},
 			},
-			["name"] = "Absolute Camera Vertical View",
+			["name"] = "Vertical View",
 		},
 		["a2012cdnil"] = {
 			["added"] = {
@@ -91,6 +91,32 @@ local diff = {
 				},
 			},
 			["name"] = "Zoom View",
+		},
+	},
+	["keyDiffs"] = {
+		["d3024pnilu3024cd17vd1vpnilvu0"] = {
+			["added"] = {
+				[1] = {
+					["key"] = "JOY_BTN3",
+				},
+			},
+			["name"] = "Wing Sweep Auto Mode",
+		},
+		["d3078pnilu3078cd57vd1vpnilvu0"] = {
+			["added"] = {
+				[1] = {
+					["key"] = "JOY_BTN2",
+				},
+			},
+			["name"] = "Store Release",
+		},
+		["d3087pnilu3087cd57vd1vpnilvu0"] = {
+			["added"] = {
+				[1] = {
+					["key"] = "JOY_BTN1",
+				},
+			},
+			["name"] = "Trigger",
 		},
 	},
 }

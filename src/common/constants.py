@@ -2,7 +2,7 @@ import os
 import sys
 
 APP_NAME = 'MouseFlightControl'
-APP_VERSION = '0.16.1'
+APP_VERSION = '0.16.3'
 
 IS_FROZEN = hasattr(sys, 'frozen')
 

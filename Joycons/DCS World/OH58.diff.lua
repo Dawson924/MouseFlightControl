@@ -5,7 +5,7 @@ local diff = {
 				[1] = {
 					["filter"] = {
 						["curvature"] = {
-							[1] = 0.15,
+							[1] = 0.05,
 						},
 						["deadzone"] = 0,
 						["hardwareDetent"] = false,
@@ -19,14 +19,14 @@ local diff = {
 					["key"] = "JOY_Y",
 				},
 			},
-			["name"] = "Pitch",
+			["name"] = "Flight Control Cyclic Pitch",
 		},
 		["a2002cdnil"] = {
 			["changed"] = {
 				[1] = {
 					["filter"] = {
 						["curvature"] = {
-							[1] = 0.15,
+							[1] = 0.05,
 						},
 						["deadzone"] = 0,
 						["hardwareDetent"] = false,
@@ -40,7 +40,7 @@ local diff = {
 					["key"] = "JOY_X",
 				},
 			},
-			["name"] = "Roll",
+			["name"] = "Flight Control Cyclic Roll",
 		},
 		["a2010cdnil"] = {
 			["added"] = {
@@ -91,6 +91,24 @@ local diff = {
 				},
 			},
 			["name"] = "Zoom View",
+		},
+	},
+	["keyDiffs"] = {
+		["d3026pnilu3026cd21vd1vpnilvu0"] = {
+			["added"] = {
+				[1] = {
+					["key"] = "JOY_BTN1",
+				},
+			},
+			["name"] = "Fire Weapon [1st Detent]",
+		},
+		["d3027pnilu3027cd21vd1vpnilvu0"] = {
+			["added"] = {
+				[1] = {
+					["key"] = "JOY_BTN2",
+				},
+			},
+			["name"] = "Fire Weapon [2nd Detent]",
 		},
 	},
 }

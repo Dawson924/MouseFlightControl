@@ -19,7 +19,7 @@ local diff = {
 					["key"] = "JOY_Y",
 				},
 			},
-			["name"] = "Pitch",
+			["name"] = "Cyclic Pitch",
 		},
 		["a2002cdnil"] = {
 			["changed"] = {
@@ -40,7 +40,7 @@ local diff = {
 					["key"] = "JOY_X",
 				},
 			},
-			["name"] = "Roll",
+			["name"] = "Cyclic Roll",
 		},
 		["a2010cdnil"] = {
 			["added"] = {

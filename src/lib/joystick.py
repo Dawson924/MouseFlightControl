@@ -5,6 +5,7 @@ from os import path
 from typing import Any, Dict, Literal
 
 from common.constants import DLL_PATH
+from type.curve import Filter
 
 AXIS_MAX = 32767
 AXIS_MIN = -32768
@@ -67,6 +68,7 @@ class JoystickDevice(ABC):
         self.input = JoystickInput(dll_path)
         self.axis_mapping = self.get_axis_mapping()
         self.button_mapping = self.get_button_mapping()
+        self.curve_filters = {}
 
     @abstractmethod
     def get_axis_mapping(self) -> Dict[int, Any]:
@@ -96,12 +98,20 @@ class JoystickDevice(ABC):
     def reset(self) -> None:
         pass
 
+    def set_filter(self, axis: int, filter: Filter) -> None:
+        self.curve_filters[axis] = filter
+
     def set_axis(self, axis: int, value: int) -> bool:
         if axis not in self.axis_mapping:
             # logging.warning(
             #     f'Unsupported axis ID {axis} (device type: {self.__class__.__name__})'
             # )
             return False
+
+        filter = self.curve_filters.get(axis)
+        if filter:
+            if filter.invert:
+                value = -value
 
         try:
             self.init_device()

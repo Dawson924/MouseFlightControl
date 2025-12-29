@@ -47,6 +47,8 @@ from lib.win32 import (
 )
 from script_engine.database import ScriptDatabase
 from script_engine.runtime import load_lua_scripts
+from type.axis import AxisPos
+from type.curve import Filter
 from type.script import ScriptModule
 from type.widget import OptionWidget
 from ui.MainWindow import Ui_MainWindow
@@ -59,19 +61,9 @@ from utils import axis2fov, check_overflow, fov, wheel_step
 # 控制器管理
 controllers = ControllerManager()
 
-
-class AxisPos:
-    def __init__(self, x, y, th, rd):
-        self.x, self.y, self.th, self.rd = x, y, th, rd
-        self.vx, self.vy, self.vz = 0, 0, 0
-
-
 # 全局控制变量
 enabled = False
 stop_thread = False  # 控制子线程退出
-
-# 全局变量初始化
-Axis = AxisPos(0, 0, AXIS_MAX, 0)
 
 # 输入状态跟踪
 delta_x = 0
@@ -156,6 +148,16 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QApplication.instance().installTranslator(translator)
             QtWidgets.QApplication.instance().translators.append(translator)
 
+        # 创建设备
+        try:
+            self.axis = AxisPos(0, 0, AXIS_MIN, 0, 0, 0, fov(self.camera_fov))
+            self.joystick = get_joystick_device(self.device, self.device_id)
+            self.joystick.set_filter(HID_Z, Filter(invert=True))
+            self.joystick.set_filter(HID_SLIDER, Filter(invert=True))
+        except RuntimeError as e:
+            logger.error(str(e))
+            self.message_box.error(self.tr('Error'), self.tr('DeviceNotFoundMessage'))
+
         # 脚本初始化和运行
         self.lua_globals = self.lua.globals()
         self.lua_lock = threading.Lock()
@@ -163,6 +165,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lua_globals.SetAttribute = self._set_attr_value
         self.lua_globals.GetAttribute = self._get_attr_value
         self.lua_globals.GetLogger = get_logger
+        self.lua_globals.GetMouseSpeed = get_mouse_speed
+        self.lua_globals.SetMouseSpeed = set_mouse_speed
         self.lua_globals.AddEventHandler = lambda event, handler: self.lua_event.on(
             event, handler
         )
@@ -178,7 +182,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lua_globals.Axis.min = AXIS_MIN
         self.lua_globals.Axis.max = AXIS_MAX
         self.lua_globals.Axis.len = AXIS_LENGTH
-        self.lua_globals.Axis.setValue = lambda axis, value: setattr(Axis, axis, value)
+        self.lua_globals.Axis.setValue = lambda axis, value: setattr(
+            self.axis, axis, value
+        )
         self.lua_globals.Screen.renderMessage = (
             lambda text, color, duration: self.showMessage.emit(text, color, duration)
         )
@@ -213,14 +219,6 @@ class MainWindow(QtWidgets.QMainWindow):
                     logger.exception(f"Script '{script.id}' has occured critical error")
             if script.update:
                 self.lua_funcs.append(script.update)
-
-        # 创建设备
-        try:
-            self.joystick = get_joystick_device(self.device, self.device_id)
-            self.joystick.set_axis(HID_Z, AXIS_MAX)
-        except RuntimeError as e:
-            logger.error(str(e))
-            self.message_box.error(self.tr('Error'), self.tr('DeviceNotFoundMessage'))
 
         self.create_menu()
 
@@ -443,7 +441,7 @@ class MainWindow(QtWidgets.QMainWindow):
             1,
             FixedWingController,
             {
-                'name': self.tr('FixedWingMode'),
+                'name': self.tr('PlaneController'),
                 'options': [
                     ('throttle_speed', OptionWidget.SpinBox, 100),
                     ('increase_throttle_speed', OptionWidget.LineEdit, 'shift'),
@@ -469,7 +467,7 @@ class MainWindow(QtWidgets.QMainWindow):
             2,
             HelicopterController,
             {
-                'name': self.tr('HelicopterMode'),
+                'name': self.tr('HelicopterController'),
                 'options': [
                     ('collective_speed', OptionWidget.SpinBox, 125),
                     ('pedals_speed', OptionWidget.SpinBox, 125),
@@ -864,7 +862,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         self.ui.speedLabel.setText(self.tr('Sensitive'))
         self.ui.speedValueLabel.setText(
-            self.tr('CurrentValue') + f': {str(self.ui.mouseSpeedSlider.value())}'
+            self.tr('CurrentValue') + f': {str(self.mouse_speed)}'
         )
         self.ui.mouseSpeedSlider.setValue(self.mouse_speed)
         self.ui.toggleEnabledLabel.setText(self.tr('ToggleEnabled'))
@@ -898,6 +896,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def on_speed_changed(self, value):
         self.mouse_speed = value
+        self.lua_globals.Mouse.speed = value
         self.ui.speedValueLabel.setText(
             f'{self.tr("CurrentValue")}: {str(self.ui.mouseSpeedSlider.value())}'
         )
@@ -1023,8 +1022,6 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.show_hint:
                 self.showMessage.emit(self.tr('NoControl'), 'red', 1000)
 
-        self.retranslate_ui()
-
     def main(self):
         global delta_x, delta_y, enabled
         try:
@@ -1034,14 +1031,18 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 controller = None
 
+            self.lua_globals.Control.mode = self.controller
+
             input = InputStateMonitor(self.pause, self.attempts)
             input.set_mouse_position(self.center_x, self.center_y)
             self.lua_globals.Input.pressed = input.is_pressed
             self.lua_globals.Input.pressing = input.is_pressing
             self.lua_globals.Input.released = input.is_released
+            self.lua_globals.Input.hotkey = input.is_hotkey_pressed
             self.lua_globals.Input.alt = lambda: input.alt_ctrl_shift(alt=True)
             self.lua_globals.Input.ctrl = lambda: input.alt_ctrl_shift(ctrl=True)
             self.lua_globals.Input.shift = lambda: input.alt_ctrl_shift(shift=True)
+            self.lua_globals.Input.modkey = lambda: input.alt_ctrl_shift
 
             def map_to_percentage(value, reverse=False):
                 clamped = max(AXIS_MIN, min(AXIS_MAX, value))
@@ -1051,6 +1052,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     else 1 - (clamped + AXIS_MAX) / AXIS_LENGTH
                 )
 
+            curr_x, curr_y = self.center_x, self.center_y
             prev_x, prev_y = self.center_x, self.center_y
             stick_pos = [self.center_x, self.center_y]
             cam_pos = [self.center_x, self.center_y]
@@ -1107,7 +1109,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 if enabled and input.is_hotkey_pressed(self.key_taxi):
                     ground_taxi = not ground_taxi
-                    Axis.rd = 0
+                    self.axis.rd = 0
                     if ground_taxi:
                         if self.show_hint:
                             self.showMessage.emit(self.tr('TaxiModeOn'), 'green', 1000)
@@ -1120,9 +1122,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     use_cache = True
 
                 if enabled and input.is_hotkey_pressed(self.key_view_center):
-                    Axis.vz = fov(self.camera_fov)
+                    self.axis.vz = fov(self.camera_fov)
                     if not freecam_on:
-                        Axis.vx, Axis.vy = 0, 0
+                        self.axis.vx, self.axis.vy = 0, 0
                         cam_pos[0], cam_pos[1] = self.center_x, self.center_y
 
                 if enabled and self.button_mapping and not freecam_on:
@@ -1152,7 +1154,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         freecam_on = True
                         stick_pos[0], stick_pos[1] = prev_x, prev_y
                         if self.freecam_auto_center:
-                            Axis.vx, Axis.vy = 0, 0
+                            self.axis.vx, self.axis.vy = 0, 0
                             prev_x, prev_y = self.center_x, self.center_y
                             use_cache = True
                         else:
@@ -1162,7 +1164,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         freecam_on = False
                         cam_pos[0], cam_pos[1] = prev_x, prev_y
                         if self.freecam_auto_center:
-                            Axis.vx, Axis.vy = 0, 0
+                            self.axis.vx, self.axis.vy = 0, 0
                         prev_x, prev_y = stick_pos[0], stick_pos[1]
                         use_cache = True
 
@@ -1175,50 +1177,50 @@ class MainWindow(QtWidgets.QMainWindow):
                     delta_y = curr_y - prev_y
 
                     if input.is_pressing(self.key_freecam) and freecam_on:
-                        Axis.vx += delta_x * self.axis_speed * self.damping_h
-                        Axis.vy += delta_y * self.axis_speed * self.damping_v
+                        self.axis.vx += delta_x * self.axis_speed * self.damping_h
+                        self.axis.vy += delta_y * self.axis_speed * self.damping_v
 
-                        x_percent = Axis.vx / AXIS_MAX
-                        y_percent = Axis.vy / AXIS_MAX
+                        x_percent = self.axis.vx / AXIS_MAX
+                        y_percent = self.axis.vy / AXIS_MAX
                         screen_x = self.center_x + x_percent * (self.screen_width / 2)
                         screen_y = self.center_y + y_percent * (self.screen_height / 2)
                         prev_x, prev_y = screen_x, screen_y
 
-                        Axis.vx = check_overflow(Axis.vx, AXIS_MIN, AXIS_MAX)
-                        Axis.vy = check_overflow(Axis.vy, AXIS_MIN, AXIS_MAX)
+                        self.axis.vx = check_overflow(self.axis.vx, AXIS_MIN, AXIS_MAX)
+                        self.axis.vy = check_overflow(self.axis.vy, AXIS_MIN, AXIS_MAX)
 
-                        Axis.vz += wheel_step(
-                            fov(10, abs=False), -input.get_wheel_delta()
+                        self.axis.vz += wheel_step(
+                            fov(10, abs=False), input.get_wheel_delta()
                         )
-                        Axis.vz = check_overflow(Axis.vz, AXIS_MIN, AXIS_MAX)
+                        self.axis.vz = check_overflow(self.axis.vz, AXIS_MIN, AXIS_MAX)
                     else:
-                        Axis.x += delta_x * self.axis_speed * self.damping_h
-                        Axis.y += delta_y * self.axis_speed * self.damping_v
+                        self.axis.x += delta_x * self.axis_speed * self.damping_h
+                        self.axis.y += delta_y * self.axis_speed * self.damping_v
 
-                        x_percent = Axis.x / AXIS_MAX
-                        y_percent = Axis.y / AXIS_MAX
+                        x_percent = self.axis.x / AXIS_MAX
+                        y_percent = self.axis.y / AXIS_MAX
                         screen_x = self.center_x + x_percent * (self.screen_width / 2)
                         screen_y = self.center_y + y_percent * (self.screen_height / 2)
                         prev_x, prev_y = screen_x, screen_y
 
-                        Axis.x = check_overflow(Axis.x, AXIS_MIN, AXIS_MAX)
-                        Axis.y = check_overflow(Axis.y, AXIS_MIN, AXIS_MAX)
+                        self.axis.x = check_overflow(self.axis.x, AXIS_MIN, AXIS_MAX)
+                        self.axis.y = check_overflow(self.axis.y, AXIS_MIN, AXIS_MAX)
 
                         if ground_taxi:
-                            Axis.rd = Axis.x
+                            self.axis.rd = self.axis.x
 
                 if enabled:
-                    self.joystick.set_axis(HID_X, int(Axis.x))
-                    self.joystick.set_axis(HID_Y, int(Axis.y))
-                    self.joystick.set_axis(HID_Z, int(Axis.th))
-                    self.joystick.set_axis(HID_RZ, int(Axis.rd))
-                    self.joystick.set_axis(HID_RX, int(Axis.vx))
-                    self.joystick.set_axis(HID_RY, int(Axis.vy))
-                    self.joystick.set_axis(HID_SLIDER, int(Axis.vz))
+                    self.joystick.set_axis(HID_X, int(self.axis.x))
+                    self.joystick.set_axis(HID_Y, int(self.axis.y))
+                    self.joystick.set_axis(HID_Z, int(self.axis.th))
+                    self.joystick.set_axis(HID_RZ, int(self.axis.rd))
+                    self.joystick.set_axis(HID_RX, int(self.axis.vx))
+                    self.joystick.set_axis(HID_RY, int(self.axis.vy))
+                    self.joystick.set_axis(HID_SLIDER, int(self.axis.vz))
 
                 if controller is not None and isinstance(controller, BaseController):
                     controller.update(
-                        Axis,
+                        self.axis,
                         self.__external__,
                         input,
                         SimpleNamespace(enabled=enabled, dt=delta_time),
@@ -1226,13 +1228,13 @@ class MainWindow(QtWidgets.QMainWindow):
                     )
 
                 with self.lua_lock:
-                    self.lua_globals.Axis['x'] = Axis.x
-                    self.lua_globals.Axis['y'] = Axis.y
-                    self.lua_globals.Axis['th'] = Axis.th
-                    self.lua_globals.Axis['rd'] = Axis.rd
-                    self.lua_globals.Axis['vx'] = Axis.vx
-                    self.lua_globals.Axis['vy'] = Axis.vy
-                    self.lua_globals.Axis['vz'] = Axis.vz
+                    self.lua_globals.Axis['x'] = self.axis.x
+                    self.lua_globals.Axis['y'] = self.axis.y
+                    self.lua_globals.Axis['th'] = self.axis.th
+                    self.lua_globals.Axis['rd'] = self.axis.rd
+                    self.lua_globals.Axis['vx'] = self.axis.vx
+                    self.lua_globals.Axis['vy'] = self.axis.vy
+                    self.lua_globals.Axis['vz'] = self.axis.vz
                     self.lua_globals.Mouse.pos[1] = prev_x
                     self.lua_globals.Mouse.pos[2] = prev_y
                     self.lua_globals.Mouse.deltaX = curr_x - prev_x
@@ -1242,7 +1244,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         enabled and not freecam_on and ground_taxi
                     )
                     self.lua_globals.Camera['active'] = enabled and freecam_on
-                    self.lua_globals.Camera['fov'] = axis2fov(Axis.vz)
+                    self.lua_globals.Camera['fov'] = axis2fov(self.axis.vz)
 
                 for i, func in enumerate(self.lua_funcs):
                     try:
@@ -1251,10 +1253,10 @@ class MainWindow(QtWidgets.QMainWindow):
                         print(f'Lua func {i} error: \n{e}')
 
                 if self.show_indicator:
-                    x_val = map_to_percentage(Axis.x)
-                    y_val = map_to_percentage(Axis.y)
-                    throttle_val = map_to_percentage(Axis.th, True)
-                    rudder_val = map_to_percentage(Axis.rd)
+                    x_val = map_to_percentage(self.axis.x)
+                    y_val = map_to_percentage(self.axis.y)
+                    throttle_val = map_to_percentage(self.axis.th)
+                    rudder_val = map_to_percentage(self.axis.rd)
                     self.update_indicator(x_val, y_val, throttle_val, rudder_val)
 
                 input.reset_wheel_delta()

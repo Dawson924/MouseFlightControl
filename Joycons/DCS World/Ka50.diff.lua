@@ -19,7 +19,7 @@ local diff = {
 					["key"] = "JOY_Y",
 				},
 			},
-			["name"] = "Pitch",
+			["name"] = "Flight Control Cyclic Pitch",
 		},
 		["a2002cdnil"] = {
 			["changed"] = {
@@ -40,7 +40,7 @@ local diff = {
 					["key"] = "JOY_X",
 				},
 			},
-			["name"] = "Roll",
+			["name"] = "Flight Control Cyclic Roll",
 		},
 		["a2010cdnil"] = {
 			["added"] = {
@@ -55,7 +55,7 @@ local diff = {
 						["hardwareDetentMax"] = 0,
 						["invert"] = false,
 						["saturationX"] = 1,
-						["saturationY"] = 0.35,
+						["saturationY"] = 0.25,
 						["slider"] = false,
 					},
 					["key"] = "JOY_RX",
@@ -76,7 +76,7 @@ local diff = {
 						["hardwareDetentMax"] = 0,
 						["invert"] = false,
 						["saturationX"] = 1,
-						["saturationY"] = 0.4,
+						["saturationY"] = 0.25,
 						["slider"] = false,
 					},
 					["key"] = "JOY_RY",

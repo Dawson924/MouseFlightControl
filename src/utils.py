@@ -1,5 +1,5 @@
 from common.constants import FOV_RANGE
-from lib.joystick import AXIS_LENGTH, AXIS_MIN
+from lib.joystick import AXIS_LENGTH, AXIS_MAX, AXIS_MIN
 
 
 def check_overflow(a, min_val, max_val):
@@ -32,7 +32,7 @@ def fov(val, abs=True):
     if not abs:
         return val * f
     else:
-        return AXIS_MIN + val * f
+        return AXIS_MAX - val * f
 
 
 def axis2fov(val):

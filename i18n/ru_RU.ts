@@ -3,103 +3,103 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="main.py" line="847"/>
+        <location filename="main.py" line="845"/>
         <source>Language</source>
         <translation>Язык</translation>
     </message>
     <message>
-        <location filename="main.py" line="90"/>
+        <location filename="main.py" line="82"/>
         <source>MouseFlightControl</source>
         <translation>Управление полетом мышью</translation>
     </message>
     <message>
-        <location filename="main.py" line="931"/>
+        <location filename="main.py" line="930"/>
         <source>Start</source>
         <translation>Старт</translation>
     </message>
     <message>
-        <location filename="main.py" line="844"/>
+        <location filename="main.py" line="842"/>
         <source>Title</source>
         <translation>Управление полетом мышью</translation>
     </message>
     <message>
-        <location filename="main.py" line="935"/>
+        <location filename="main.py" line="934"/>
         <source>StatusStopped</source>
         <translation>Состояние: остановлено</translation>
     </message>
     <message>
-        <location filename="main.py" line="934"/>
+        <location filename="main.py" line="933"/>
         <source>StatusWorking</source>
         <translation>Состояние: работает</translation>
     </message>
     <message>
-        <location filename="main.py" line="867"/>
+        <location filename="main.py" line="865"/>
         <source>CurrentValue</source>
         <translation>Текущее значение</translation>
     </message>
     <message>
-        <location filename="main.py" line="932"/>
+        <location filename="main.py" line="931"/>
         <source>Stop</source>
         <translation>Стоп</translation>
     </message>
     <message>
-        <location filename="main.py" line="865"/>
+        <location filename="main.py" line="863"/>
         <source>Sensitive</source>
         <translation>Чувствительность</translation>
     </message>
     <message>
-        <location filename="main.py" line="870"/>
+        <location filename="main.py" line="868"/>
         <source>ToggleEnabled</source>
         <translation>Переключить управление</translation>
     </message>
     <message>
-        <location filename="main.py" line="872"/>
+        <location filename="main.py" line="870"/>
         <source>CenterControl</source>
         <translation>Центрировать управление</translation>
     </message>
     <message>
-        <location filename="main.py" line="886"/>
+        <location filename="main.py" line="884"/>
         <source>ShowCursor</source>
         <translation>Показать курсор</translation>
     </message>
     <message>
-        <location filename="main.py" line="888"/>
+        <location filename="main.py" line="886"/>
         <source>HintOverlay</source>
         <translation>Прозрачные подсказки</translation>
     </message>
     <message>
-        <location filename="main.py" line="892"/>
+        <location filename="main.py" line="890"/>
         <source>ButtonMapping</source>
         <translation>Назначение кнопок мыши</translation>
     </message>
     <message>
-        <location filename="main.py" line="894"/>
+        <location filename="main.py" line="892"/>
         <source>MemorizeAxisPos</source>
         <translation>Сохранять положение осей</translation>
     </message>
     <message>
-        <location filename="main.py" line="861"/>
+        <location filename="main.py" line="859"/>
         <source>ControlsTitle</source>
         <translation>Управление</translation>
     </message>
     <message>
-        <location filename="main.py" line="885"/>
+        <location filename="main.py" line="883"/>
         <source>OptionsTitle</source>
         <translation>Параметры</translation>
     </message>
     <message>
-        <location filename="main.py" line="882"/>
+        <location filename="main.py" line="880"/>
         <source>Controller</source>
         <translation>Игровой контроллер</translation>
     </message>
     <message>
-        <location filename="main.py" line="446"/>
-        <source>FixedWingMode</source>
+        <location filename="main.py" line="444"/>
+        <source>PlaneController</source>
         <translation>Режим самолета</translation>
     </message>
     <message>
-        <location filename="main.py" line="472"/>
-        <source>HelicopterMode</source>
+        <location filename="main.py" line="470"/>
+        <source>HelicopterController</source>
         <translation>Режим вертолета</translation>
     </message>
     <message>
@@ -110,7 +110,7 @@
 - В режиме вертолета клавиши WASD управляют коллективом и педалями</translation>
     </message>
     <message>
-        <location filename="main.py" line="874"/>
+        <location filename="main.py" line="872"/>
         <source>EnableFreecam</source>
         <translation>Включить свободный обзор</translation>
     </message>
@@ -120,82 +120,82 @@
         <translation type="obsolete">Показать подсказки</translation>
     </message>
     <message>
-        <location filename="main.py" line="845"/>
+        <location filename="main.py" line="843"/>
         <source>General</source>
         <translation>Основные</translation>
     </message>
     <message>
-        <location filename="main.py" line="880"/>
+        <location filename="main.py" line="878"/>
         <source>TaxiMode</source>
         <translation>Режим таксировки</translation>
     </message>
     <message>
-        <location filename="main.py" line="1019"/>
+        <location filename="main.py" line="1018"/>
         <source>Controlled</source>
         <translation>Управляется</translation>
     </message>
     <message>
-        <location filename="main.py" line="1024"/>
+        <location filename="main.py" line="1023"/>
         <source>NoControl</source>
         <translation>Без управления</translation>
     </message>
     <message>
-        <location filename="main.py" line="1113"/>
+        <location filename="main.py" line="1115"/>
         <source>TaxiModeOn</source>
         <translation>Режим таксировки: Включен</translation>
     </message>
     <message>
-        <location filename="main.py" line="1116"/>
+        <location filename="main.py" line="1118"/>
         <source>TaxiModeOff</source>
         <translation>Режим таксировки: Выключен</translation>
     </message>
     <message>
-        <location filename="main.py" line="896"/>
+        <location filename="main.py" line="894"/>
         <source>FreecamAutoCenter</source>
         <translation>Автоматическое центрирование свободного обзора</translation>
     </message>
     <message>
-        <location filename="main.py" line="878"/>
+        <location filename="main.py" line="876"/>
         <source>CameraFov</source>
         <translation>Поле зрения свободного обзора</translation>
     </message>
     <message>
-        <location filename="main.py" line="876"/>
+        <location filename="main.py" line="874"/>
         <source>ViewCenter</source>
         <translation>Центр обзора</translation>
     </message>
     <message>
-        <location filename="main.py" line="890"/>
+        <location filename="main.py" line="888"/>
         <source>ShowIndicator</source>
         <translation>Индикатор</translation>
     </message>
     <message>
-        <location filename="main.py" line="846"/>
+        <location filename="main.py" line="844"/>
         <source>ImportPreset</source>
         <translation>Импорт...</translation>
     </message>
     <message>
-        <location filename="main.py" line="441"/>
+        <location filename="main.py" line="439"/>
         <source>None</source>
         <translation>Не выбрано</translation>
     </message>
     <message>
-        <location filename="main.py" line="848"/>
+        <location filename="main.py" line="846"/>
         <source>Script</source>
         <translation>Скрипт</translation>
     </message>
     <message>
-        <location filename="main.py" line="850"/>
+        <location filename="main.py" line="848"/>
         <source>Installed</source>
         <translation>Установлено</translation>
     </message>
     <message>
-        <location filename="main.py" line="223"/>
+        <location filename="main.py" line="159"/>
         <source>Error</source>
         <translation>Исключение</translation>
     </message>
     <message>
-        <location filename="main.py" line="223"/>
+        <location filename="main.py" line="159"/>
         <source>DeviceNotFoundMessage</source>
         <translation>Не найдено доступных устройств vJoy. Пожалуйста, посетите страницу помощи программного обеспечения или официальный сайт vJoy, чтобы найти решения</translation>
     </message>

@@ -5,7 +5,7 @@ local diff = {
 				[1] = {
 					["filter"] = {
 						["curvature"] = {
-							[1] = 0.15,
+							[1] = 0.1,
 						},
 						["deadzone"] = 0,
 						["hardwareDetent"] = false,
@@ -19,14 +19,14 @@ local diff = {
 					["key"] = "JOY_Y",
 				},
 			},
-			["name"] = "Pitch",
+			["name"] = "Flight Control Cyclic Pitch",
 		},
 		["a2002cdnil"] = {
 			["changed"] = {
 				[1] = {
 					["filter"] = {
 						["curvature"] = {
-							[1] = 0.15,
+							[1] = 0.1,
 						},
 						["deadzone"] = 0,
 						["hardwareDetent"] = false,
@@ -40,7 +40,7 @@ local diff = {
 					["key"] = "JOY_X",
 				},
 			},
-			["name"] = "Roll",
+			["name"] = "Flight Control Cyclic Roll",
 		},
 		["a2010cdnil"] = {
 			["added"] = {
@@ -91,6 +91,37 @@ local diff = {
 				},
 			},
 			["name"] = "Zoom View",
+		},
+	},
+	["keyDiffs"] = {
+		["d3004pnilu3004cd41vd1vpnilvu0"] = {
+			["name"] = "Pilot Trimmer",
+			["removed"] = {
+				[1] = {
+					["key"] = "JOY_BTN3",
+				},
+			},
+		},
+		["d3009pnilu3009cd21vd1vpnilvu0"] = {
+			["name"] = "Pilot's radio trigger RADIO (call radio menu)",
+			["removed"] = {
+				[1] = {
+					["key"] = "JOY_BTN1",
+				},
+			},
+		},
+		["d84pnilu84cdnilvd1vpnilvu0"] = {
+			["added"] = {
+				[1] = {
+					["key"] = "JOY_BTN1",
+				},
+			},
+			["name"] = "Pilot weapon release/Machinegun fire",
+			["removed"] = {
+				[1] = {
+					["key"] = "JOY_BTN2",
+				},
+			},
 		},
 	},
 }

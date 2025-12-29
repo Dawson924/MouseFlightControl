@@ -36,6 +36,7 @@ Camera = {}
 ---@class Control
 ---@field active boolean 是否激活控制（true=正在控制，false=未控制）
 ---@field steering boolean 是否激活滑行模式（true=滑行模式，false=正常模式）
+---@field mode integer 控制器模式序号 (0即未选择)
 Control = {}
 
 
@@ -57,6 +58,18 @@ function Input.pressing(key) end
 ---@param key string
 ---@return boolean 释放返回 true，否则 false
 function Input.released(key) end
+
+---检查按键是否**刚刚按下**（单次触发）
+---@param key string
+---@return boolean 按下返回 true，否则 false
+function Input.hotkey(key) end
+
+---检查修饰键
+---@param alt boolean
+---@param shift boolean
+---@param ctrl boolean
+---@return boolean
+function Input.modkey(alt, shift, ctrl) end
 
 
 -- 屏幕全局变量：渲染提示消息

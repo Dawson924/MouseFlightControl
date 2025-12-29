@@ -6,6 +6,7 @@ import win32api
 import win32con
 from pynput import mouse
 
+from lib.logger import logger
 from utils import pos
 
 
@@ -123,13 +124,12 @@ class InputStateMonitor:
     def stop_wheel_listener(self):
         if self.mouse_listener and self.mouse_listener.is_alive():
             self.mouse_listener.stop()
-            # 强制等待线程退出
-            for _ in range(3):  # 重试3次
+            for _ in range(3):
                 if self.mouse_listener.is_alive():
                     self.mouse_listener.join(timeout=0.5)
                 else:
                     break
-            self.mouse_listener = None  # 置空，避免重复操作
+            self.mouse_listener = None
 
     def _on_scroll(self, x, y, dx, dy):
         """pynput滚轮事件回调函数"""
@@ -173,10 +173,9 @@ class InputStateMonitor:
         """更新鼠标位置"""
         try:
             self.mouse_x, self.mouse_y = win32api.GetCursorPos()
-        except:
-            pass
+        except Exception as e:
+            logger.exception(f"Failed to get cursor position: {str(e)}")
 
-    # ===== 状态检测方法 =====
     def is_mouse_pressing(self, button_name):
         """检测鼠标按钮当前是否按下（当前帧按下）"""
         if isinstance(button_name, str):
