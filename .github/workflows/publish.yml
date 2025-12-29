@@ -25,10 +25,8 @@ jobs:
           python-version: '3.8.10'
           cache: 'pip'
 
-      - name: Set up CMake
-        uses: cmake-action/cmake-action@v1
-        with:
-          cmake-version: '3.28.0'
+      - name: CMake Action
+        uses: threeal/cmake-action@v2.1.0
 
       - name: Install dependencies
         run: |
