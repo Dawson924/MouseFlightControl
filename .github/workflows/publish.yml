@@ -1,0 +1,82 @@
+name: Mouseflightcontrol publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: 'Program version'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  build-and-package:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PySide2 pyinstaller lupa
+        shell: cmd
+
+      - name: Run UI compilation (uic)
+        run: |
+          python ./exec.py uic
+        shell: cmd
+
+      - name: Update translation files (lupdate)
+        run: |
+          python ./exec.py lupdate
+        shell: cmd
+
+      - name: Compile translation files (lrelease)
+        run: |
+          python ./exec.py lrelease
+        shell: cmd
+
+      - name: Package with PyInstaller
+        run: |
+          python ./pyinstaller.py
+        shell: cmd
+
+      - name: Extract version
+        id: get_version
+        run: |
+          if ("${{ github.event.inputs.app_version }}" -ne "") {
+              $version = "${{ github.event.inputs.app_version }}"
+          } else {
+              $latest_tag = git describe --tags --abbrev=0 --match "v*" 2>$null
+              if ($latest_tag) {
+                  $version = $latest_tag -replace '^v', ''
+              } else {
+                  $version = "0.0.0"
+              }
+          }
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: Compress dist to ZIP
+        run: |
+          $zipName = "Mouseflightcontrol_v${{ steps.get_version.outputs.version }}.zip"
+          Compress-Archive -Path ./dist/* -DestinationPath $zipName -Force
+          Write-Host "Compressed: $zipName"
+        shell: pwsh
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MouseFlightControl-Package
+          path: "Mouseflightcontrol_v*.zip"
+          retention-days: 30
