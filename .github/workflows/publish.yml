@@ -1,11 +1,11 @@
-name: Mouseflightcontrol publish
+name: Publish
 
 on:
   workflow_dispatch:
     inputs:
       app_version:
         description: 'Program version'
-        required: false
+        required: true
         type: string
         default: ''
 
@@ -25,6 +25,11 @@ jobs:
           python-version: '3.8.10'
           cache: 'pip'
 
+      - name: Set up CMake
+        uses: cmake-action/cmake-action@v1
+        with:
+          cmake-version: '3.28.0'
+
       - name: Install dependencies
         run: |
           chcp 65001
@@ -32,6 +37,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install PySide2 pyinstaller lupa
         shell: cmd
+
+      - name: CMake Configure
+        run: |
+          chcp 65001
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+
+      - name: CMake Build
+        run: |
+          chcp 65001
+          cmake --build build --config Release
+        shell: cmd
+        working-directory: ${{ github.workspace }}
 
       - name: Run UI compilation (uic)
         run: |
@@ -56,7 +75,7 @@ jobs:
 
       - name: Package with PyInstaller
         run: |
-          chcp 65001  # UTF-8
+          chcp 65001
           set PYTHONIOENCODING=utf-8
           python ./pyinstaller.py
         shell: cmd
