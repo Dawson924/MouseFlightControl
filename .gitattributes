@@ -1,0 +1,3 @@
+i18n/**/* linguist-vendored
+Joycons/**/* linguist-vendored
+Lua/**/*.lua linguist-vendored
