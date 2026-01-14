@@ -1,0 +1,9 @@
+[en_US]
+name = SpeedAdjuster
+secondary_speed = Secondary speed
+toggle_secondary_speed = Toggle secondary speed
+
+[zh_CN]
+name = 指针变速
+secondary_speed = 次要速度
+toggle_secondary_speed = 切换次要速度

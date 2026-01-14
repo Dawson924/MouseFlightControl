@@ -136,7 +136,7 @@ class ScriptWindow(QMainWindow):
                     if hasattr(self.parent(), 'language')
                     else 'en_US'
                 )
-                label = self.script.i18n.get(name, {}).get(language, name)
+                label = self.script.i18n.get(language, {}).get(name, '')
             else:
                 label = name
             row_layout = self.add_config_row(

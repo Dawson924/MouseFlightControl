@@ -9,7 +9,7 @@ local detent
 
 function te.init(database)
     config = database.get(te.id)
-    detent = Axis.max * config.afterburner_position
+    detent = AXIS_MAX * config.afterburner_position
 end
 
 function te.update(dt)
@@ -18,15 +18,15 @@ function te.update(dt)
             DETENT_ON = not DETENT_ON
         end
         if DETENT_ON and Axis.th > detent then
-            Axis.setValue('th', detent)
+            SetAxis('th', detent)
         end
 
         accumulator = accumulator + dt
         while accumulator >= interval do
             if Input.pressing(config.throttle_increase) then
-                Axis.setValue('th', Axis.th + config.throttle_speed)
+                SetAxis('th', Axis.th + config.throttle_speed)
             elseif Input.pressing(config.throttle_decrease) then
-                Axis.setValue('th', Axis.th - config.throttle_speed)
+                SetAxis('th', Axis.th - config.throttle_speed)
             end
             accumulator = accumulator - interval
         end

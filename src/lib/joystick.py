@@ -65,6 +65,7 @@ class JoystickInput:
 class JoystickDevice(ABC):
     def __init__(self, dll_path: str):
         self.device = None
+        self.init_device()
         self.input = JoystickInput(dll_path)
         self.axis_mapping = self.get_axis_mapping()
         self.button_mapping = self.get_button_mapping()
@@ -103,9 +104,6 @@ class JoystickDevice(ABC):
 
     def set_axis(self, axis: int, value: int) -> bool:
         if axis not in self.axis_mapping:
-            # logging.warning(
-            #     f'Unsupported axis ID {axis} (device type: {self.__class__.__name__})'
-            # )
             return False
 
         filter = self.curve_filters.get(axis)
@@ -114,7 +112,6 @@ class JoystickDevice(ABC):
                 value = -value
 
         try:
-            self.init_device()
             value = self.convert(axis, value)
             axis = self.axis_mapping[axis]
             self._set_axis(axis, value)
@@ -133,7 +130,6 @@ class JoystickDevice(ABC):
             return False
 
         try:
-            self.init_device()
             target_btn = self.button_mapping[button_id]
             self._set_button(target_btn, pressed)
             return True
@@ -147,8 +143,10 @@ class VJoyDevice(JoystickDevice):
         self.device_id = device_id
         try:
             import pyvjoy
+            from pyvjoy import vJoyException
 
             self._pyvjoy = pyvjoy
+            self._exception = vJoyException
         except ImportError as e:
             raise RuntimeError(f'Failed to import pyvjoy module: {e}') from e
         super().__init__(dll_path)
@@ -173,10 +171,20 @@ class VJoyDevice(JoystickDevice):
             return
         try:
             self.device = self._pyvjoy.VJoyDevice(self.device_id)
+        except self._exception as e:
+            name = type(e).__name__
+            if name == 'vJoyNotEnabledException':
+                raise RuntimeError(
+                    f'vjoy device initialization failed (ID: {self.device_id}): vJoy device is not enabled'
+                ) from e
+            elif name == 'vJoyFailedToAcquireException':
+                raise RuntimeError(
+                    f'vjoy device initialization failed (ID: {self.device_id}): Failed to acquire vJoy device'
+                ) from e
         except Exception as e:
             raise RuntimeError(
-                f'vjoy device initialization failed (ID: {self.device_id}): {str(e)}'
-            )
+                f'vjoy device initialization failed (ID: {self.device_id}): {str(e) or type(e).__name__}'
+            ) from e
 
     def convert(self, axis_id: int, value: int) -> int:
         clamped = max(AXIS_MIN, min(AXIS_MAX, value))
@@ -258,7 +266,6 @@ class XboxDevice(JoystickDevice):
             )
             self.device.right_joystick(self.right_joystick[0], self.right_joystick[1])
 
-        # 必须调用update同步状态
         self.device.update()
 
     def _set_button(self, target_btn: Any, pressed: bool) -> None:

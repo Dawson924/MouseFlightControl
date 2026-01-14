@@ -13,7 +13,7 @@ Axis = {}
 
 --- @param axis string
 --- @param value integer
-function Axis.setValue(axis, value) end
+function SetAxis(axis, value) end
 
 
 -- 鼠标全局变量：包含速度、位置、增量

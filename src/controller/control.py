@@ -17,8 +17,6 @@ class FixedWingController(BaseController):
 
             Axis.th += wheel_step(options.throttle_speed * f, input.get_wheel_delta())
 
-            Axis.th = check_overflow(Axis.th, AXIS_MIN, AXIS_MAX)
-
 
 class HelicopterController(BaseController):
     def __init__(self, device):
@@ -35,19 +33,15 @@ class HelicopterController(BaseController):
             while self.collective_accumulator >= self.min_interval:
                 if input.is_pressing('W'):
                     Axis.th += options.collective_speed
-                    Axis.th = check_overflow(Axis.th, AXIS_MIN, AXIS_MAX)
                 elif input.is_pressing('S'):
                     Axis.th -= options.collective_speed
-                    Axis.th = check_overflow(Axis.th, AXIS_MIN, AXIS_MAX)
                 self.collective_accumulator -= self.min_interval
 
             while self.pedals_accumulator >= self.min_interval:
                 if input.is_pressing('A'):
                     Axis.rd -= options.pedals_speed
-                    Axis.rd = check_overflow(Axis.rd, AXIS_MIN, AXIS_MAX)
                 elif input.is_pressing('D'):
                     Axis.rd += options.pedals_speed
-                    Axis.rd = check_overflow(Axis.rd, AXIS_MIN, AXIS_MAX)
                 self.pedals_accumulator -= self.min_interval
 
             if input.is_pressed('X'):

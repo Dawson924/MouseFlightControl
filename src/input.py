@@ -6,8 +6,8 @@ import win32api
 import win32con
 from pynput import mouse
 
+from lib.axis import pos
 from lib.logger import logger
-from utils import pos
 
 
 class InputStateMonitor:
@@ -174,7 +174,7 @@ class InputStateMonitor:
         try:
             self.mouse_x, self.mouse_y = win32api.GetCursorPos()
         except Exception as e:
-            logger.exception(f"Failed to get cursor position: {str(e)}")
+            logger.exception(f'Failed to get cursor position: {str(e)}')
 
     def is_mouse_pressing(self, button_name):
         """检测鼠标按钮当前是否按下（当前帧按下）"""

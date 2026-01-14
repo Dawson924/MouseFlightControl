@@ -5,7 +5,7 @@ local diff = {
 				[1] = {
 					["filter"] = {
 						["curvature"] = {
-							[1] = 0.05,
+							[1] = 0.15,
 						},
 						["deadzone"] = 0,
 						["hardwareDetent"] = false,
@@ -26,7 +26,7 @@ local diff = {
 				[1] = {
 					["filter"] = {
 						["curvature"] = {
-							[1] = 0.05,
+							[1] = 0.15,
 						},
 						["deadzone"] = 0,
 						["hardwareDetent"] = false,
@@ -94,21 +94,21 @@ local diff = {
 		},
 	},
 	["keyDiffs"] = {
-		["d3002pnilu3002cd13vd1vpnilvu0"] = {
+		["d3021pnilu3021cd16vd1vpnilvu0"] = {
 			["added"] = {
 				[1] = {
 					["key"] = "JOY_BTN1",
 				},
 			},
-			["name"] = "Gun Trigger - SECOND DETENT (Press to shoot)",
+			["name"] = "CAMERA/GUN Trigger - SECOND DETENT",
 		},
-		["d3003pnilu3003cd13vd1vpnilvu0"] = {
+		["d3022pnilu3022cd16vd1vpnilvu0"] = {
 			["added"] = {
 				[1] = {
 					["key"] = "JOY_BTN2",
 				},
 			},
-			["name"] = "Weapon Release Button",
+			["name"] = "WPN REL Button - Depress",
 		},
 	},
 }

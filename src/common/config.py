@@ -2,15 +2,15 @@ CONFIG_FILE = 'config.ini'
 CONFIG = {
     'General': {
         'language': (str),
+        'flight_mode': (int),
+        'camera_fov': (int),
     },
     'Controls': {
         'mouse_speed': (int),
-        'controller': (int),
         'key_toggle': (str),
         'key_center': (str),
         'key_freecam': (str),
         'key_view_center': (str),
-        'camera_fov': (int),
         'key_taxi': (str),
     },
     'Options': {
@@ -24,7 +24,7 @@ CONFIG = {
     'Window': {
         'w_size': (int),
     },
-    'External': {},
+    'Flight': {},
 }
 CONFIGURABLE = {
     'target_fps': (int, 60, 500),

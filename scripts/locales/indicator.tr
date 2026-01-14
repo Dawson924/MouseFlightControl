@@ -1,0 +1,11 @@
+[en_US]
+name = Controls Indicator
+indicator_x = Horizontal margin
+indicator_y = Vertical margin
+indicator_size = Indicator size
+
+[zh_CN]
+name = 控制指示器
+indicator_x = 水平边距
+indicator_y = 垂直边距
+indicator_size = 指示器尺寸

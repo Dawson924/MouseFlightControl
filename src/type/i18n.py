@@ -1,9 +1,5 @@
-from typing import Dict, TypedDict
+from typing import Any, Dict, Literal
 
+Language = Literal['en_US', 'zn_CN', 'ru_RU']
 
-class LanguageMap(TypedDict):
-    en_US: str
-    zh_CN: str
-
-
-I18nDict = Dict[str, LanguageMap]
+I18n = Dict[Language, Dict[str, Any]]

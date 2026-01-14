@@ -1,6 +1,7 @@
 {
     "Lua.diagnostics.disable": [
-        "missing-return"
+        "missing-return",
+        "undefined-global"
     ],
     "Lua.workspace.library": [
         "${workspaceFolder}/.vscode/lua-types"

@@ -1,0 +1,6 @@
+name = 节流阀扩展
+throttle_speed = 节流阀速度
+throttle_increase = 节流阀前进
+throttle_decrease = 节流阀后退
+afterburner_detent = 加力止动
+afterburner_position = 加力止动位置

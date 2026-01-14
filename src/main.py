@@ -20,6 +20,7 @@ from controller.base import BaseController
 from controller.control import FixedWingController, HelicopterController
 from controller.manager import ControllerManager
 from input import InputStateMonitor
+from lib.axis import axis2fov, fov, set_axis
 from lib.config import load_config, save_config, validate_config
 from lib.event import EventEmitter
 from lib.fs import choose_single_file, open_directory
@@ -56,7 +57,7 @@ from ui.overlay.CursorGraph import CursorGraph
 from ui.overlay.HintLabel import HintLabel
 from ui.overlay.IndicatorWindow import IndicatorWindow
 from ui.window.ScriptWindow import ScriptWindow
-from utils import axis2fov, check_overflow, fov, wheel_step
+from utils import check_overflow, wheel_step
 
 # 控制器管理
 controllers = ControllerManager()
@@ -121,6 +122,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 配置默认值
         self.language = 'en_US'
+        self.flight_mode = 0
         self.mouse_speed = 5
         self.key_toggle = '`'
         self.key_center = 'MMB'
@@ -128,7 +130,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.key_view_center = 'capslock'
         self.camera_fov = 90
         self.key_taxi = 'alt + `'
-        self.controller = 0
         self.show_cursor = False
         self.show_hint = True
         self.show_indicator = False
@@ -179,12 +180,11 @@ class MainWindow(QtWidgets.QMainWindow):
             Camera = {active=false, fov=0}
             Screen = {}
         """)
-        self.lua_globals.Axis.min = AXIS_MIN
-        self.lua_globals.Axis.max = AXIS_MAX
-        self.lua_globals.Axis.len = AXIS_LENGTH
-        self.lua_globals.Axis.setValue = lambda axis, value: setattr(
-            self.axis, axis, value
-        )
+        self.lua_globals.Axis = self.axis
+        self.lua_globals.AXIS_MIN = AXIS_MIN
+        self.lua_globals.AXIS_MAX = AXIS_MAX
+        self.lua_globals.AXIS_LEN = AXIS_LENGTH
+        self.lua_globals.SetAxis = lambda axis, value: set_axis(self.axis, axis, value)
         self.lua_globals.Screen.renderMessage = (
             lambda text, color, duration: self.showMessage.emit(text, color, duration)
         )
@@ -223,7 +223,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.create_menu()
 
         self.setup_controllers()
-        self.create_controller_widgets(self.controller)
+        self.create_controller_widgets(self.flight_mode)
 
         self.retranslate_ui()
         self.update_ui_state()
@@ -448,18 +448,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     ('decrease_throttle_speed', OptionWidget.LineEdit, 'ctrl'),
                 ],
                 'i18n': {
-                    'throttle_speed': {
-                        'en_US': 'Throttle Speed',
-                        'zh_CN': '节流阀速度',
-                    },
-                    'increase_throttle_speed': {
-                        'en_US': 'Increase Speed (Hold)',
-                        'zh_CN': '增加移动速度',
-                    },
-                    'decrease_throttle_speed': {
-                        'en_US': 'Decrease Speed (Hold)',
-                        'zh_CN': '减少移动速度',
-                    },
+                    'throttle_speed': self.tr('ThrottleSpeed'),
+                    'increase_throttle_speed': self.tr('IncreaseSpeed'),
+                    'decrease_throttle_speed': self.tr('DecreaseSpeed'),
                 },
             },
         )
@@ -473,53 +464,41 @@ class MainWindow(QtWidgets.QMainWindow):
                     ('pedals_speed', OptionWidget.SpinBox, 125),
                 ],
                 'i18n': {
-                    'collective_speed': {
-                        'en_US': 'Collective Speed',
-                        'zh_CN': '总距速度',
-                    },
-                    'pedals_speed': {
-                        'en_US': 'Pedals Speed',
-                        'zh_CN': '尾桨踏板速度',
-                    },
+                    'collective_speed': self.tr('CollectiveSpeed'),
+                    'pedals_speed': self.tr('RudderSpeed'),
                 },
             },
         )
-        index = self.controller
+        index = self.flight_mode
         self.ui.controllerComboBox.clear()
         for name in controllers.names():
             self.ui.controllerComboBox.addItem(name)
         self.ui.controllerComboBox.setCurrentIndex(index)
 
     def create_controller_widgets(self, id):
-        """根据控制器元数据创建动态控件"""
         self.clear_controller_widgets()
 
         metadata = controllers.get_metadata(id)
         if not metadata or 'options' not in metadata:
             return
 
-        # 为每个选项创建控件
         for option, widget, default in metadata['options']:
-            # 创建水平布局
             h_layout = QtWidgets.QHBoxLayout()
-            h_layout.setSpacing(10)  # 设置间距为10
+            h_layout.setSpacing(10)
             h_layout.setContentsMargins(0, 0, 0, 0)
 
-            # 创建标签
-            text = metadata.get('i18n', {}).get(option, {}).get(self.language, option)
+            text = metadata.get('i18n', {}).get(option, {})
             label = QtWidgets.QLabel(text)
             label.setObjectName(f'{option}Label')
             label.setMinimumWidth(self.px(150))
             h_layout.addWidget(label)
 
-            # 添加水平弹簧
             spacer = QtWidgets.QSpacerItem(
                 40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
             )
             h_layout.addItem(spacer)
 
             if widget == OptionWidget.CheckBox:
-                # 创建复选框
                 checkbox = QtWidgets.QCheckBox()
                 checkbox.setObjectName(f'{option}Option')
                 if hasattr(self.__external__, option):
@@ -550,10 +529,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 }
 
             elif widget == OptionWidget.LineEdit:
-                # 创建文本输入
                 line_edit = QtWidgets.QLineEdit()
                 line_edit.setObjectName(f'{option}Option')
-                # 应用动态宽度样式
                 line_edit.setStyleSheet(f"""
                     QLineEdit {{
                         border: 1px solid #A0A0A0;
@@ -591,10 +568,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 }
 
             elif widget == OptionWidget.SpinBox:
-                # 创建数值选择器
                 spin_box = QtWidgets.QSpinBox()
                 spin_box.setObjectName(f'{option}Option')
-                # 应用动态宽度样式
                 spin_box.setStyleSheet(f"""
                     QSpinBox {{
                         border: 1px solid #A0A0A0;
@@ -637,11 +612,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     'layout': h_layout,
                 }
 
-            # 添加到布局
             self.ui.ControllerVerticalLayout.addLayout(h_layout)
 
     def clear_controller_widgets(self):
-        """清除所有动态控件"""
         while self.ui.ControllerVerticalLayout.count():
             item = self.ui.ControllerVerticalLayout.takeAt(0)
             if item.widget():
@@ -652,7 +625,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dynamic_widgets = {}
 
     def delete_layout(self, layout):
-        """递归删除布局中的所有控件"""
         if layout is None:
             return
 
@@ -663,7 +635,6 @@ class MainWindow(QtWidgets.QMainWindow):
             elif item.layout():
                 self.delete_layout(item.layout())
 
-        # 删除布局本身
         layout.deleteLater()
 
     def get_script(self, id: str):
@@ -677,7 +648,6 @@ class MainWindow(QtWidgets.QMainWindow):
             raise RuntimeError(f"'{id}' not found")
 
     def load_config(self, file: str = CONFIG_FILE):
-        """从配置文件加载设置"""
         config = configparser.ConfigParser()
 
         if os.path.exists(file):
@@ -685,8 +655,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 config.read(file)
                 for section, options in CONFIG.items():
                     if config.has_section(section):
-                        if section == 'External':
-                            for k, v in config.items('External'):
+                        if section == 'Flight':
+                            for k, v in config.items('Flight'):
                                 if v.lower() == 'true':
                                     setattr(self.__external__, k, True)
                                 elif v.lower() == 'false':
@@ -714,13 +684,12 @@ class MainWindow(QtWidgets.QMainWindow):
         return False
 
     def save_config(self):
-        """保存配置到文件"""
         config = configparser.ConfigParser()
 
         for section, options in CONFIG.items():
             config.add_section(section)
 
-            if section == 'External':
+            if section == 'Flight':
                 for k, v in self.__external__.__dict__.items():
                     config.set(section, k, str(v))
             else:
@@ -767,30 +736,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.import_action.triggered.connect(self.open_preset)
         self.general_menu.addAction(self.import_action)
 
-        # 添加语言选项
+        # 语言
+        self.language_configs = [
+            {'code': 'en_US', 'display_name': 'English'},
+            {'code': 'zh_CN', 'display_name': '简体中文'},
+            {'code': 'ru_RU', 'display_name': 'Русский'},
+        ]
         self.language_group = QtWidgets.QActionGroup(self)
         self.language_group.setExclusive(True)
-        # 英语
-        self.english_action = QtWidgets.QAction('English', self)
-        self.english_action.setCheckable(True)
-        self.english_action.triggered.connect(lambda: self.change_language('en_US'))
-        self.language_group.addAction(self.english_action)
-        self.language_menu.addAction(self.english_action)
-        self.english_action.setChecked(self.language == 'en_US')
-        # 简体中文
-        self.chinese_action = QtWidgets.QAction('简体中文', self)
-        self.chinese_action.setCheckable(True)
-        self.chinese_action.triggered.connect(lambda: self.change_language('zh_CN'))
-        self.language_group.addAction(self.chinese_action)
-        self.language_menu.addAction(self.chinese_action)
-        self.chinese_action.setChecked(self.language == 'zh_CN')
-        # 俄语
-        self.russian_action = QtWidgets.QAction('Русский', self)
-        self.russian_action.setCheckable(True)
-        self.russian_action.triggered.connect(lambda: self.change_language('ru_RU'))
-        self.language_group.addAction(self.russian_action)
-        self.language_menu.addAction(self.russian_action)
-        self.russian_action.setChecked(self.language == 'ru_RU')
+        self.language_actions = {}
+        for lang in self.language_configs:
+            action = QtWidgets.QAction(lang['display_name'], self)
+            action.setCheckable(True)
+            action.triggered.connect(
+                lambda *_, code=lang['code']: self.change_language(code)
+            )
+            self.language_group.addAction(action)
+            self.language_menu.addAction(action)
+            action.setChecked(self.language == lang['code'])
+            self.language_actions[lang['code']] = action
 
         # 插件相关
         self.script_action = QtWidgets.QAction('', self)
@@ -807,9 +771,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def open_preset(self):
         if self.running:
+            self.running = False
+            self.toggle_enabled(False)
             self.stop_main_thread()
 
-        file_path = choose_single_file(self, self.tr('ImportPreset'), 'Inputs')
+        file_path = choose_single_file(self, self.tr('ImportPreset'), 'Inits')
         if not file_path:
             return
 
@@ -819,7 +785,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_ui_state()
 
     def change_language(self, language_code):
-        """更改应用程序语言"""
         for translator in QtWidgets.QApplication.instance().translators:
             QtWidgets.QApplication.instance().removeTranslator(translator)
 
@@ -831,7 +796,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.language = language_code
         self.retranslate_ui()
         self.setup_controllers()
-        self.create_controller_widgets(self.controller)
+        self.create_controller_widgets(self.flight_mode)
 
     def open_script_config(self, script: ScriptModule):
         window = ScriptWindow(script, self.script_db.get(script.id), self)
@@ -878,8 +843,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.taxiModeLabel.setText(self.tr('TaxiMode'))
         self.ui.taxiModeKey.setText(self.key_taxi)
         self.ui.controllerLabel.setText(self.tr('Controller'))
-        self.ui.controllerComboBox.setCurrentIndex(self.controller)
-        self.ui.controllerComboBox.setCurrentText(controllers.get_name(self.controller))
+        self.ui.controllerComboBox.setCurrentIndex(self.flight_mode)
+        self.ui.controllerComboBox.setCurrentText(
+            controllers.get_name(self.flight_mode)
+        )
         self.ui.optionsTitleLabel.setText(self.tr('OptionsTitle'))
         self.ui.showCursorLabel.setText(self.tr('ShowCursor'))
         self.ui.showCursorOption.setChecked(self.show_cursor)
@@ -903,7 +870,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_ui_state()
 
     def on_controller_changed(self, value):
-        self.controller = value
+        self.flight_mode = value
         self.create_controller_widgets(value)
         self.update_ui_state()
 
@@ -1025,13 +992,13 @@ class MainWindow(QtWidgets.QMainWindow):
     def main(self):
         global delta_x, delta_y, enabled
         try:
-            Class = controllers.get_class(self.controller)
+            Class = controllers.get_class(self.flight_mode)
             if Class:
                 controller = Class(self.joystick)
             else:
                 controller = None
 
-            self.lua_globals.Control.mode = self.controller
+            self.lua_globals.Control.mode = self.flight_mode
 
             input = InputStateMonitor(self.pause, self.attempts)
             input.set_mouse_position(self.center_x, self.center_y)
@@ -1089,7 +1056,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                     loop_counter += 1
                     if loop_counter % 500 == 0 and actual_fps:
-                        cpu_usage = self.process.cpu_percent(interval=0.001)
+                        cpu_usage = self.process.cpu_percent()
                         memory_usage = self.process.memory_info().rss / 1024 / 1024
                         logger.debug(
                             f'FPS: {actual_fps:.1f} | CPU: {cpu_usage:.1f}% | Memory: {memory_usage:.2f}MB'
@@ -1186,13 +1153,9 @@ class MainWindow(QtWidgets.QMainWindow):
                         screen_y = self.center_y + y_percent * (self.screen_height / 2)
                         prev_x, prev_y = screen_x, screen_y
 
-                        self.axis.vx = check_overflow(self.axis.vx, AXIS_MIN, AXIS_MAX)
-                        self.axis.vy = check_overflow(self.axis.vy, AXIS_MIN, AXIS_MAX)
-
                         self.axis.vz += wheel_step(
                             fov(10, abs=False), input.get_wheel_delta()
                         )
-                        self.axis.vz = check_overflow(self.axis.vz, AXIS_MIN, AXIS_MAX)
                     else:
                         self.axis.x += delta_x * self.axis_speed * self.damping_h
                         self.axis.y += delta_y * self.axis_speed * self.damping_v
@@ -1203,20 +1166,8 @@ class MainWindow(QtWidgets.QMainWindow):
                         screen_y = self.center_y + y_percent * (self.screen_height / 2)
                         prev_x, prev_y = screen_x, screen_y
 
-                        self.axis.x = check_overflow(self.axis.x, AXIS_MIN, AXIS_MAX)
-                        self.axis.y = check_overflow(self.axis.y, AXIS_MIN, AXIS_MAX)
-
                         if ground_taxi:
                             self.axis.rd = self.axis.x
-
-                if enabled:
-                    self.joystick.set_axis(HID_X, int(self.axis.x))
-                    self.joystick.set_axis(HID_Y, int(self.axis.y))
-                    self.joystick.set_axis(HID_Z, int(self.axis.th))
-                    self.joystick.set_axis(HID_RZ, int(self.axis.rd))
-                    self.joystick.set_axis(HID_RX, int(self.axis.vx))
-                    self.joystick.set_axis(HID_RY, int(self.axis.vy))
-                    self.joystick.set_axis(HID_SLIDER, int(self.axis.vz))
 
                 if controller is not None and isinstance(controller, BaseController):
                     controller.update(
@@ -1228,13 +1179,6 @@ class MainWindow(QtWidgets.QMainWindow):
                     )
 
                 with self.lua_lock:
-                    self.lua_globals.Axis['x'] = self.axis.x
-                    self.lua_globals.Axis['y'] = self.axis.y
-                    self.lua_globals.Axis['th'] = self.axis.th
-                    self.lua_globals.Axis['rd'] = self.axis.rd
-                    self.lua_globals.Axis['vx'] = self.axis.vx
-                    self.lua_globals.Axis['vy'] = self.axis.vy
-                    self.lua_globals.Axis['vz'] = self.axis.vz
                     self.lua_globals.Mouse.pos[1] = prev_x
                     self.lua_globals.Mouse.pos[2] = prev_y
                     self.lua_globals.Mouse.deltaX = curr_x - prev_x
@@ -1250,7 +1194,24 @@ class MainWindow(QtWidgets.QMainWindow):
                     try:
                         func(delta_time)
                     except Exception as e:
-                        print(f'Lua func {i} error: \n{e}')
+                        logger.error(f'Lua script error: \n{e}')
+                        self.lua_funcs.pop(i)
+
+                if enabled:
+                    self.axis.x = check_overflow(self.axis.x, AXIS_MIN, AXIS_MAX)
+                    self.axis.y = check_overflow(self.axis.y, AXIS_MIN, AXIS_MAX)
+                    self.axis.th = check_overflow(self.axis.th, AXIS_MIN, AXIS_MAX)
+                    self.axis.rd = check_overflow(self.axis.rd, AXIS_MIN, AXIS_MAX)
+                    self.axis.vx = check_overflow(self.axis.vx, AXIS_MIN, AXIS_MAX)
+                    self.axis.vy = check_overflow(self.axis.vy, AXIS_MIN, AXIS_MAX)
+                    self.axis.vz = check_overflow(self.axis.vz, AXIS_MIN, AXIS_MAX)
+                    self.joystick.set_axis(HID_X, int(self.axis.x))
+                    self.joystick.set_axis(HID_Y, int(self.axis.y))
+                    self.joystick.set_axis(HID_Z, int(self.axis.th))
+                    self.joystick.set_axis(HID_RZ, int(self.axis.rd))
+                    self.joystick.set_axis(HID_RX, int(self.axis.vx))
+                    self.joystick.set_axis(HID_RY, int(self.axis.vy))
+                    self.joystick.set_axis(HID_SLIDER, int(self.axis.vz))
 
                 if self.show_indicator:
                     x_val = map_to_percentage(self.axis.x)
