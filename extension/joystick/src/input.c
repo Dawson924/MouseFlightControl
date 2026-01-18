@@ -11,5 +11,5 @@ int32_t vjoy(int32_t val, int32_t min, int32_t max) {
     else if (val > max) val = max;
 
     double ratio = (double)(val - min) / (max - min);
-    return (int32_t)(ratio * 32767) + 1;
+    return (int32_t)(ratio * max) + 1;
 }

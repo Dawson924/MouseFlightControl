@@ -1,0 +1,43 @@
+ButtonMapping: Mouse Button Mapping
+CameraFov: Freecam Field of View
+CenterControl: Center Control
+CollectiveSpeed: Collective speed
+Controlled: Controlled
+ControlsTitle: CONTROLS
+Controller: Flight Controller
+CurrentValue: Current value
+DecreaseSpeed: Decrease speed
+DeviceNotFoundMessage: No available vJoy devices were found. Please visit the software's help page or the official vJoy website to find solutions
+EnableFreecam: Enable Freecam
+Error: Runtime Error
+FreecamAutoCenter: Freecam Auto Center
+General: General
+HelicopterController: Helicopter Mode
+HintOverlay: Hint Overlay
+IncreaseSpeed: Increase speed
+ImportPreset: Import...
+Installed: Installed
+Language: Language
+MemorizeAxisPos: Maintain Axis Position
+MouseFlightControl: Mouse Flight Control
+NoControl: No Control
+None: None
+OptionsTitle: OPTIONS
+PlaneController: Plane Mode
+RudderSpeed: Rudder speed
+Sensitive: Sensitive
+Script: Script
+ShowCaptions: Captions
+ShowCursor: Show Cursor
+ShowIndicator: Controls Indicator
+Start: Start
+StatusStopped: Status:stopped
+StatusWorking: Status:working
+Stop: Stop
+TaxiMode: Taxi Mode
+TaxiModeOff: 'Taxi mode: Off'
+TaxiModeOn: 'Taxi mode: On'
+ThrottleSpeed: Throttle speed
+Title: Mouse Flight Control
+ToggleEnabled: Toggle Control
+ViewCenter: View Center

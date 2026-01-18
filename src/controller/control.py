@@ -1,9 +1,12 @@
 from controller.base import BaseController
-from lib.joystick import AXIS_MAX, AXIS_MIN
-from utils import check_overflow, wheel_step
+from lib.joystick import AXIS_MIN
+from type.widget import OptionWidget
+from utils import wheel_step
 
 
 class FixedWingController(BaseController):
+    _name = 'PlaneController'
+
     def __init__(self, device):
         super().__init__(device)
 
@@ -18,7 +21,27 @@ class FixedWingController(BaseController):
             Axis.th += wheel_step(options.throttle_speed * f, input.get_wheel_delta())
 
 
+FixedWingController.add_option(
+    name='throttle_speed',
+    widget=OptionWidget.SpinBox,
+    default=100,
+    i18n_text='ThrottleSpeed',
+).add_option(
+    name='increase_throttle_speed',
+    widget=OptionWidget.LineEdit,
+    default='shift',
+    i18n_text='IncreaseSpeed',
+).add_option(
+    name='decrease_throttle_speed',
+    widget=OptionWidget.LineEdit,
+    default='ctrl',
+    i18n_text='DecreaseSpeed',
+)
+
+
 class HelicopterController(BaseController):
+    _name = 'HelicopterController'
+
     def __init__(self, device):
         super().__init__(device)
         self.collective_accumulator = 0.0
@@ -48,3 +71,16 @@ class HelicopterController(BaseController):
                 Axis.rd = 0
             if input.is_pressed('Z'):
                 Axis.th = AXIS_MIN
+
+
+HelicopterController.add_option(
+    name='collective_speed',
+    widget=OptionWidget.SpinBox,
+    default=125,
+    i18n_text='CollectiveSpeed',
+).add_option(
+    name='pedals_speed',
+    widget=OptionWidget.SpinBox,
+    default=125,
+    i18n_text='RudderSpeed',
+)

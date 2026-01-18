@@ -13,6 +13,7 @@ from PySide2 import QtCore, QtGui, QtWidgets
 from PySide2.QtCore import QCoreApplication, Qt
 from PySide2.QtGui import QFont, QScreen
 
+import i18n
 from app import App
 from common.config import CONFIG, CONFIG_FILE
 from common.constants import APP_VERSION, SCRIPT_INI_PATH
@@ -80,7 +81,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         init_logger(
-            self.tr('MouseFlightControl'), APP_VERSION, self.show_startup_message
+            i18n.t('MouseFlightControl'), APP_VERSION, self.show_startup_message
         )
         (
             self.screen_width,
@@ -144,10 +145,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setup_ui()
 
         # 加载配置的语言
-        translator = QtCore.QTranslator()
-        if translator.load(f'i18n/{self.language}.qm'):
-            QtWidgets.QApplication.instance().installTranslator(translator)
-            QtWidgets.QApplication.instance().translators.append(translator)
+        i18n.set('locale', self.language)
 
         # 创建设备
         try:
@@ -157,7 +155,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.joystick.set_filter(HID_SLIDER, Filter(invert=True))
         except RuntimeError as e:
             logger.error(str(e))
-            self.message_box.error(self.tr('Error'), self.tr('DeviceNotFoundMessage'))
+            self.message_box.error(i18n.t('Error'), i18n.t('DeviceNotFoundMessage'))
 
         # 脚本初始化和运行
         self.lua_globals = self.lua.globals()
@@ -436,39 +434,22 @@ class MainWindow(QtWidgets.QMainWindow):
         QtWidgets.QApplication.instance().setFont(font)
 
     def setup_controllers(self):
-        controllers.register(0, None, {'name': self.tr('None')})
-        controllers.register(
-            1,
-            FixedWingController,
-            {
-                'name': self.tr('PlaneController'),
-                'options': [
-                    ('throttle_speed', OptionWidget.SpinBox, 100),
-                    ('increase_throttle_speed', OptionWidget.LineEdit, 'shift'),
-                    ('decrease_throttle_speed', OptionWidget.LineEdit, 'ctrl'),
-                ],
-                'i18n': {
-                    'throttle_speed': self.tr('ThrottleSpeed'),
-                    'increase_throttle_speed': self.tr('IncreaseSpeed'),
-                    'decrease_throttle_speed': self.tr('DecreaseSpeed'),
-                },
-            },
-        )
-        controllers.register(
-            2,
-            HelicopterController,
-            {
-                'name': self.tr('HelicopterController'),
-                'options': [
-                    ('collective_speed', OptionWidget.SpinBox, 125),
-                    ('pedals_speed', OptionWidget.SpinBox, 125),
-                ],
-                'i18n': {
-                    'collective_speed': self.tr('CollectiveSpeed'),
-                    'pedals_speed': self.tr('RudderSpeed'),
-                },
-            },
-        )
+        controllers.register(0, None, {'name': i18n.t('None')})
+
+        controller_classes = [(1, FixedWingController), (2, HelicopterController)]
+
+        for id, _class_def in controller_classes:
+            if not issubclass(_class_def, BaseController):
+                logger.warning(f'Invalid class definition: {_class_def.__name__}')
+                continue
+
+            _metadata = {
+                'name': _class_def.get_name(translator=i18n.t),
+                'options': _class_def.get_options(),
+                'i18n': _class_def.get_i18n(translator=i18n.t),
+            }
+            controllers.register(id, _class_def, _metadata)
+
         index = self.flight_mode
         self.ui.controllerComboBox.clear()
         for name in controllers.names():
@@ -775,7 +756,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.toggle_enabled(False)
             self.stop_main_thread()
 
-        file_path = choose_single_file(self, self.tr('ImportPreset'), 'Inits')
+        file_path = choose_single_file(self, i18n.t('ImportPreset'), 'Inits')
         if not file_path:
             return
 
@@ -785,15 +766,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_ui_state()
 
     def change_language(self, language_code):
-        for translator in QtWidgets.QApplication.instance().translators:
-            QtWidgets.QApplication.instance().removeTranslator(translator)
-
-        translator = QtCore.QTranslator()
-        if translator.load(f'i18n/{language_code}.qm'):
-            QtWidgets.QApplication.instance().installTranslator(translator)
-            QtWidgets.QApplication.instance().translators.append(translator)
-
         self.language = language_code
+        i18n.set('locale', language_code)
         self.retranslate_ui()
         self.setup_controllers()
         self.create_controller_widgets(self.flight_mode)
@@ -804,14 +778,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def retranslate_ui(self):
         """重新翻译UI文本"""
-        self.setWindowTitle(self.tr('Title'))
-        self.general_menu.setTitle(self.tr('General'))
-        self.import_action.setText(self.tr('ImportPreset'))
-        self.language_menu.setTitle(self.tr('Language'))
-        self.script_menu.setTitle(self.tr('Script'))
-        self.script_action.setText(
-            self.tr('Installed') + f' ({self.scripts.__len__()})'
-        )
+        self.setWindowTitle(i18n.t('Title'))
+        self.general_menu.setTitle(i18n.t('General'))
+        self.import_action.setText(i18n.t('ImportPreset'))
+        self.language_menu.setTitle(i18n.t('Language'))
+        self.script_menu.setTitle(i18n.t('Script'))
+        self.script_action.setText(i18n.t('Installed') + f' ({self.scripts.__len__()})')
 
         for id, action in self._script_actions.items():
             script = self.get_script(id)
@@ -819,53 +791,53 @@ class MainWindow(QtWidgets.QMainWindow):
             action.setText(script.name)
 
         self.ui.startBtn.setText(
-            self.tr('Start') if not self.running else self.tr('Stop')
+            i18n.t('Start') if not self.running else i18n.t('Stop')
         )
-        self.ui.controlsTitleLabel.setText(self.tr('ControlsTitle'))
+        self.ui.controlsTitleLabel.setText(i18n.t('ControlsTitle'))
         self.ui.statusLabel.setText(
-            self.tr('StatusStopped') if not enabled else self.tr('StatusWorking')
+            i18n.t('StatusStopped') if not enabled else i18n.t('StatusWorking')
         )
-        self.ui.speedLabel.setText(self.tr('Sensitive'))
+        self.ui.speedLabel.setText(i18n.t('Sensitive'))
         self.ui.speedValueLabel.setText(
-            self.tr('CurrentValue') + f': {str(self.mouse_speed)}'
+            i18n.t('CurrentValue') + f': {str(self.mouse_speed)}'
         )
         self.ui.mouseSpeedSlider.setValue(self.mouse_speed)
-        self.ui.toggleEnabledLabel.setText(self.tr('ToggleEnabled'))
+        self.ui.toggleEnabledLabel.setText(i18n.t('ToggleEnabled'))
         self.ui.toggleEnabledKey.setText(self.key_toggle)
-        self.ui.centerControlLabel.setText(self.tr('CenterControl'))
+        self.ui.centerControlLabel.setText(i18n.t('CenterControl'))
         self.ui.centerControlKey.setText(self.key_center)
-        self.ui.enableFreecamLabel.setText(self.tr('EnableFreecam'))
+        self.ui.enableFreecamLabel.setText(i18n.t('EnableFreecam'))
         self.ui.enableFreecamKey.setText(self.key_freecam)
-        self.ui.viewCenterLabel.setText(self.tr('ViewCenter'))
+        self.ui.viewCenterLabel.setText(i18n.t('ViewCenter'))
         self.ui.viewCenterKey.setText(self.key_view_center)
-        self.ui.cameraFovLabel.setText(self.tr('CameraFov'))
+        self.ui.cameraFovLabel.setText(i18n.t('CameraFov'))
         self.ui.cameraFovSpinBox.setValue(self.camera_fov)
-        self.ui.taxiModeLabel.setText(self.tr('TaxiMode'))
+        self.ui.taxiModeLabel.setText(i18n.t('TaxiMode'))
         self.ui.taxiModeKey.setText(self.key_taxi)
-        self.ui.controllerLabel.setText(self.tr('Controller'))
+        self.ui.controllerLabel.setText(i18n.t('Controller'))
         self.ui.controllerComboBox.setCurrentIndex(self.flight_mode)
         self.ui.controllerComboBox.setCurrentText(
             controllers.get_name(self.flight_mode)
         )
-        self.ui.optionsTitleLabel.setText(self.tr('OptionsTitle'))
-        self.ui.showCursorLabel.setText(self.tr('ShowCursor'))
+        self.ui.optionsTitleLabel.setText(i18n.t('OptionsTitle'))
+        self.ui.showCursorLabel.setText(i18n.t('ShowCursor'))
         self.ui.showCursorOption.setChecked(self.show_cursor)
-        self.ui.showHintLabel.setText(self.tr('HintOverlay'))
+        self.ui.showHintLabel.setText(i18n.t('HintOverlay'))
         self.ui.showHintOption.setChecked(self.show_hint)
-        self.ui.showIndicatorLabel.setText(self.tr('ShowIndicator'))
+        self.ui.showIndicatorLabel.setText(i18n.t('ShowIndicator'))
         self.ui.showIndicatorOption.setChecked(self.show_indicator)
-        self.ui.buttonMappingLabel.setText(self.tr('ButtonMapping'))
+        self.ui.buttonMappingLabel.setText(i18n.t('ButtonMapping'))
         self.ui.buttonMappingOption.setChecked(self.button_mapping)
-        self.ui.memorizeAxisPosLabel.setText(self.tr('MemorizeAxisPos'))
+        self.ui.memorizeAxisPosLabel.setText(i18n.t('MemorizeAxisPos'))
         self.ui.memorizeAxisPosOption.setChecked(self.memorize_axis_pos)
-        self.ui.freecamAutoCenterLabel.setText(self.tr('FreecamAutoCenter'))
+        self.ui.freecamAutoCenterLabel.setText(i18n.t('FreecamAutoCenter'))
         self.ui.freecamAutoCenterOption.setChecked(self.freecam_auto_center)
 
     def on_speed_changed(self, value):
         self.mouse_speed = value
         self.lua_globals.Mouse.speed = value
         self.ui.speedValueLabel.setText(
-            f'{self.tr("CurrentValue")}: {str(self.ui.mouseSpeedSlider.value())}'
+            f'{i18n.t("CurrentValue")}: {str(self.ui.mouseSpeedSlider.value())}'
         )
         self.update_ui_state()
 
@@ -894,10 +866,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_ui_state(self):
         disabled = self.running
         self.ui.startBtn.setText(
-            self.tr('Start') if not self.running else self.tr('Stop')
+            i18n.t('Start') if not self.running else i18n.t('Stop')
         )
         self.ui.statusLabel.setText(
-            self.tr('StatusWorking') if disabled else self.tr('StatusStopped')
+            i18n.t('StatusWorking') if disabled else i18n.t('StatusStopped')
         )
         self.ui.mouseSpeedSlider.setDisabled(disabled)
         self.ui.toggleEnabledKey.setDisabled(disabled)
@@ -982,12 +954,12 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.show_cursor:
                 self.showCursor.emit(True)
             if self.show_hint:
-                self.showMessage.emit(self.tr('Controlled'), 'green', 1000)
+                self.showMessage.emit(i18n.t('Controlled'), 'green', 1000)
         else:
             set_mouse_speed(self.original_mouse_speed)
             self.showCursor.emit(False)
             if self.show_hint:
-                self.showMessage.emit(self.tr('NoControl'), 'red', 1000)
+                self.showMessage.emit(i18n.t('NoControl'), 'red', 1000)
 
     def main(self):
         global delta_x, delta_y, enabled
@@ -1079,10 +1051,10 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.axis.rd = 0
                     if ground_taxi:
                         if self.show_hint:
-                            self.showMessage.emit(self.tr('TaxiModeOn'), 'green', 1000)
+                            self.showMessage.emit(i18n.t('TaxiModeOn'), 'green', 1000)
                     else:
                         if self.show_hint:
-                            self.showMessage.emit(self.tr('TaxiModeOff'), 'red', 1000)
+                            self.showMessage.emit(i18n.t('TaxiModeOff'), 'red', 1000)
 
                 if enabled and input.is_hotkey_pressed(self.key_center):
                     prev_x, prev_y = self.center_x, self.center_y
@@ -1301,10 +1273,12 @@ if __name__ == '__main__':
         error_msg.exec_()
         sys.exit(1)
 
-    translator = QtCore.QTranslator()
-    if translator.load('i18n/en_US.qm'):
-        app.installTranslator(translator)
-        app.translators.append(translator)
+    i18n.load_path.append('i18n')
+    i18n.set('available_locales', ['en_US', 'zh_CN', 'ru_RU'])
+    i18n.set('skip_locale_root_data', True)
+    i18n.set('filename_format', '{locale}.{format}')
+    i18n.set('locale', 'en_US')
+    i18n.set('fallback', 'en_US')
 
     window = MainWindow()
 

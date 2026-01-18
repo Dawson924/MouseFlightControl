@@ -1,8 +1,9 @@
 import ctypes
 import logging
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from os import path
-from typing import Any, Dict, Literal
+from typing import Any, DefaultDict, Dict, Literal
 
 from common.constants import DLL_PATH
 from type.curve import Filter
@@ -21,8 +22,8 @@ HID_RZ = 0x35  # Z旋转轴
 HID_SLIDER = 0x36  # 滑块1
 HID_WHEEL = 0x38  # 滚轮
 
-
 DeviceType = Literal['vjoy', 'xbox']
+DEFAULT_SMOOTH_SPEED = int(AXIS_MAX * 0.01)
 
 
 def get_joystick_device(device: DeviceType, device_id: int = 1):
@@ -69,7 +70,8 @@ class JoystickDevice(ABC):
         self.input = JoystickInput(dll_path)
         self.axis_mapping = self.get_axis_mapping()
         self.button_mapping = self.get_button_mapping()
-        self.curve_filters = {}
+        self.filters = {}
+        self._curves: DefaultDict[int, int] = defaultdict(lambda: AXIS_CENTER)
 
     @abstractmethod
     def get_axis_mapping(self) -> Dict[int, Any]:
@@ -100,27 +102,71 @@ class JoystickDevice(ABC):
         pass
 
     def set_filter(self, axis: int, filter: Filter) -> None:
-        self.curve_filters[axis] = filter
+        self.filters[axis] = filter
 
-    def set_axis(self, axis: int, value: int) -> bool:
-        if axis not in self.axis_mapping:
+    def set_axis(self, axis_id: int, raw_value: int) -> bool:
+        if axis_id not in self.axis_mapping:
             return False
 
-        filter = self.curve_filters.get(axis)
-        if filter:
-            if filter.invert:
-                value = -value
+        filter = self.filters.get(axis_id)
+        value = raw_value
 
-        try:
-            value = self.convert(axis, value)
-            axis = self.axis_mapping[axis]
-            self._set_axis(axis, value)
+        if not filter:
+            value = max(AXIS_MIN, min(AXIS_MAX, value))
+            self._apply_axis(axis_id, value)
             return True
-        except RuntimeError as e:
-            raise e
+
+        self._apply_curve(axis_id, value)
+        return True
+
+    def _apply_curve(self, axis_id, value) -> bool:
+        filter = self.filters.get(axis_id)
+        current = self._curves[axis_id]
+
+        if filter.invert:
+            value = -value
+
+        if filter.smooth_preset == 'linear':
+            smooth_speed = filter.smooth_speed or DEFAULT_SMOOTH_SPEED
+            smooth_speed = max(1, smooth_speed)
+
+            if current < value:
+                new_val = min(current + smooth_speed, value)
+            elif current > value:
+                new_val = max(current - smooth_speed, value)
+            else:
+                new_val = value
+
+            self._apply_axis(axis_id, new_val)
+            self._curves[axis_id] = new_val
+            return
+
+        if filter.curvature is not None and filter.curvature != 1.0:
+            curvature = max(0.1, filter.curvature)
+            if value == AXIS_MIN:
+                normalized = -1.0
+            else:
+                normalized = value / AXIS_MAX
+
+            if normalized >= 0:
+                normalized = normalized**curvature
+            else:
+                normalized = -(abs(normalized) ** curvature)
+
+            if normalized == -1.0:
+                value = AXIS_MIN
+            else:
+                value = int(normalized * AXIS_MAX)
+
+        self._apply_axis(axis_id, value)
+
+    def _apply_axis(self, axis: int, value: int) -> None:
+        try:
+            converted_val = self.convert(axis, value)
+            mapped_axis = self.axis_mapping[axis]
+            self._set_axis(mapped_axis, converted_val)
         except Exception as e:
-            logging.error(f'Failed to set axis {axis}: {str(e)}')
-            return False
+            logging.error(f'Failed to apply axis {axis} value {value}: {str(e)}')
 
     def set_button(self, button_id: int, pressed: bool) -> bool:
         if button_id not in self.button_mapping:
@@ -187,8 +233,7 @@ class VJoyDevice(JoystickDevice):
             ) from e
 
     def convert(self, axis_id: int, value: int) -> int:
-        clamped = max(AXIS_MIN, min(AXIS_MAX, value))
-        return self.input.vjoy(clamped)
+        return self.input.vjoy(value)
 
     def _set_axis(self, axis: Any, value: int) -> None:
         self.device.set_axis(axis, value)
@@ -201,6 +246,7 @@ class VJoyDevice(JoystickDevice):
             self.init_device()
             self.device.reset()
             self.device.reset_buttons()
+            self._curves.clear()
         except Exception as e:
             logging.error(f'Failed to reset device: {str(e)}')
 
@@ -220,10 +266,10 @@ class XboxDevice(JoystickDevice):
 
     def get_axis_mapping(self) -> Dict[int, str]:
         return {
-            HID_X: ('left_joystick', 'x'),  # 左摇杆X轴
-            HID_Y: ('left_joystick', 'y'),  # 左摇杆Y轴
-            HID_Z: ('right_joystick', 'y'),  # 右摇杆Y轴
-            HID_RZ: ('right_joystick', 'x'),  # 右摇杆X轴
+            HID_X: ('left_joystick', 'x'),
+            HID_Y: ('left_joystick', 'y'),
+            HID_Z: ('right_joystick', 'y'),
+            HID_RZ: ('right_joystick', 'x'),
         }
 
     def get_button_mapping(self) -> Dict[int, Any]:
@@ -280,5 +326,8 @@ class XboxDevice(JoystickDevice):
             self.init_device()
             self.device.reset()
             self.device.update()
+            self._curves.clear()
+            self.left_joystick = [AXIS_CENTER, AXIS_CENTER]
+            self.right_joystick = [AXIS_CENTER, AXIS_CENTER]
         except Exception as e:
             logging.error(f'Failed to reset device: {str(e)}')

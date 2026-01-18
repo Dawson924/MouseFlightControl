@@ -1,9 +1,12 @@
+from controller.base import BaseController
+
+
 class ControllerManager:
     def __init__(self):
         self.controllers = {}
         self.metadata = {}
 
-    def register(self, id, controller_class, metadata=None):
+    def register(self, id: int, controller_class: BaseController, metadata=None):
         """注册一个新的控制器"""
         self.controllers[id] = controller_class
         self.metadata[id] = metadata or {}

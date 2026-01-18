@@ -1,11 +1,12 @@
 import os
 import sys
 
+IS_FROZEN = hasattr(sys, 'frozen')
+
 APP_NAME = 'MouseFlightControl'
 APP_VERSION = '0.16.3'
 
-IS_FROZEN = hasattr(sys, 'frozen')
-
+BASE_DIR = os.path.dirname(os.path.abspath(sys.executable)) if IS_FROZEN else os.curdir
 DLL_PATH = (
     os.path.dirname(os.path.abspath(sys.executable))
     if IS_FROZEN
