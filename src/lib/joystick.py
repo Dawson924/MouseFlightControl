@@ -1,11 +1,8 @@
-import ctypes
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from os import path
 from typing import Any, DefaultDict, Dict, Literal
 
-from common.constants import DLL_PATH
 from type.curve import Filter
 
 AXIS_MAX = 32767
@@ -19,8 +16,8 @@ HID_Z = 0x32  # Z轴
 HID_RX = 0x33  # X旋转轴
 HID_RY = 0x34  # Y旋转轴
 HID_RZ = 0x35  # Z旋转轴
-HID_SLIDER = 0x36  # 滑块1
-HID_WHEEL = 0x38  # 滚轮
+HID_SL = 0x36  # 滑块1
+HID_SL2 = 0x38  # 滑块2
 
 DeviceType = Literal['vjoy', 'xbox']
 DEFAULT_SMOOTH_SPEED = int(AXIS_MAX * 0.01)
@@ -28,46 +25,15 @@ DEFAULT_SMOOTH_SPEED = int(AXIS_MAX * 0.01)
 
 def get_joystick_device(device: DeviceType, device_id: int = 1):
     if device == 'vjoy':
-        return VJoyDevice(device_id, path.join(DLL_PATH, 'joystickinput.dll'))
+        return VJoyDevice(device_id)
     elif device == 'xbox':
-        return XboxDevice(path.join(DLL_PATH, 'joystickinput.dll'))
-
-
-class JoystickInput:
-    def __init__(self, dll_path: str):
-        try:
-            self.dll = ctypes.CDLL(dll_path)
-            self.dll_path = dll_path
-        except OSError as e:
-            raise RuntimeError(f'Invalid shared library: {dll_path}') from e
-
-        self._declare()
-
-    def _declare(self):
-        self.dll.vjoy.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.c_int32]
-        self.dll.vjoy.restype = ctypes.c_int32
-
-    def vjoy(self, val: int) -> int:
-        if not isinstance(val, int):
-            raise TypeError(f'Unexpected type: {type(val)}')
-        try:
-            return self.dll.vjoy(val, AXIS_MIN, AXIS_MAX)
-        except OSError as e:
-            raise RuntimeError(e) from e
-
-    def __del__(self):
-        if hasattr(self, 'dll'):
-            try:
-                ctypes.windll.kernel32.FreeLibrary(self.dll._handle)
-            except Exception:
-                pass
+        return XboxDevice()
 
 
 class JoystickDevice(ABC):
-    def __init__(self, dll_path: str):
+    def __init__(self):
         self.device = None
         self.init_device()
-        self.input = JoystickInput(dll_path)
         self.axis_mapping = self.get_axis_mapping()
         self.button_mapping = self.get_button_mapping()
         self.filters = {}
@@ -185,7 +151,7 @@ class JoystickDevice(ABC):
 
 
 class VJoyDevice(JoystickDevice):
-    def __init__(self, device_id: int, dll_path: str):
+    def __init__(self, device_id: int):
         self.device_id = device_id
         try:
             import pyvjoy
@@ -195,7 +161,7 @@ class VJoyDevice(JoystickDevice):
             self._exception = vJoyException
         except ImportError as e:
             raise RuntimeError(f'Failed to import pyvjoy module: {e}') from e
-        super().__init__(dll_path)
+        super().__init__()
 
     def get_axis_mapping(self) -> Dict[int, Any]:
         return {
@@ -205,8 +171,8 @@ class VJoyDevice(JoystickDevice):
             HID_RX: self._pyvjoy.HID_USAGE_RX,
             HID_RY: self._pyvjoy.HID_USAGE_RY,
             HID_RZ: self._pyvjoy.HID_USAGE_RZ,
-            HID_SLIDER: self._pyvjoy.HID_USAGE_SL0,
-            HID_WHEEL: self._pyvjoy.HID_USAGE_WHL,
+            HID_SL: self._pyvjoy.HID_USAGE_SL0,
+            HID_SL2: self._pyvjoy.HID_USAGE_WHL,
         }
 
     def get_button_mapping(self) -> Dict[int, int]:
@@ -233,7 +199,11 @@ class VJoyDevice(JoystickDevice):
             ) from e
 
     def convert(self, axis_id: int, value: int) -> int:
-        return self.input.vjoy(value)
+        val_clamped = max(AXIS_MIN, min(AXIS_MAX, value))
+        if AXIS_MAX == AXIS_MIN:
+            return 1
+        ratio = (val_clamped - AXIS_MIN) / (AXIS_MAX - AXIS_MIN)
+        return int(ratio * AXIS_MAX) + 1
 
     def _set_axis(self, axis: Any, value: int) -> None:
         self.device.set_axis(axis, value)
@@ -252,7 +222,7 @@ class VJoyDevice(JoystickDevice):
 
 
 class XboxDevice(JoystickDevice):
-    def __init__(self, dll_path: str):
+    def __init__(self):
         try:
             from vgamepad import XUSB_BUTTON, VX360Gamepad
 
@@ -260,7 +230,7 @@ class XboxDevice(JoystickDevice):
             self._xusb_button = XUSB_BUTTON
         except ImportError as e:
             raise RuntimeError(f'Failed to import vgamepad module: {e}') from e
-        super().__init__(dll_path)
+        super().__init__()
         self.left_joystick = [AXIS_CENTER, AXIS_CENTER]
         self.right_joystick = [AXIS_CENTER, AXIS_CENTER]
 

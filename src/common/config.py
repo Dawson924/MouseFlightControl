@@ -1,4 +1,5 @@
 CONFIG_FILE = 'config.ini'
+
 CONFIG = {
     'General': {
         'language': (str),
@@ -26,6 +27,7 @@ CONFIG = {
     },
     'Flight': {},
 }
+
 CONFIGURABLE = {
     'target_fps': (int, 60, 500),
     'attempts': (int, 1, None),
@@ -41,3 +43,9 @@ CONFIGURABLE = {
     'damping_h': (float, 0.01, 1),
     'damping_v': (float, 0.01, 1),
 }
+
+LANGUAGE_CONFIG = [
+    {'code': 'en_US', 'display_name': 'English'},
+    {'code': 'zh_CN', 'display_name': '简体中文'},
+    {'code': 'ru_RU', 'display_name': 'Русский'},
+]

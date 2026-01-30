@@ -1,11 +1,11 @@
 import datetime
 import os
 import platform
-import sys
 
 from loguru import logger
 
-from common.constants import IS_FROZEN
+import i18n
+from common.constants import APP_VERSION, IS_FROZEN
 
 _init = False
 
@@ -45,7 +45,7 @@ def get_logger():
         return logger
 
 
-def init_logger(app_name: str, app_version: str, handler):
+def init_logger():
     logger.remove()
 
     logger.add(
@@ -73,23 +73,26 @@ def init_logger(app_name: str, app_version: str, handler):
         )
 
     system_info = platform.uname()
-    python_version = sys.version.split()[0]
     pid = os.getpid()
     cwd = os.getcwd()
     startup_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')[:-3]
 
-    def func():
+    def func(log):
         logger.opt(colors=True).info(f'<bold><green>{"=" * 80}</green></bold>')
         logger.opt(colors=True).info(
-            f'<bold><green>🚀 {app_name} - 启动成功</green></bold>'
+            f'<bold><green>🚀 {i18n.t("MouseFlight")} - {i18n.t("StartupSuccessful")}</green></bold>'
         )
-        logger.opt(colors=True).info(f'<green>版本信息：</green> v{app_version}')
-        logger.opt(colors=True).info(f'<green>启动时间：</green> {startup_time}')
         logger.opt(colors=True).info(
-            f'<green>运行环境：</green> {system_info.system} {system_info.release} ({system_info.machine}) | Python {python_version} | PID: {pid} | 工作目录: {cwd}'
+            f'<green>{i18n.t("VersionInfo")}: </green> v{APP_VERSION}'
         )
-        logger.opt(colors=True).info(f'<green>日志文件：</green> {LOG_FILE}')
-        handler(logger)
+        logger.opt(colors=True).info(
+            f'<green>{i18n.t("StartupTime")}: </green> {startup_time}'
+        )
+        logger.opt(colors=True).info(
+            f'<green>{i18n.t("RuntimeEnv")}: </green> {system_info.system} {system_info.release} ({system_info.machine}) | PID: {pid} | {cwd}'
+        )
+        logger.opt(colors=True).info(f'<green>{i18n.t("LogFile")}: </green> {LOG_FILE}')
+        log(logger)
         logger.opt(colors=True).info(f'<bold><green>{"=" * 80}</green></bold>\n')
 
     _init = True

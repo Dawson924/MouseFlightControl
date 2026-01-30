@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "MouseFlightControl"
-version = "0.16.5"
+name = "MouseFlight"
+version = "0.16.6"
 description = "Mouse flight control for DCS World"
 authors = ["Dawson <bendawson0924@gmail.com>"]
 classifiers = [
@@ -25,6 +25,8 @@ priority = "primary"
 [tool.poetry.scripts]
 dev = "run:dev"
 build = "run:build"
+lint = "run:lint"
+i18n = "run:i18n"
 
 [tool.poetry.dependencies]
 python = "==3.8.10"

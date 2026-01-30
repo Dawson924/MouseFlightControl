@@ -1,8 +1,8 @@
-# Mouse Flight Control
+# MouseFlight
 
 [English](README.md) [简体中文](README-CN.md)
 
-Mouse Flight Control is designed to provide a intuitive way to control flight in Game. It emulates a joystick's functionality through the mouse.
+MouseFlight is designed to provide a intuitive way to control flight in Game. It emulates a joystick's functionality through the mouse.
 
 ## Installation
 

@@ -15,6 +15,7 @@ from PySide2.QtWidgets import (
     QWidget,
 )
 
+import i18n
 from type.script import ScriptModule
 from ui.Style import STYLE_LIGHT
 
@@ -22,7 +23,7 @@ from ui.Style import STYLE_LIGHT
 class ScriptWindow(QMainWindow):
     def __init__(self, script: ScriptModule, config: Dict, parent: QMainWindow):
         super().__init__(parent)
-        self.setWindowTitle(parent.tr('OptionsTitle'))
+        self.setWindowTitle(i18n.t('OptionsTitle'))
         self.init_style()
 
         self.script = script
@@ -130,15 +131,7 @@ class ScriptWindow(QMainWindow):
             if len(option) != 3:
                 continue
             name, type, default = option
-            if hasattr(self.script, 'i18n'):
-                language = (
-                    self.parent().language
-                    if hasattr(self.parent(), 'language')
-                    else 'en_US'
-                )
-                label = self.script.i18n.get(language, {}).get(name, '')
-            else:
-                label = name
+            label = self.script.translate(name)
             row_layout = self.add_config_row(
                 name,
                 label,

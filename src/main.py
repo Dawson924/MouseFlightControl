@@ -15,8 +15,8 @@ from PySide2.QtGui import QFont, QScreen
 
 import i18n
 from app import App
-from common.config import CONFIG, CONFIG_FILE
-from common.constants import APP_VERSION, SCRIPT_INI_PATH
+from common.config import CONFIG, CONFIG_FILE, LANGUAGE_CONFIG
+from common.constants import SCRIPT_INI_PATH
 from controller.base import BaseController
 from controller.control import FixedWingController, HelicopterController
 from controller.manager import ControllerManager
@@ -32,7 +32,7 @@ from lib.joystick import (
     HID_RX,
     HID_RY,
     HID_RZ,
-    HID_SLIDER,
+    HID_SL,
     HID_X,
     HID_Y,
     HID_Z,
@@ -43,7 +43,6 @@ from lib.script import get_default
 from lib.win32 import (
     MessageBox,
     get_mouse_speed,
-    get_process_dpi_awareness,
     set_mouse_speed,
     set_process_dpi_awareness,
 )
@@ -80,9 +79,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        init_logger(
-            i18n.t('MouseFlightControl'), APP_VERSION, self.show_startup_message
-        )
         (
             self.screen_width,
             self.screen_height,
@@ -137,7 +133,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button_mapping = True
         self.memorize_axis_pos = True
         self.freecam_auto_center = False
-        self.__external__ = SimpleNamespace()
+        self.flight = SimpleNamespace()
 
         # 加载所有配置
         self.load_config()
@@ -152,7 +148,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.axis = AxisPos(0, 0, AXIS_MIN, 0, 0, 0, fov(self.camera_fov))
             self.joystick = get_joystick_device(self.device, self.device_id)
             self.joystick.set_filter(HID_Z, Filter(invert=True))
-            self.joystick.set_filter(HID_SLIDER, Filter(invert=True))
+            self.joystick.set_filter(HID_SL, Filter(invert=True))
         except RuntimeError as e:
             logger.error(str(e))
             self.message_box.error(i18n.t('Error'), i18n.t('DeviceNotFoundMessage'))
@@ -287,7 +283,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.show()
         self.move(self.center_x - self.w_size / 2, self.center_y - self.height() / 2)
-        logger.done()
+        logger.done(self.show_message)
 
     def get_stylesheet(self):
         assets_dir = 'assets/'
@@ -482,8 +478,8 @@ class MainWindow(QtWidgets.QMainWindow):
             if widget == OptionWidget.CheckBox:
                 checkbox = QtWidgets.QCheckBox()
                 checkbox.setObjectName(f'{option}Option')
-                if hasattr(self.__external__, option):
-                    value = getattr(self.__external__, option)
+                if hasattr(self.flight, option):
+                    value = getattr(self.flight, option)
                     if isinstance(value, str):
                         if value.lower() == 'true':
                             value = True
@@ -493,13 +489,11 @@ class MainWindow(QtWidgets.QMainWindow):
                             value = False
                     checkbox.setChecked(bool(value))
                 else:
-                    setattr(self.__external__, option, default)
+                    setattr(self.flight, option, default)
                     checkbox.setChecked(default)
 
                 checkbox.stateChanged.connect(
-                    lambda state, opt=option: setattr(
-                        self.__external__, opt, bool(state)
-                    )
+                    lambda state, opt=option: setattr(self.flight, opt, bool(state))
                 )
                 h_layout.addWidget(checkbox)
 
@@ -523,11 +517,11 @@ class MainWindow(QtWidgets.QMainWindow):
                     }}
                 """)
 
-                if hasattr(self.__external__, option):
-                    value = getattr(self.__external__, option)
+                if hasattr(self.flight, option):
+                    value = getattr(self.flight, option)
                 else:
                     value = default
-                    setattr(self.__external__, option, value)
+                    setattr(self.flight, option, value)
 
                 if isinstance(value, int):
                     line_edit.setValidator(QtGui.QIntValidator())
@@ -537,7 +531,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 line_edit.setText(str(value))
 
                 line_edit.textChanged.connect(
-                    lambda text, opt=option: setattr(self.__external__, opt, str(text))
+                    lambda text, opt=option: setattr(self.flight, opt, str(text))
                 )
 
                 h_layout.addWidget(line_edit)
@@ -569,20 +563,20 @@ class MainWindow(QtWidgets.QMainWindow):
                 spin_box.setMinimum(0)
                 spin_box.setMaximum(1000000)
 
-                if hasattr(self.__external__, option):
-                    value = getattr(self.__external__, option)
+                if hasattr(self.flight, option):
+                    value = getattr(self.flight, option)
                     try:
                         value = int(value)
                     except ValueError:
                         value = default
                 else:
                     value = default
-                    setattr(self.__external__, option, value)
+                    setattr(self.flight, option, value)
 
                 spin_box.setValue(value)
 
                 spin_box.valueChanged.connect(
-                    lambda value, opt=option: setattr(self.__external__, opt, value)
+                    lambda value, opt=option: setattr(self.flight, opt, value)
                 )
 
                 h_layout.addWidget(spin_box)
@@ -639,13 +633,13 @@ class MainWindow(QtWidgets.QMainWindow):
                         if section == 'Flight':
                             for k, v in config.items('Flight'):
                                 if v.lower() == 'true':
-                                    setattr(self.__external__, k, True)
+                                    setattr(self.flight, k, True)
                                 elif v.lower() == 'false':
-                                    setattr(self.__external__, k, False)
+                                    setattr(self.flight, k, False)
                                 elif v.isdigit():
-                                    setattr(self.__external__, k, int(v))
+                                    setattr(self.flight, k, int(v))
                                 else:
-                                    setattr(self.__external__, k, v)
+                                    setattr(self.flight, k, v)
                         else:
                             for option, (converter) in options.items():
                                 if config.has_option(section, option):
@@ -661,7 +655,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                     self._set_attr_value(option, value)
                 return True
             except Exception as e:
-                logger.error(f'加载配置文件失败: {e}')
+                logger.error(f'{i18n.t("ConfigLoadFailed")}: {e}')
         return False
 
     def save_config(self):
@@ -671,7 +665,7 @@ class MainWindow(QtWidgets.QMainWindow):
             config.add_section(section)
 
             if section == 'Flight':
-                for k, v in self.__external__.__dict__.items():
+                for k, v in self.flight.__dict__.items():
                     config.set(section, k, str(v))
             else:
                 for option in options.keys():
@@ -681,9 +675,9 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             with open(CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
-            logger.success('配置文件保存成功')
+            logger.success(i18n.t('ConfigSaved'))
         except Exception as e:
-            logger.error(f'保存配置文件失败: {e}')
+            logger.error(f'{i18n.t("ConfigSaveFailed")}: {e}')
 
     def _get_attr_value(self, attr_path):
         parts = attr_path.split('.')
@@ -718,15 +712,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.general_menu.addAction(self.import_action)
 
         # 语言
-        self.language_configs = [
-            {'code': 'en_US', 'display_name': 'English'},
-            {'code': 'zh_CN', 'display_name': '简体中文'},
-            {'code': 'ru_RU', 'display_name': 'Русский'},
-        ]
         self.language_group = QtWidgets.QActionGroup(self)
         self.language_group.setExclusive(True)
         self.language_actions = {}
-        for lang in self.language_configs:
+        for lang in LANGUAGE_CONFIG:
             action = QtWidgets.QAction(lang['display_name'], self)
             action.setCheckable(True)
             action.triggered.connect(
@@ -1144,7 +1133,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 if controller is not None and isinstance(controller, BaseController):
                     controller.update(
                         self.axis,
-                        self.__external__,
+                        self.flight,
                         input,
                         SimpleNamespace(enabled=enabled, dt=delta_time),
                         self,
@@ -1183,7 +1172,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.joystick.set_axis(HID_RZ, int(self.axis.rd))
                     self.joystick.set_axis(HID_RX, int(self.axis.vx))
                     self.joystick.set_axis(HID_RY, int(self.axis.vy))
-                    self.joystick.set_axis(HID_SLIDER, int(self.axis.vz))
+                    self.joystick.set_axis(HID_SL, int(self.axis.vz))
 
                 if self.show_indicator:
                     x_val = map_to_percentage(self.axis.x)
@@ -1246,17 +1235,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.indicator.set_throttle_value(throttle)
         self.indicator.set_rudder_value(rudder)
 
-    def show_startup_message(self, logger):
-        dpi_aware = get_process_dpi_awareness()
+    def show_message(self, logger):
         logger.opt(colors=True).info(
-            f'<green>屏幕信息：</green> 分辨率: {self.screen_width}x{self.screen_height} | 缩放: {self.scale} | {dpi_aware[1]}'
+            f'<green>{i18n.t("ScreenInfo")}: </green> {self.screen_width}x{self.screen_height} | DPI: {self.scale}'
         )
         if self.debug:
             logger.info('')
-            logger.opt(colors=True).info('<yellow>调试模式已启用</yellow>')
+            logger.opt(colors=True).info(f'<yellow>{i18n.t("DebugEnabled")}</yellow>')
 
 
 if __name__ == '__main__':
+    init_logger()
     set_process_dpi_awareness(2)
     QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
@@ -1274,7 +1263,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     i18n.load_path.append('i18n')
-    i18n.set('available_locales', ['en_US', 'zh_CN', 'ru_RU'])
+    i18n.set('available_locales', [lang['code'] for lang in LANGUAGE_CONFIG])
     i18n.set('skip_locale_root_data', True)
     i18n.set('filename_format', '{locale}.{format}')
     i18n.set('locale', 'en_US')

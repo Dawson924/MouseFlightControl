@@ -2,35 +2,46 @@ ButtonMapping: Mouse Button Mapping
 CameraFov: Freecam Field of View
 CenterControl: Center Control
 CollectiveSpeed: Collective speed
+ConfigLoadFailed: 'Configuration failed to load: '
+ConfigSaveFailed: 'Configuration failed to save: '
+ConfigSaved: Configuration saved
 Controlled: Controlled
-ControlsTitle: CONTROLS
 Controller: Flight Controller
+ControlsTitle: CONTROLS
 CurrentValue: Current value
+DebugEnabled: Debug mode is enabled
 DecreaseSpeed: Decrease speed
-DeviceNotFoundMessage: No available vJoy devices were found. Please visit the software's help page or the official vJoy website to find solutions
+DeviceNotFoundMessage: No available vJoy devices were found. Please visit the software's
+  help page or the official vJoy website to find solutions
 EnableFreecam: Enable Freecam
 Error: Runtime Error
 FreecamAutoCenter: Freecam Auto Center
 General: General
 HelicopterController: Helicopter Mode
 HintOverlay: Hint Overlay
-IncreaseSpeed: Increase speed
 ImportPreset: Import...
+IncreaseSpeed: Increase speed
 Installed: Installed
 Language: Language
+LogFile: Log file
 MemorizeAxisPos: Maintain Axis Position
-MouseFlightControl: Mouse Flight Control
+MouseFlight: MouseFlight
 NoControl: No Control
 None: None
 OptionsTitle: OPTIONS
 PlaneController: Plane Mode
 RudderSpeed: Rudder speed
-Sensitive: Sensitive
+RuntimeEnv: Environment
+Scale: Scale
+ScreenInfo: Screen info
 Script: Script
+Sensitive: Sensitive
 ShowCaptions: Captions
 ShowCursor: Show Cursor
 ShowIndicator: Controls Indicator
 Start: Start
+StartupSuccessful: Launched successfully
+StartupTime: Time startup
 StatusStopped: Status:stopped
 StatusWorking: Status:working
 Stop: Stop
@@ -38,6 +49,7 @@ TaxiMode: Taxi Mode
 TaxiModeOff: 'Taxi mode: Off'
 TaxiModeOn: 'Taxi mode: On'
 ThrottleSpeed: Throttle speed
-Title: Mouse Flight Control
+Title: MouseFlight
 ToggleEnabled: Toggle Control
+VersionInfo: Version
 ViewCenter: View Center

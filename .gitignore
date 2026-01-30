@@ -8,8 +8,9 @@
 # Output
 build/
 dist/
+out/
 config.ini
-scripts.ini
+script.ini
 *.egg-info/
 *.pyc
 *.qm

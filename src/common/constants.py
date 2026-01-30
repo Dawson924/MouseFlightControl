@@ -1,10 +1,15 @@
 import os
 import sys
+from importlib.metadata import PackageNotFoundError, version
 
 IS_FROZEN = hasattr(sys, 'frozen')
 
-APP_NAME = 'MouseFlightControl'
-APP_VERSION = '0.16.3'
+APP_NAME = 'MouseFlight'
+
+try:
+    APP_VERSION = version(APP_NAME)
+except PackageNotFoundError:
+    APP_VERSION = 'v0.0.0'
 
 BASE_DIR = os.path.dirname(os.path.abspath(sys.executable)) if IS_FROZEN else os.curdir
 DLL_PATH = (
@@ -14,6 +19,6 @@ DLL_PATH = (
 )
 LUA_PATH = os.path.join(DLL_PATH if IS_FROZEN else os.curdir, 'Lua')
 SCRIPT_PATH = 'scripts'
-SCRIPT_INI_PATH = 'scripts.ini'
+SCRIPT_INI_PATH = 'script.ini'
 
 FOV_RANGE = (0, 160)

@@ -1,43 +1,55 @@
 ButtonMapping: Назначение кнопок мыши
 CameraFov: Поле зрения свободного обзора
 CenterControl: Центрировать управление
-CollectiveSpeed: ""
+CollectiveSpeed: Скорость общего шага
+ConfigLoadFailed: Не удалось загрузить конфигурационный файл
+ConfigSaveFailed: Не удалось сохранить конфигурационный файл
+ConfigSaved: Конфигурационный файл сохранен успешно
 Controlled: Управляется
-ControlsTitle: Управление
 Controller: Игровой контроллер
+ControlsTitle: Управление
 CurrentValue: Текущее значение
+DebugEnabled: Режим отладки включен
 DecreaseSpeed: Снижение скорости
-DeviceNotFoundMessage: Не найдено доступных устройств vJoy. Пожалуйста, посетите страницу помощи программного обеспечения или официальный сайт vJoy, чтобы найти решения
+DeviceNotFoundMessage: Не найдено доступных устройств vJoy. Пожалуйста, посетите страницу
+  помощи программного обеспечения или официальный сайт vJoy, чтобы найти решения
 EnableFreecam: Включить свободный обзор
 Error: Исключение
 FreecamAutoCenter: Автоматическое центрирование свободного обзора
 General: Основные
 HelicopterController: Режим вертолета
 HintOverlay: Прозрачные подсказки
-IncreaseSpeed: Увеличьте скорость
 ImportPreset: Импорт...
+IncreaseSpeed: Увеличьте скорость
 Installed: Установлено
 Language: Язык
+LogFile: Лог-файл
 MemorizeAxisPos: Сохранять положение осей
-MouseFlightControl: Управление полетом мышью
+MouseFlight: Полет мышью
 NoControl: Без управления
 None: Не выбрано
 OptionsTitle: Параметры
 PlaneController: Режим самолета
-RudderSpeed: ""
-Sensitive: Чувствительность
+RudderSpeed: Скорость руля направления
+RuntimeEnv: Операционная среда
+Scale: Масштаб
+ScreenInfo: Информация о экране
 Script: Скрипт
+Sensitive: Чувствительность
 ShowCaptions: Показать подсказки
 ShowCursor: Показать курсор
-ShowIndicator: Индикатор
+ShowIndicator: Индикатор управления
 Start: Старт
+StartupSuccessful: Запуск выполнен успешно
+StartupTime: Время запуска
 StatusStopped: 'Состояние: остановлено'
 StatusWorking: 'Состояние: работает'
 Stop: Стоп
 TaxiMode: Режим таксировки
 TaxiModeOff: 'Режим таксировки: Выключен'
 TaxiModeOn: 'Режим таксировки: Включен'
-ThrottleSpeed: Регулировка скорости
-Title: Управление полетом мышью
+ThrottleSpeed: Регулировка скорости дросселя
+Title: Полет мышью
 ToggleEnabled: Переключить управление
-ViewCenter: Центр обзора
+VersionInfo: Информация о версии
+ViewCenter: Центрирование свободного обзора

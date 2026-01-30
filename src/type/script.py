@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple
 from type.i18n import I18n
 
 ScriptOption = Tuple[str, str, Any]
+ScriptFunction = Callable[[Any], NoReturn]
 
 
 class ScriptModule:
@@ -11,8 +12,8 @@ class ScriptModule:
     options: Optional[List[ScriptOption]] = []
     i18n: Optional[I18n]
     data: Optional[Dict[str, Any]] = None
-    init: Optional[Callable[[Dict], NoReturn]] = None
-    update: Optional[Callable[[float], NoReturn]] = None
+    init: Optional[ScriptFunction] = None
+    update: Optional[ScriptFunction] = None
 
     _language = 'en_US'
 
@@ -26,17 +27,16 @@ class ScriptModule:
         if not hasattr(self, 'i18n'):
             return f'{self.id}:{key}'
 
-        translation = self.i18n.get(self._language)
-        if isinstance(translation, dict):
-            return translation.get(key)
-        elif key == 'name' and hasattr(self, 'name'):
-            return self.name
+        locale = self.i18n.get(self._language)
+        if isinstance(locale, dict):
+            return locale.get(key)
         else:
-            return f'{self.id}:{key}'
+            fallback = self.i18n.get('en_US')
+            if isinstance(fallback, dict):
+                return fallback.get(key)
+            else:
+                return f'{self.id}:{key}'
 
     def set_language(self, lang):
         self._language = lang
-        self.language_changed()
-
-    def language_changed(self):
         self.name = self.translate('name')

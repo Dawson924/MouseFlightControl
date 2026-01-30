@@ -1,14 +1,30 @@
-# MouseFlightControl.spec
+# MouseFlight.spec
 
 # -*- mode: python ; coding: utf-8 -*-
+
+import os
+from pathlib import Path
+
+
+def find_dist_info(pkg_name):
+    dist_info_paths = list(Path('.venv/Lib/site-packages').glob(f"{pkg_name}*.dist-info"))
+    if dist_info_paths:
+        return str(dist_info_paths[0])
+    raise FileNotFoundError(f"'{pkg_name}' is not found")
+
+try:
+    DIST_INFO = find_dist_info("mouseflight")
+except FileNotFoundError as e:
+    print(e)
+    exit(1)
 
 block_cipher = None
 
 a = Analysis(
-    ['src/main.py'],  # 主脚本路径
-    pathex=[],  # 额外搜索路径
+    ['src/main.py'],
+    pathex=[],
     binaries=[],
-    datas=[],
+    datas=[(DIST_INFO, os.path.basename(DIST_INFO))],
     hiddenimports=[],
     hookspath=['./hooks'],
     hooksconfig={},
@@ -27,7 +43,7 @@ exe = EXE(
     a.scripts,
     a.binaries + a.zipfiles + a.datas,
     [],
-    name='MouseFlightControl',
+    name='Flight',
     contents_directory='.',
     debug=False,
     bootloader_ignore_signals=False,
