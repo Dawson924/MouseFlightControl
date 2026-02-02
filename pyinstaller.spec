@@ -43,7 +43,7 @@ exe = EXE(
     a.scripts,
     a.binaries + a.zipfiles + a.datas,
     [],
-    name='Flight',
+    name='MouseFlight',
     contents_directory='.',
     debug=False,
     bootloader_ignore_signals=False,

@@ -2,12 +2,6 @@ name: Publish
 
 on:
   workflow_dispatch:
-    inputs:
-      app_version:
-        description: 'Program version'
-        required: true
-        type: string
-        default: ''
 
 jobs:
   build-and-package:
@@ -25,8 +19,30 @@ jobs:
           python-version: '3.8.10'
           cache: 'pip'
 
-      - name: CMake Action
-        uses: threeal/cmake-action@v2.1.0
+      - name: Extract version from pyproject.toml (Poetry格式)
+        id: get_version
+        shell: pwsh
+        run: |
+          chcp 65001
+          set PYTHONIOENCODING=utf-8
+          python -m pip install tomli
+          python - <<EOF
+import tomli
+import sys
+
+try:
+    with open("./pyproject.toml", "rb") as f:
+        pyproject = tomli.load(f)
+    version = pyproject["tool"]["poetry"]["version"]
+    print(f"::set-output name=version::{version}")
+    print(f"Successfully extracted version: {version}")
+except KeyError as e:
+    print(f"Error: Missing key in pyproject.toml - {e}", file=sys.stderr)
+    sys.exit(1)
+except Exception as e:
+    print(f"Error: {e}", file=sys.stderr)
+    sys.exit(1)
+EOF
 
       - name: Install dependencies
         run: |
@@ -35,20 +51,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install PySide2 pyinstaller lupa
         shell: cmd
-
-      - name: CMake Configure
-        run: |
-          chcp 65001
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-        shell: cmd
-        working-directory: ${{ github.workspace }}
-
-      - name: CMake Build
-        run: |
-          chcp 65001
-          cmake --build build --config Release
-        shell: cmd
-        working-directory: ${{ github.workspace }}
 
       - name: Run UI compilation (uic)
         run: |
@@ -78,25 +80,9 @@ jobs:
           python ./pyinstaller.py
         shell: cmd
 
-      - name: Extract version
-        id: get_version
-        run: |
-          if ("${{ github.event.inputs.app_version }}" -ne "") {
-              $version = "${{ github.event.inputs.app_version }}"
-          } else {
-              $latest_tag = git describe --tags --abbrev=0 --match "v*" 2>$null
-              if ($latest_tag) {
-                  $version = $latest_tag -replace '^v', ''
-              } else {
-                  $version = "0.0.0"
-              }
-          }
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-        shell: pwsh
-
       - name: Compress dist to ZIP
         run: |
-          $zipName = "Mouseflightcontrol_v${{ steps.get_version.outputs.version }}.zip"
+          $zipName = "MouseFlight_${{ steps.get_version.outputs.version }}.zip"
           Compress-Archive -Path ./dist/* -DestinationPath $zipName -Force
           Write-Host "Compressed: $zipName"
         shell: pwsh
@@ -105,5 +91,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MouseFlight-Package
-          path: "MouseFlight_v*.zip"
+          path: "MouseFlight_*.zip"
           retention-days: 30
