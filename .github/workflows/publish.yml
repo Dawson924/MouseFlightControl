@@ -26,7 +26,7 @@ jobs:
           chcp 65001
           set PYTHONIOENCODING=utf-8
           python -m pip install tomli
-          python - <<EOF
+          python -c "
               import tomli
               import sys
               
@@ -42,7 +42,7 @@ jobs:
               except Exception as e:
                   print(f"Error: {e}", file=sys.stderr)
                   sys.exit(1)
-          EOF
+          "
 
       - name: Install dependencies
         run: |
