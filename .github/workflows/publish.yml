@@ -19,7 +19,7 @@ jobs:
           python-version: '3.8.10'
           cache: 'pip'
 
-      - name: Extract version from pyproject.toml (Poetry格式)
+      - name: Extract version from pyproject.toml
         id: get_version
         shell: pwsh
         run: |
@@ -27,21 +27,21 @@ jobs:
           set PYTHONIOENCODING=utf-8
           python -m pip install tomli
           $versionScript = @"
-            import tomli
-            import sys
-            
-            try:
-                with open('./pyproject.toml', 'rb') as f:
-                    pyproject = tomli.load(f)
-                version = pyproject['tool']['poetry']['version']
-                print(f'::set-output name=version::{version}')
-                print(f'Successfully extracted version: {version}')
-            except KeyError as e:
-                print(f'Error: Missing key in pyproject.toml - {e}', file=sys.stderr)
-                sys.exit(1)
-            except Exception as e:
-                print(f'Error: {e}', file=sys.stderr)
-                sys.exit(1)
+          import tomli
+          import sys
+          
+          try:
+              with open('./pyproject.toml', 'rb') as f:
+                  pyproject = tomli.load(f)
+              version = pyproject['tool']['poetry']['version']
+              print(f'::set-output name=version::{version}')
+              print(f'Successfully extracted version: {version}')
+          except KeyError as e:
+              print(f'Error: Missing key in pyproject.toml - {e}', file=sys.stderr)
+              sys.exit(1)
+          except Exception as e:
+              print(f'Error: {e}', file=sys.stderr)
+              sys.exit(1)
           "@
           $versionScript | Out-File -FilePath ./extract_version.py -Encoding utf8
           
