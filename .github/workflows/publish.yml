@@ -54,8 +54,9 @@ jobs:
           chcp 65001
           set PYTHONIOENCODING=utf-8
           python -m pip install --upgrade pip
-          pip install pyinstaller poetry
-          poetry install
+          pip install pyinstaller poetry==1.8.5
+          poetry export --format requirements.txt --output requirements.txt --without-hashes --only main
+          pip install -r requirements.txt
         shell: cmd
 
       - name: Run UI compilation (uic)
