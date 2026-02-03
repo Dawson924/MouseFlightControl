@@ -55,9 +55,20 @@ jobs:
           set PYTHONIOENCODING=utf-8
           python -m pip install --upgrade pip
           pip install pyinstaller poetry==1.8.5
-          poetry export --format requirements.txt --output requirements.txt --without-hashes --only main
-          pip install -r requirements.txt
+          poetry config virtualenvs.in-project true
+          poetry lock --no-update || echo "Lock file generated"
+          poetry install --verbose
         shell: cmd
+
+      - name: Cache poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            .venv
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
 
       - name: Run UI compilation (uic)
         run: |
