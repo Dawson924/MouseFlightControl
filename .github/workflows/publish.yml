@@ -19,58 +19,62 @@ jobs:
           python-version: '3.8.10'
           cache: 'pip'
 
-      - name: Extract version from pyproject.toml (Poetry格式)
+      - name: Extract version from pyproject.toml
         id: get_version
         shell: pwsh
         run: |
           chcp 65001
           set PYTHONIOENCODING=utf-8
           python -m pip install tomli
-          python -c "
-              import tomli
-              import sys
-              
-              try:
-                  with open("./pyproject.toml", "rb") as f:
-                      pyproject = tomli.load(f)
-                  version = pyproject["tool"]["poetry"]["version"]
-                  print(f"::set-output name=version::{version}")
-                  print(f"Successfully extracted version: {version}")
-              except KeyError as e:
-                  print(f"Error: Missing key in pyproject.toml - {e}", file=sys.stderr)
-                  sys.exit(1)
-              except Exception as e:
-                  print(f"Error: {e}", file=sys.stderr)
-                  sys.exit(1)
-          "
+          $versionScript = @"
+          import tomli
+          import sys
+          
+          try:
+              with open('./pyproject.toml', 'rb') as f:
+                  pyproject = tomli.load(f)
+              version = pyproject['tool']['poetry']['version']
+              print(f'::set-output name=version::{version}')
+              print(f'Successfully extracted version: {version}')
+          except KeyError as e:
+              print(f'Error: Missing key in pyproject.toml - {e}', file=sys.stderr)
+              sys.exit(1)
+          except Exception as e:
+              print(f'Error: {e}', file=sys.stderr)
+              sys.exit(1)
+          "@
+          $versionScript | Out-File -FilePath ./extract_version.py -Encoding utf8
+          
+          python ./extract_version.py
+          
+          Remove-Item ./extract_version.py -Force
 
       - name: Install dependencies
         run: |
           chcp 65001
           set PYTHONIOENCODING=utf-8
           python -m pip install --upgrade pip
-          pip install PySide2 pyinstaller lupa
+          pip install pyinstaller poetry==1.8.5
+          poetry config virtualenvs.in-project true
+          poetry lock --no-update || echo "Lock file generated"
+          poetry install --verbose
         shell: cmd
+
+      - name: Cache poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            .venv
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
 
       - name: Run UI compilation (uic)
         run: |
           chcp 65001
           set PYTHONIOENCODING=utf-8
           python ./exec.py uic
-        shell: cmd
-
-      - name: Update translation files (lupdate)
-        run: |
-          chcp 65001
-          set PYTHONIOENCODING=utf-8
-          python ./exec.py lupdate
-        shell: cmd
-
-      - name: Compile translation files (lrelease)
-        run: |
-          chcp 65001
-          set PYTHONIOENCODING=utf-8
-          python ./exec.py lrelease
         shell: cmd
 
       - name: Package with PyInstaller
@@ -81,15 +85,17 @@ jobs:
         shell: cmd
 
       - name: Compress dist to ZIP
+        id: compress
         run: |
           $zipName = "MouseFlight_${{ steps.get_version.outputs.version }}.zip"
-          Compress-Archive -Path ./dist/* -DestinationPath $zipName -Force
+          Compress-Archive -Path ./out/* -DestinationPath $zipName -Force
           Write-Host "Compressed: $zipName"
+          echo "::set-output name=zipName::$zipName"
         shell: pwsh
 
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
           name: MouseFlight-Package
-          path: "MouseFlight_*.zip"
+          path: ${{ steps.compress.outputs.zipName }}
           retention-days: 30

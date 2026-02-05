@@ -1,53 +1,79 @@
 import os
 import shutil
 import subprocess
-
+import sys
 
 def main():
-    folders_to_copy = ['assets', 'i18n', 'Inits', 'Scripts', 'Lua', 'Joycons']
     source_dir = os.getcwd()
+    spec_file = os.path.join(source_dir, 'pyinstaller.spec')
     target_dir = os.path.join(source_dir, 'out')
+    
+    print(f'Current working directory: {source_dir}')
+    print(f'Python executable path: {sys.executable}')
+    print(f'PyInstaller spec file path: {spec_file}')
+    print(f'Target output directory: {target_dir}')
+    
+    if not os.path.exists(spec_file):
+        print(f'Error: PyInstaller spec file {spec_file} not found')
+        print('File list in current directory:')
+        for file in os.listdir(source_dir):
+            print(f'  - {file}')
+        sys.exit(1)
 
     try:
-        print('开始执行打包...')
+        print('\nStarting PyInstaller packaging...')
+        
         result = subprocess.run(
-            ['pyinstaller', '--distpath=out', 'pyinstaller.spec', '--noconfirm'],
+            [sys.executable, '-m', 'PyInstaller', '--distpath=out', spec_file, '--noconfirm'],
             check=True,
-            capture_output=True,
-            text=True,
+            cwd=source_dir,
+            encoding='utf-8',
+            errors='replace'
         )
-        print('打包完成!')
-        print('输出信息:', result.stdout)
+        
+        print('\nPyInstaller packaging completed!')
 
-        if not os.path.exists(target_dir):
-            os.mkdir(target_dir)
+        os.makedirs(target_dir, exist_ok=True)
+        print(f'Confirmed target directory exists: {target_dir}')
 
+        folders_to_copy = ['assets', 'i18n', 'Inits', 'Scripts', 'Lua', 'Joycons']
+        
         for folder in folders_to_copy:
             src = os.path.join(source_dir, folder)
             dest = os.path.join(target_dir, folder)
 
             if not os.path.exists(src):
-                print(f'警告: 源文件夹 {src} 不存在，跳过复制。')
+                print(f'Warning: Source folder {src} does not exist, skip copying.')
                 continue
 
             if os.path.exists(dest):
-                print(f'目标文件夹 {dest} 已存在，先删除...')
+                print(f'Target folder {dest} already exists, deleting first...')
                 if os.path.isfile(dest) or os.path.islink(dest):
                     os.unlink(dest)
                 else:
-                    shutil.rmtree(dest)
+                    shutil.rmtree(dest, ignore_errors=True)
 
-            print(f'正在复制 {src} 到 {dest}...')
-            shutil.copytree(src, dest)
-            print(f'复制 {folder} 完成。')
+            print(f'Copying {src} to {dest}...')
+            shutil.copytree(src, dest, ignore_dangling_symlinks=True)
+            print(f'Copy of {folder} completed.')
 
-        print('所有操作完成。')
+        print('\nAll packaging and copying operations completed.')
 
     except subprocess.CalledProcessError as e:
-        print(f'pyinstaller执行失败: {e.stderr}')
+        print(f'\nPyInstaller execution failed, return code: {e.returncode}')
+        print(f'Failed command: {" ".join(e.cmd)}')
+        sys.exit(e.returncode)
+    except FileNotFoundError as e:
+        print(f'\nFile not found error: {str(e)}')
+        sys.exit(1)
+    except PermissionError as e:
+        print(f'\nPermission error: {str(e)}')
+        sys.exit(1)
     except Exception as e:
-        print(f'发生错误: {str(e)}')
-
+        print(f'\nUnknown error: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
