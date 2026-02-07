@@ -49,7 +49,7 @@ TaxiMode: Режим таксировки
 TaxiModeOff: 'Режим таксировки: Выключен'
 TaxiModeOn: 'Режим таксировки: Включен'
 ThrottleSpeed: Регулировка скорости дросселя
-Title: Полет мышью
+Title: Полет мышью %{version}
 ToggleEnabled: Переключить управление
 VersionInfo: Информация о версии
 ViewCenter: Центрирование свободного обзора

@@ -49,7 +49,7 @@ TaxiMode: Taxi Mode
 TaxiModeOff: 'Taxi mode: Off'
 TaxiModeOn: 'Taxi mode: On'
 ThrottleSpeed: Throttle speed
-Title: MouseFlight
+Title: Mouse flight %{version}
 ToggleEnabled: Toggle Control
 VersionInfo: Version
 ViewCenter: View Center

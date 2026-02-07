@@ -11,12 +11,12 @@ import psutil
 from lupa import LuaRuntime
 from PySide2 import QtCore, QtGui, QtWidgets
 from PySide2.QtCore import QCoreApplication, Qt
-from PySide2.QtGui import QFont, QScreen
+from PySide2.QtGui import QFont, QIcon, QScreen
 
 import i18n
 from app import App
 from common.config import CONFIG, CONFIG_FILE, LANGUAGE_CONFIG
-from common.constants import SCRIPT_INI_PATH
+from common.constants import APP_VERSION, SCRIPT_INI_PATH
 from controller.base import BaseController
 from controller.control import FixedWingController, HelicopterController
 from controller.manager import ControllerManager
@@ -767,7 +767,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def retranslate_ui(self):
         """重新翻译UI文本"""
-        self.setWindowTitle(i18n.t('Title'))
+        self.setWindowTitle(i18n.t('Title', version=f'v{APP_VERSION}'))
         self.general_menu.setTitle(i18n.t('General'))
         self.import_action.setText(i18n.t('ImportPreset'))
         self.language_menu.setTitle(i18n.t('Language'))
@@ -1250,6 +1250,7 @@ if __name__ == '__main__':
     QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
     app = App(sys.argv)
+    app.setWindowIcon(QIcon('assets/icon.ico'))
 
     if not os.path.exists('i18n'):
         error_msg = QtWidgets.QMessageBox()

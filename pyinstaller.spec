@@ -24,7 +24,9 @@ a = Analysis(
     ['src/main.py'],
     pathex=[],
     binaries=[],
-    datas=[(DIST_INFO, os.path.basename(DIST_INFO))],
+    datas=[
+        (DIST_INFO, os.path.basename(DIST_INFO)),
+    ],
     hiddenimports=[],
     hookspath=['./hooks'],
     hooksconfig={},
@@ -56,5 +58,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='icon.ico',
+    icon='assets/icon.ico',
 )

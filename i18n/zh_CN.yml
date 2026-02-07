@@ -48,7 +48,7 @@ TaxiMode: 地面滑行模式
 TaxiModeOff: 地面滑行模式：禁用
 TaxiModeOn: 地面滑行模式：启用
 ThrottleSpeed: 节流阀速度
-Title: 鼠标飞行（免费软件）
+Title: 鼠标飞行 %{version}
 ToggleEnabled: 开关控制
 VersionInfo: 版本信息
 ViewCenter: 自由视角归中

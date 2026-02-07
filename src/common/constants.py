@@ -9,7 +9,7 @@ APP_NAME = 'MouseFlight'
 try:
     APP_VERSION = version(APP_NAME)
 except PackageNotFoundError:
-    APP_VERSION = 'v0.0.0'
+    APP_VERSION = ''
 
 BASE_DIR = os.path.dirname(os.path.abspath(sys.executable)) if IS_FROZEN else os.curdir
 DLL_PATH = (
