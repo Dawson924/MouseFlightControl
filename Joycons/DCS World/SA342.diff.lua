@@ -13,7 +13,7 @@ local diff = {
 						["hardwareDetentMax"] = 0,
 						["invert"] = false,
 						["saturationX"] = 1,
-						["saturationY"] = 0.38,
+						["saturationY"] = 0.35,
 						["slider"] = false,
 					},
 					["key"] = "JOY_RX",
@@ -34,7 +34,7 @@ local diff = {
 						["hardwareDetentMax"] = 0,
 						["invert"] = false,
 						["saturationX"] = 1,
-						["saturationY"] = 0.5,
+						["saturationY"] = 0.4,
 						["slider"] = false,
 					},
 					["key"] = "JOY_RY",
@@ -55,7 +55,7 @@ local diff = {
 				[1] = {
 					["filter"] = {
 						["curvature"] = {
-							[1] = 0.15,
+							[1] = 0,
 						},
 						["deadzone"] = 0,
 						["hardwareDetent"] = false,
@@ -63,7 +63,7 @@ local diff = {
 						["hardwareDetentMax"] = 0,
 						["invert"] = false,
 						["saturationX"] = 1,
-						["saturationY"] = 1,
+						["saturationY"] = 0.75,
 						["slider"] = false,
 					},
 					["key"] = "JOY_Y",
@@ -76,7 +76,7 @@ local diff = {
 				[1] = {
 					["filter"] = {
 						["curvature"] = {
-							[1] = 0.15,
+							[1] = 0,
 						},
 						["deadzone"] = 0,
 						["hardwareDetent"] = false,
@@ -84,7 +84,7 @@ local diff = {
 						["hardwareDetentMax"] = 0,
 						["invert"] = false,
 						["saturationX"] = 1,
-						["saturationY"] = 1,
+						["saturationY"] = 0.75,
 						["slider"] = false,
 					},
 					["key"] = "JOY_X",

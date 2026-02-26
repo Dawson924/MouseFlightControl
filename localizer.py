@@ -62,9 +62,7 @@ def process_yaml_files(key, action):
         print(f"Successfully removed key '{key}' from all YAML files in {I18N_DIR}")
     elif action == 'rename':
         old_key, new_key = key
-        print(
-            f"Successfully renamed key '{old_key}' to '{new_key}' in all YAML files in {I18N_DIR}"
-        )
+        print(f"Successfully renamed key '{old_key}' to '{new_key}' in all YAML files in {I18N_DIR}")
     return True
 
 
@@ -104,9 +102,7 @@ def main():
                 continue
             old_key, new_key = parts[1], parts[2]
             if ' ' in old_key or ' ' in new_key:
-                print(
-                    'Error: Old key and new key cannot contain spaces!', file=sys.stderr
-                )
+                print('Error: Old key and new key cannot contain spaces!', file=sys.stderr)
                 continue
             key = (old_key, new_key)
             action = 'rename'

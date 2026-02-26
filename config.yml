@@ -1,0 +1,18 @@
+General:
+  language: zh_CN
+Controls:
+  mouse_speed: 4
+  key_toggle: '`'
+  key_center: q
+  key_freecam: tab
+  key_view_center: win
+  key_taxi: alt + `
+Options:
+  show_cursor: false
+  show_hint: true
+  show_indicator: true
+  button_mapping: true
+  memorize_axis_pos: true
+  freecam_auto_center: false
+Window:
+  w_size: 350

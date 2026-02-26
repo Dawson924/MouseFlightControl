@@ -4,9 +4,7 @@ from PySide2.QtWidgets import QApplication, QWidget
 
 
 class IndicatorWindow(QWidget):
-    def __init__(
-        self, parent, x, y, bg_color, line_color, bg_square_size=200, scale=1.0
-    ):
+    def __init__(self, parent, x, y, bg_color, line_color, bg_square_size=200, scale=1.0):
         super().__init__(parent)
         self.setWindowFlags(
             Qt.FramelessWindowHint
@@ -87,16 +85,12 @@ class IndicatorWindow(QWidget):
         smooth_factor = 0.15
 
         if abs(self.current_throttle - self.target_throttle) > 0.001:
-            self.current_throttle += (
-                self.target_throttle - self.current_throttle
-            ) * smooth_factor
+            self.current_throttle += (self.target_throttle - self.current_throttle) * smooth_factor
         else:
             self.current_throttle = self.target_throttle
 
         if abs(self.current_rudder - self.target_rudder) > 0.001:
-            self.current_rudder += (
-                self.target_rudder - self.current_rudder
-            ) * smooth_factor
+            self.current_rudder += (self.target_rudder - self.current_rudder) * smooth_factor
         else:
             self.current_rudder = self.target_rudder
 
@@ -124,9 +118,7 @@ class IndicatorWindow(QWidget):
     def draw_transparent_background(self, painter):
         painter.setBrush(QBrush(self._background_color))
         painter.setPen(Qt.NoPen)
-        painter.drawRect(
-            self.bg_square_x, self.bg_square_y, self.bg_square_size, self.bg_square_size
-        )
+        painter.drawRect(self.bg_square_x, self.bg_square_y, self.bg_square_size, self.bg_square_size)
 
     def draw_throttle_axis(self, painter, value):
         base_x_ratio = 0.1
@@ -209,9 +201,7 @@ class IndicatorWindow(QWidget):
         pen.setColor(self._foreground_color)
         pen.setWidth(self.shifted_line)
         painter.setPen(pen)
-        painter.drawLine(
-            indicator_x, base_y - aux_offset, indicator_x, base_y + aux_offset
-        )
+        painter.drawLine(indicator_x, base_y - aux_offset, indicator_x, base_y + aux_offset)
 
     # 绘制十字象限
     def draw_quadrant_cross(self, painter, x_value, y_value):
@@ -238,12 +228,8 @@ class IndicatorWindow(QWidget):
         # 十字线
         pen = QPen(QColor(fg_r, fg_g, fg_b, aux_alpha), self.base_line)
         painter.setPen(pen)
-        painter.drawLine(
-            center_x - cross_size, center_y, center_x + cross_size, center_y
-        )
-        painter.drawLine(
-            center_x, center_y - cross_size, center_x, center_y + cross_size
-        )
+        painter.drawLine(center_x - cross_size, center_y, center_x + cross_size, center_y)
+        painter.drawLine(center_x, center_y - cross_size, center_x, center_y + cross_size)
 
         # 菱形指示器
         ball_x = center_x + (x_value - 0.5) * 2 * cross_size

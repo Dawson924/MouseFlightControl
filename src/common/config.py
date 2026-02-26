@@ -1,29 +1,30 @@
-CONFIG_FILE = 'config.ini'
+CONFIG_FILE = 'config.yml'
+INPUT_FILE = 'flight.yml'
 
 CONFIG = {
     'General': {
-        'language': (str),
-        'flight_mode': (int),
-        'camera_fov': (int),
+        'language': 'string(min=1)',
+        'flight_mode': 'integer(min=0)',
+        'camera_fov': 'integer(min=1, max=180)',
     },
     'Controls': {
-        'mouse_speed': (int),
-        'key_toggle': (str),
-        'key_center': (str),
-        'key_freecam': (str),
-        'key_view_center': (str),
-        'key_taxi': (str),
+        'mouse_speed': 'integer(min=1, max=100)',
+        'key_toggle': 'string(min=1)',
+        'key_center': 'string(min=1)',
+        'key_freecam': 'string(min=1)',
+        'key_view_center': 'string(min=1)',
+        'key_taxi': 'string(min=1)',
     },
     'Options': {
-        'show_cursor': (bool),
-        'show_hint': (bool),
-        'show_indicator': (bool),
-        'button_mapping': (bool),
-        'memorize_axis_pos': (bool),
-        'freecam_auto_center': (bool),
+        'show_cursor': 'boolean',
+        'show_hint': 'boolean',
+        'show_indicator': 'boolean',
+        'button_mapping': 'boolean',
+        'memorize_axis_pos': 'boolean',
+        'freecam_auto_center': 'boolean',
     },
     'Window': {
-        'w_size': (int),
+        'w_size': 'integer(min=100)',
     },
     'Flight': {},
 }

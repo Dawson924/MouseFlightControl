@@ -3,21 +3,20 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, Literal
 
-from type.curve import Filter
-
-AXIS_MAX = 32767
-AXIS_MIN = -32768
-AXIS_LENGTH = 65535
-AXIS_CENTER = 0
-
-HID_X = 0x30  # X轴
-HID_Y = 0x31  # Y轴
-HID_Z = 0x32  # Z轴
-HID_RX = 0x33  # X旋转轴
-HID_RY = 0x34  # Y旋转轴
-HID_RZ = 0x35  # Z旋转轴
-HID_SL = 0x36  # 滑块1
-HID_SL2 = 0x38  # 滑块2
+from type.axis import (
+    AXIS_CENTER,
+    AXIS_MAX,
+    AXIS_MIN,
+    AXIS_RX,
+    AXIS_RY,
+    AXIS_RZ,
+    AXIS_SL,
+    AXIS_SL2,
+    AXIS_X,
+    AXIS_Y,
+    AXIS_Z,
+)
+from type.filter import Filters
 
 DeviceType = Literal['vjoy', 'xbox']
 DEFAULT_SMOOTH_SPEED = int(AXIS_MAX * 0.01)
@@ -32,12 +31,13 @@ def get_joystick_device(device: DeviceType, device_id: int = 1):
 
 class JoystickDevice(ABC):
     def __init__(self):
-        self.device = None
+        self.device: Any = None
         self.init_device()
+        self.filters: Filters = {}
+        self._curves: DefaultDict[int, int] = defaultdict(lambda: AXIS_CENTER)
+
         self.axis_mapping = self.get_axis_mapping()
         self.button_mapping = self.get_button_mapping()
-        self.filters = {}
-        self._curves: DefaultDict[int, int] = defaultdict(lambda: AXIS_CENTER)
 
     @abstractmethod
     def get_axis_mapping(self) -> Dict[int, Any]:
@@ -67,8 +67,8 @@ class JoystickDevice(ABC):
     def reset(self) -> None:
         pass
 
-    def set_filter(self, axis: int, filter: Filter) -> None:
-        self.filters[axis] = filter
+    def update_filters(self, filters: Filters) -> None:
+        self.filters = filters
 
     def set_axis(self, axis_id: int, raw_value: int) -> bool:
         if axis_id not in self.axis_mapping:
@@ -87,37 +87,50 @@ class JoystickDevice(ABC):
 
     def _apply_curve(self, axis_id, value) -> bool:
         filter = self.filters.get(axis_id)
-        current = self._curves[axis_id]
+        # current = self._curves[axis_id]
 
         if filter.invert:
             value = -value
 
-        if filter.smooth_preset == 'linear':
-            smooth_speed = filter.smooth_speed or DEFAULT_SMOOTH_SPEED
-            smooth_speed = max(1, smooth_speed)
+        # if filter.preset == 'linear':
+        #     smooth_speed = filter.smooth or DEFAULT_SMOOTH_SPEED
+        #     smooth_speed = max(1, smooth_speed)
 
-            if current < value:
-                new_val = min(current + smooth_speed, value)
-            elif current > value:
-                new_val = max(current - smooth_speed, value)
-            else:
-                new_val = value
+        #     if current < value:
+        #         new_val = min(current + smooth_speed, value)
+        #     elif current > value:
+        #         new_val = max(current - smooth_speed, value)
+        #     else:
+        #         new_val = value
 
-            self._apply_axis(axis_id, new_val)
-            self._curves[axis_id] = new_val
-            return
+        #     self._apply_axis(axis_id, new_val)
+        #     self._curves[axis_id] = new_val
+        #     return
 
-        if filter.curvature is not None and filter.curvature != 1.0:
-            curvature = max(0.1, filter.curvature)
+        if filter.curvature and filter.curvature != 0:
             if value == AXIS_MIN:
                 normalized = -1.0
             else:
                 normalized = value / AXIS_MAX
 
-            if normalized >= 0:
-                normalized = normalized**curvature
+            c = filter.curvature
+            c_abs = abs(c)
+            n = 3
+            x = normalized
+
+            if c >= 0:
+                cubic = x * (1 - c_abs) + (x**n) * c_abs
+                y = cubic * (1 - c_abs) + (cubic**n) * c_abs
             else:
-                normalized = -(abs(normalized) ** curvature)
+                sign = 1 if x >= 0 else -1
+                x_abs = abs(x)
+                comp1 = x * (1 - c_abs) + sign * (1 - (1 - x_abs) ** n) * c_abs
+                comp1_abs = abs(comp1)
+                sign2 = 1 if comp1 >= 0 else -1
+                comp2 = sign2 * (1 - (1 - comp1_abs) ** n)
+                y = comp1 * (1 - c_abs) + comp2 * c_abs
+
+            normalized = y
 
             if normalized == -1.0:
                 value = AXIS_MIN
@@ -136,9 +149,7 @@ class JoystickDevice(ABC):
 
     def set_button(self, button_id: int, pressed: bool) -> bool:
         if button_id not in self.button_mapping:
-            logging.warning(
-                f'Unsupported button ID {button_id} (device type: {self.__class__.__name__})'
-            )
+            logging.warning(f'Unsupported button ID {button_id} (device type: {self.__class__.__name__})')
             return False
 
         try:
@@ -165,14 +176,14 @@ class VJoyDevice(JoystickDevice):
 
     def get_axis_mapping(self) -> Dict[int, Any]:
         return {
-            HID_X: self._pyvjoy.HID_USAGE_X,
-            HID_Y: self._pyvjoy.HID_USAGE_Y,
-            HID_Z: self._pyvjoy.HID_USAGE_Z,
-            HID_RX: self._pyvjoy.HID_USAGE_RX,
-            HID_RY: self._pyvjoy.HID_USAGE_RY,
-            HID_RZ: self._pyvjoy.HID_USAGE_RZ,
-            HID_SL: self._pyvjoy.HID_USAGE_SL0,
-            HID_SL2: self._pyvjoy.HID_USAGE_WHL,
+            AXIS_X: self._pyvjoy.HID_USAGE_X,
+            AXIS_Y: self._pyvjoy.HID_USAGE_Y,
+            AXIS_Z: self._pyvjoy.HID_USAGE_Z,
+            AXIS_RX: self._pyvjoy.HID_USAGE_RX,
+            AXIS_RY: self._pyvjoy.HID_USAGE_RY,
+            AXIS_RZ: self._pyvjoy.HID_USAGE_RZ,
+            AXIS_SL: self._pyvjoy.HID_USAGE_SL0,
+            AXIS_SL2: self._pyvjoy.HID_USAGE_WHL,
         }
 
     def get_button_mapping(self) -> Dict[int, int]:
@@ -236,10 +247,10 @@ class XboxDevice(JoystickDevice):
 
     def get_axis_mapping(self) -> Dict[int, str]:
         return {
-            HID_X: ('left_joystick', 'x'),
-            HID_Y: ('left_joystick', 'y'),
-            HID_Z: ('right_joystick', 'y'),
-            HID_RZ: ('right_joystick', 'x'),
+            AXIS_X: ('left_joystick', 'x'),
+            AXIS_Y: ('left_joystick', 'y'),
+            AXIS_Z: ('right_joystick', 'y'),
+            AXIS_RZ: ('right_joystick', 'x'),
         }
 
     def get_button_mapping(self) -> Dict[int, Any]:
@@ -277,9 +288,7 @@ class XboxDevice(JoystickDevice):
             self.left_joystick[0 if dir == 'x' else 1] = value if dir == 'x' else -value
             self.device.left_joystick(self.left_joystick[0], self.left_joystick[1])
         elif axis_type == 'right_joystick':
-            self.right_joystick[0 if dir == 'x' else 1] = (
-                value if dir == 'x' else -value
-            )
+            self.right_joystick[0 if dir == 'x' else 1] = value if dir == 'x' else -value
             self.device.right_joystick(self.right_joystick[0], self.right_joystick[1])
 
         self.device.update()

@@ -17,13 +17,12 @@ from PySide2.QtWidgets import (
 
 import i18n
 from type.script import ScriptModule
-from ui.Style import STYLE_LIGHT
 
 
 class ScriptWindow(QMainWindow):
     def __init__(self, script: ScriptModule, config: Dict, parent: QMainWindow):
         super().__init__(parent)
-        self.setWindowTitle(i18n.t('OptionsTitle'))
+        self.setWindowTitle(i18n.t('OptionsPage'))
         self.init_style()
 
         self.script = script
@@ -34,7 +33,7 @@ class ScriptWindow(QMainWindow):
 
     def init_style(self):
         self.setMinimumWidth(300)
-        self.setStyleSheet(STYLE_LIGHT)
+        self.setStyleSheet(self.parent().get_stylesheet())
 
     def init_widget(self):
         central_widget = QWidget()
@@ -45,22 +44,16 @@ class ScriptWindow(QMainWindow):
         controls_title = QLabel(self.script.name)
         controls_title.setObjectName('controlsTitleLabel')
         controls_title.setAlignment(Qt.AlignCenter)
-        controls_title.setStyleSheet(
-            'font-size: 14pt; font-weight: bold; color: #000000;'
-        )
+        controls_title.setStyleSheet('font-size: 14pt; font-weight: bold; color: #000000;')
         main_layout.addWidget(controls_title)
 
         self.config_layout = QVBoxLayout()
         self.config_layout.setSpacing(10)
         main_layout.addLayout(self.config_layout)
 
-        main_layout.addSpacerItem(
-            QSpacerItem(0, 10, QSizePolicy.Fixed, QSizePolicy.Fixed)
-        )
+        main_layout.addSpacerItem(QSpacerItem(0, 10, QSizePolicy.Fixed, QSizePolicy.Fixed))
 
-        main_layout.addSpacerItem(
-            QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        )
+        main_layout.addSpacerItem(QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         return central_widget
 
@@ -68,47 +61,35 @@ class ScriptWindow(QMainWindow):
         # TODO 类型检查和合法性校验
         self.config[key] = value
 
-    def add_config_row(
-        self, name: str, label: str, widget_type: int, value: Any
-    ) -> QHBoxLayout:
+    def add_config_row(self, name: str, label: str, widget_type: int, value: Any) -> QHBoxLayout:
         row_layout = QHBoxLayout()
         row_layout.setSpacing(10)
 
         label = QLabel(label)
         row_layout.addWidget(label)
 
-        row_layout.addSpacerItem(
-            QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        )
+        row_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
         if widget_type == 'bool':
             widget = QCheckBox()
             widget.setChecked(value if isinstance(value, bool) else False)
-            widget.stateChanged.connect(
-                lambda checked, key=name: self.set_config(key, checked)
-            )
+            widget.stateChanged.connect(lambda checked, key=name: self.set_config(key, checked))
         elif widget_type == 'string':
             widget = QLineEdit()
             widget.setText(str(value) if value is not None else '')
-            widget.textChanged.connect(
-                lambda text, key=name: self.set_config(key, text)
-            )
+            widget.textChanged.connect(lambda text, key=name: self.set_config(key, text))
         elif widget_type == 'int':
             widget = QSpinBox()
             widget.setMinimum(-1000000)
             widget.setMaximum(1000000)
             widget.setValue(value)
-            widget.valueChanged.connect(
-                lambda value, key=name: self.set_config(key, value)
-            )
+            widget.valueChanged.connect(lambda value, key=name: self.set_config(key, value))
         elif widget_type == 'uint':
             widget = QSpinBox()
             widget.setMinimum(0)
             widget.setMaximum(1000000)
             widget.setValue(value)
-            widget.valueChanged.connect(
-                lambda value, key=name: self.set_config(key, value)
-            )
+            widget.valueChanged.connect(lambda value, key=name: self.set_config(key, value))
         elif widget_type == 'float':
             widget = QDoubleSpinBox()
             widget.setDecimals(3)
@@ -116,9 +97,7 @@ class ScriptWindow(QMainWindow):
             widget.setMinimum(0.0)
             widget.setMaximum(100.0)
             widget.setValue(value)
-            widget.valueChanged.connect(
-                lambda value, key=name: self.set_config(key, value)
-            )
+            widget.valueChanged.connect(lambda value, key=name: self.set_config(key, value))
         else:
             widget = QLabel('Invalid')
             widget.setStyleSheet('color: red;')

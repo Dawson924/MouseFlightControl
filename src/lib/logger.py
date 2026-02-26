@@ -82,12 +82,8 @@ def init_logger():
         logger.opt(colors=True).info(
             f'<bold><green>🚀 {i18n.t("MouseFlight")} - {i18n.t("StartupSuccessful")}</green></bold>'
         )
-        logger.opt(colors=True).info(
-            f'<green>{i18n.t("VersionInfo")}: </green> v{APP_VERSION}'
-        )
-        logger.opt(colors=True).info(
-            f'<green>{i18n.t("StartupTime")}: </green> {startup_time}'
-        )
+        logger.opt(colors=True).info(f'<green>{i18n.t("VersionInfo")}: </green> v{APP_VERSION}')
+        logger.opt(colors=True).info(f'<green>{i18n.t("StartupTime")}: </green> {startup_time}')
         logger.opt(colors=True).info(
             f'<green>{i18n.t("RuntimeEnv")}: </green> {system_info.system} {system_info.release} ({system_info.machine}) | PID: {pid} | {cwd}'
         )

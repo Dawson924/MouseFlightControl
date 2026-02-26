@@ -1,24 +1,31 @@
 from controller.base import BaseController
 from lib.joystick import AXIS_MIN
 from type.widget import OptionWidget
-from utils import wheel_step
+
+MIN_INTERVAL = 1 / 60
 
 
 class FixedWingController(BaseController):
     _name = 'PlaneController'
 
-    def __init__(self, device):
-        super().__init__(device)
+    def __init__(self, device, input):
+        super().__init__(device, input)
+        self.throttle_speed = input.get('throttle_speed')
+        self.increase_speed = input.get('increase_speed')
+        self.decrease_speed = input.get('decrease_speed')
 
-    def update(self, Axis, options, input, state, _):
-        if state.enabled:
-            f = 10
-            if input.is_pressing(options.increase_throttle_speed):
-                f = 50
-            elif input.is_pressing(options.decrease_throttle_speed):
-                f = 5
+        self.throttle_accumulator = 0.0
+        self.min_interval = MIN_INTERVAL
 
-            Axis.th += wheel_step(options.throttle_speed * f, input.get_wheel_delta())
+    def update(self, axis, key, state, _):
+        if state.enabled and key.alt_ctrl_shift():
+            self.throttle_accumulator += state.dt
+            while self.throttle_accumulator >= self.min_interval:
+                if key.is_pressing(self.increase_speed):
+                    axis.th += self.throttle_speed
+                elif key.is_pressing(self.decrease_speed):
+                    axis.th -= self.throttle_speed
+                self.throttle_accumulator -= self.min_interval
 
 
 FixedWingController.add_option(
@@ -27,12 +34,12 @@ FixedWingController.add_option(
     default=100,
     i18n_text='ThrottleSpeed',
 ).add_option(
-    name='increase_throttle_speed',
+    name='increase_speed',
     widget=OptionWidget.LineEdit,
     default='shift',
     i18n_text='IncreaseSpeed',
 ).add_option(
-    name='decrease_throttle_speed',
+    name='decrease_speed',
     widget=OptionWidget.LineEdit,
     default='ctrl',
     i18n_text='DecreaseSpeed',
@@ -42,35 +49,37 @@ FixedWingController.add_option(
 class HelicopterController(BaseController):
     _name = 'HelicopterController'
 
-    def __init__(self, device):
-        super().__init__(device)
+    def __init__(self, device, input):
+        super().__init__(device, input)
+        self.col_speed = self.input.get('collective_speed')
+        self.rud_speed = self.input.get('pedals_speed')
         self.collective_accumulator = 0.0
         self.pedals_accumulator = 0.0
-        self.min_interval = 1.0 / 60
+        self.min_interval = MIN_INTERVAL
 
-    def update(self, Axis, options, input, state, _):
-        if state.enabled and input.alt_ctrl_shift():
+    def update(self, axis, key, state, _):
+        if state.enabled and key.alt_ctrl_shift():
             self.collective_accumulator += state.dt
             self.pedals_accumulator += state.dt
 
             while self.collective_accumulator >= self.min_interval:
-                if input.is_pressing('W'):
-                    Axis.th += options.collective_speed
-                elif input.is_pressing('S'):
-                    Axis.th -= options.collective_speed
+                if key.is_pressing('W'):
+                    axis.th += self.col_speed
+                elif key.is_pressing('S'):
+                    axis.th -= self.col_speed
                 self.collective_accumulator -= self.min_interval
 
             while self.pedals_accumulator >= self.min_interval:
-                if input.is_pressing('A'):
-                    Axis.rd -= options.pedals_speed
-                elif input.is_pressing('D'):
-                    Axis.rd += options.pedals_speed
+                if key.is_pressing('A'):
+                    axis.rd -= self.rud_speed
+                elif key.is_pressing('D'):
+                    axis.rd += self.rud_speed
                 self.pedals_accumulator -= self.min_interval
 
-            if input.is_pressed('X'):
-                Axis.rd = 0
-            if input.is_pressed('Z'):
-                Axis.th = AXIS_MIN
+            if key.is_pressed('X'):
+                axis.rd = 0
+            if key.is_pressed('Z'):
+                axis.th = AXIS_MIN
 
 
 HelicopterController.add_option(

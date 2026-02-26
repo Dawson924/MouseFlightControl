@@ -35,7 +35,7 @@ a = Analysis(
     exclude_binaries=False,
     win_no_prefer_redirects=False,
     cipher=block_cipher,
-    noarchive=False,
+    noarchive=True,
 )
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)

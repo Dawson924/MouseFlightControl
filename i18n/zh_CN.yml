@@ -1,3 +1,4 @@
+AxisPage: '轴调整'
 ButtonMapping: 鼠标按钮映射
 CameraFov: 自由视角视场角度
 CenterControl: 操控回中
@@ -7,7 +8,7 @@ ConfigSaveFailed: 保存配置文件失败
 ConfigSaved: 配置文件保存成功
 Controlled: 正在控制
 Controller: 飞行控制器
-ControlsTitle: 控制
+ControlsPage: 控制
 CurrentValue: 当前值
 DebugEnabled: 调试模式已启用
 DecreaseSpeed: 减少速度
@@ -27,7 +28,7 @@ MemorizeAxisPos: 维持摇杆位置
 MouseFlight: 鼠标飞行
 NoControl: 无控制
 None: 未选择
-OptionsTitle: 选项
+OptionsPage: 选项
 PlaneController: 固定翼模式
 RudderSpeed: 方向舵速度
 RuntimeEnv: 运行环境

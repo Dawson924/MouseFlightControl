@@ -25,9 +25,7 @@ class ScriptDatabase:
     def list_tables(self) -> List[str]:
         return list(self._tables.keys())
 
-    def add(
-        self, table_name: str, table_data: Dict[str, Any], overwrite: bool = False
-    ) -> None:
+    def add(self, table_name: str, table_data: Dict[str, Any], overwrite: bool = False) -> None:
         if table_name in self._tables and not overwrite:
             raise ValueError(f"Table '{table_name}' exists")
         self._tables[table_name] = deepcopy(table_data)
@@ -54,7 +52,5 @@ class ScriptDatabase:
         return self._tables
 
     def __repr__(self) -> str:
-        table_info = ', '.join(
-            f"'{name}': {len(data)} keys" for name, data in self._tables.items()
-        )
+        table_info = ', '.join(f"'{name}': {len(data)} keys" for name, data in self._tables.items())
         return f'ScriptDatabase(singleton, tables=[{table_info}])'

@@ -19,9 +19,7 @@ class CursorGraph(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
 
         cross_size = 20
-        self.resize(
-            cross_size // self.devicePixelRatio(), cross_size // self.devicePixelRatio()
-        )
+        self.resize(cross_size // self.devicePixelRatio(), cross_size // self.devicePixelRatio())
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_position)

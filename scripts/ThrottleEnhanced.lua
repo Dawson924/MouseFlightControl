@@ -3,8 +3,6 @@ local te = require('ThrottleEnhanced.init')
 DETENT_ON = false
 
 local config
-local accumulator = 0.0
-local interval = 1.0/60
 local detent
 
 function te.init(database)
@@ -19,16 +17,6 @@ function te.update(dt)
         end
         if DETENT_ON and Axis.th > detent then
             SetAxis('th', detent)
-        end
-
-        accumulator = accumulator + dt
-        while accumulator >= interval do
-            if Input.pressing(config.throttle_increase) then
-                SetAxis('th', Axis.th + config.throttle_speed)
-            elseif Input.pressing(config.throttle_decrease) then
-                SetAxis('th', Axis.th - config.throttle_speed)
-            end
-            accumulator = accumulator - interval
         end
     end
 end

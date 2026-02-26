@@ -139,9 +139,7 @@ class InputStateMonitor:
     def start_wheel_listener(self):
         """启动pynput滚轮监听器"""
         if self.mouse_listener is None or not self.mouse_listener.is_alive():
-            self.mouse_listener = mouse.Listener(
-                on_scroll=self._on_scroll, on_move=None, on_click=None
-            )
+            self.mouse_listener = mouse.Listener(on_scroll=self._on_scroll, on_move=None, on_click=None)
             self.mouse_listener.start()
 
     def update(self):
@@ -187,18 +185,14 @@ class InputStateMonitor:
         """检测鼠标按钮是否刚刚按下（上一帧未按下，当前帧按下）"""
         if isinstance(button_name, str):
             button = button_name.upper()
-            return self.mouse_buttons.get(
-                button, False
-            ) and not self.prev_mouse_buttons.get(button, False)
+            return self.mouse_buttons.get(button, False) and not self.prev_mouse_buttons.get(button, False)
         return False
 
     def is_mouse_released(self, button_name):
         """检测鼠标按钮是否刚刚释放（上一帧按下，当前帧未按下）"""
         if isinstance(button_name, str):
             button = button_name.upper()
-            return not self.mouse_buttons.get(
-                button, False
-            ) and self.prev_mouse_buttons.get(button, False)
+            return not self.mouse_buttons.get(button, False) and self.prev_mouse_buttons.get(button, False)
         return False
 
     def is_key_presssing(self, key_name):
@@ -215,32 +209,24 @@ class InputStateMonitor:
         """检测键盘按键是否刚刚按下（上一帧未按下，当前帧按下）"""
         if isinstance(key_name, str):
             key = key_name.lower()
-            return self.key_states.get(key, False) and not self.prev_key_states.get(
-                key, False
-            )
+            return self.key_states.get(key, False) and not self.prev_key_states.get(key, False)
         if isinstance(key_name, int):
             key_name = self.VK_MAP.get(key_name, None)
             if key_name:
                 key = key_name.lower()
-                return self.key_states.get(key, False) and not self.prev_key_states.get(
-                    key, False
-                )
+                return self.key_states.get(key, False) and not self.prev_key_states.get(key, False)
         return False
 
     def is_key_released(self, key_name):
         """检测键盘按键是否刚刚释放（上一帧按下，当前帧未按下）"""
         if isinstance(key_name, str):
             key = key_name.lower()
-            return not self.key_states.get(key, False) and self.prev_key_states.get(
-                key, False
-            )
+            return not self.key_states.get(key, False) and self.prev_key_states.get(key, False)
         if isinstance(key_name, int):
             key_name = self.VK_MAP.get(key_name, None)
             if key_name:
                 key = key_name.lower()
-                return not self.key_states.get(key, False) and self.prev_key_states.get(
-                    key, False
-                )
+                return not self.key_states.get(key, False) and self.prev_key_states.get(key, False)
         return False
 
     def is_pressed(self, name):
@@ -258,9 +244,7 @@ class InputStateMonitor:
             return True
         return False
 
-    def alt_ctrl_shift(
-        self, alt: bool = False, ctrl: bool = False, shift: bool = False
-    ):
+    def alt_ctrl_shift(self, alt: bool = False, ctrl: bool = False, shift: bool = False):
         if (
             self.is_key_presssing('alt') == alt
             and self.is_key_presssing('ctrl') == ctrl

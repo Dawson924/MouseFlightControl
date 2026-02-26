@@ -44,7 +44,7 @@ def main():
         os.makedirs(target_dir, exist_ok=True)
         print(f'Confirmed target directory exists: {target_dir}')
 
-        folders_to_copy = ['assets', 'i18n', 'Inits', 'Scripts', 'Lua', 'Joycons']
+        folders_to_copy = ['assets', 'i18n', 'Inputs', 'Scripts', 'Lua', 'Joycons']
 
         for folder in folders_to_copy:
             src = os.path.join(source_dir, folder)

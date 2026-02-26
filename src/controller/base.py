@@ -1,14 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional
 
+from data.input import FlightInput
+from input import InputStateMonitor
+from lib.joystick import JoystickDevice
+from type.axis import AxisPos
+
 
 class BaseController(ABC):
     _name: str = ''
     _option_defs: List[tuple]
     _i18n_defs: Dict[str, str]
 
-    def __init__(self, device):
+    def __init__(self, device: JoystickDevice, input: FlightInput):
         self.device = device
+        self.input = input
 
     @classmethod
     def get_name(cls, translator: Optional[Callable[[str], str]] = None) -> str:
@@ -25,9 +31,7 @@ class BaseController(ABC):
         return cls._option_defs.copy()
 
     @classmethod
-    def add_option(
-        cls, name: str, widget: Any, default: Any, i18n_text: Optional[str] = None
-    ) -> 'BaseController':
+    def add_option(cls, name: str, widget: Any, default: Any, i18n_text: Optional[str] = None) -> 'BaseController':
         if not hasattr(cls, '_option_defs'):
             cls._option_defs = []
         if not hasattr(cls, '_i18n_defs'):
@@ -45,9 +49,7 @@ class BaseController(ABC):
         return cls
 
     @classmethod
-    def get_i18n(
-        cls, translator: Optional[Callable[[str], str]] = None
-    ) -> Dict[str, str]:
+    def get_i18n(cls, translator: Optional[Callable[[str], str]] = None) -> Dict[str, str]:
         if not hasattr(cls, '_i18n_defs'):
             cls._i18n_defs = {}
         i18n = cls._i18n_defs.copy()
@@ -57,5 +59,5 @@ class BaseController(ABC):
         return i18n
 
     @abstractmethod
-    def update(self, Axis, options, input, state, context):
+    def update(self, axis: AxisPos, key: InputStateMonitor, state, context):
         pass

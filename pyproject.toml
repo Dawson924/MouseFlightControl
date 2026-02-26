@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "MouseFlight"
-version = "0.16.7"
+version = "0.17.0"
 description = "Mouse flight control for DCS World"
 authors = ["Dawson <bendawson0924@gmail.com>"]
 classifiers = [
@@ -48,12 +48,14 @@ psutil = "^7.1.2"
 vgamepad = "^0.1.0"
 loguru = "^0.7.3"
 python-i18n = {extras = ["yaml"], version = "^0.3.9"}
+configobj = "^5.0.9"
 
 [tool.poetry.build]
 generate-setup-file = false
 
 [tool.ruff]
 exclude = ["src/ui/MainWindow.py"]
+line-length = 120
 
 [tool.ruff.lint]
 ignore = ["E722", "E731", "F821"]

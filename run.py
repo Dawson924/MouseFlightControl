@@ -48,16 +48,12 @@ def run_command(command: List[str], cwd: str = None):
 
 
 def dev():
-    run_command(
-        ['pyside2-uic', './src/ui/MainWindow.ui', '-o', './src/ui/MainWindow.py']
-    )
+    run_command(['pyside2-uic', './src/ui/MainWindow.ui', '-o', './src/ui/MainWindow.py'])
     run_python_script(os.path.join('src', 'main.py'))
 
 
 def build():
-    run_command(
-        ['pyside2-uic', './src/ui/MainWindow.ui', '-o', './src/ui/MainWindow.py']
-    )
+    run_command(['pyside2-uic', './src/ui/MainWindow.ui', '-o', './src/ui/MainWindow.py'])
     run_python_script('pyinstaller.py')
 
 

@@ -1,6 +1,7 @@
 import os
-from typing import Optional
+from typing import Any, Optional
 
+import yaml
 from PySide2.QtCore import QUrl
 from PySide2.QtGui import QDesktopServices
 from PySide2.QtWidgets import QFileDialog, QMainWindow
@@ -24,9 +25,7 @@ def choose_multiple_files(
     filter: str = '',
     options: QFileDialog.Options = None,
 ):
-    files, _ = QFileDialog.getOpenFileNames(
-        parent, caption, path, filter, options or QFileDialog.Options()
-    )
+    files, _ = QFileDialog.getOpenFileNames(parent, caption, path, filter, options or QFileDialog.Options())
     return files if files else []
 
 
@@ -36,9 +35,7 @@ def choose_directory(
     path: str,
     options: QFileDialog.Options = None,
 ):
-    dir_path = QFileDialog.getExistingDirectory(
-        parent, caption, path, options or QFileDialog.Options()
-    )
+    dir_path = QFileDialog.getExistingDirectory(parent, caption, path, options or QFileDialog.Options())
     return dir_path if dir_path else None
 
 
@@ -83,9 +80,7 @@ def save_file(
     filter: str = '',
     options: QFileDialog.Options = None,
 ):
-    file_path, _ = QFileDialog.getSaveFileName(
-        parent, caption, path, filter, options or QFileDialog.Options()
-    )
+    file_path, _ = QFileDialog.getSaveFileName(parent, caption, path, filter, options or QFileDialog.Options())
     return file_path if file_path else None
 
 
@@ -95,3 +90,13 @@ def open_file(file_path: str) -> bool:
 
 def open_directory(dir_path: str) -> bool:
     return QDesktopServices.openUrl(QUrl.fromLocalFile(dir_path))
+
+
+def save_yaml(obj: Any, file_path: str):
+    with open(file_path, 'w', encoding='utf-8') as f:
+        yaml.dump(obj, f, allow_unicode=True, sort_keys=False)
+
+
+def load_yaml(file_path: str) -> Any:
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return yaml.load(f, Loader=yaml.SafeLoader)

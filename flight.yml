@@ -1,0 +1,41 @@
+Input:
+  flight_mode: 1
+  camera_fov: 115
+  throttle_speed: 500
+  collective_speed: 140
+  pedals_speed: 120
+  increase_speed: x
+  decrease_speed: z
+Axis:
+  x:
+    invert: false
+    curvature: 0.0
+    deadzone: 0.0
+  y:
+    invert: false
+    curvature: 0.0
+    deadzone: 0.0
+  z:
+    invert: true
+    curvature: 0.0
+    deadzone: 0.0
+  rx:
+    invert: false
+    curvature: 0.0
+    deadzone: 0.0
+  ry:
+    invert: false
+    curvature: 0.0
+    deadzone: 0.0
+  rz:
+    invert: false
+    curvature: 0.0
+    deadzone: 0.0
+  sl:
+    invert: true
+    curvature: 0.0
+    deadzone: 0.0
+  sl2:
+    invert: false
+    curvature: 0.0
+    deadzone: 0.0

@@ -12,7 +12,7 @@
         </property>
 
         <widget class="QWidget" name="centralWidget">
-            <layout class="QVBoxLayout" name="verticalLayout">
+            <layout class="QVBoxLayout" name="centralLayout">
                 <property name="leftMargin">
                     <number>15</number>
                 </property>
@@ -29,300 +29,800 @@
                     <number>10</number>
                 </property>
 
-                <!-- 控制标题 -->
+                <!-- 顶部标签菜单 -->
                 <item>
-                    <widget class="QLabel" name="controlsTitleLabel">
-                        <property name="text">
-                            <string></string>
+                    <widget class="QTabWidget" name="tabWidget">
+                        <property name="tabPosition">
+                            <enum>QTabWidget::North</enum>
                         </property>
-                        <property name="alignment">
-                            <set>Qt::AlignCenter</set>
-                        </property>
-                        <property name="styleSheet">
-                            <string notr="true">font-size: 14pt; font-weight: bold;
-                                color: #000000;</string>
-                        </property>
+                        <!-- 控制页面 -->
+                        <widget class="QWidget" name="controlsTab">
+                            <attribute name="title">
+                                <string>CONTROLS</string>
+                            </attribute>
+                            <layout class="QVBoxLayout" name="verticalLayout">
+                                <!-- 灵敏度设置行 -->
+                                <item>
+                                    <layout class="QVBoxLayout">
+                                        <property name="spacing">
+                                            <number>5</number>
+                                        </property>
+
+                                        <!-- 灵敏度标签 -->
+                                        <item>
+                                            <widget class="QLabel" name="speedLabel">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                                <property name="styleSheet">
+                                                    <string notr="true">color: #000000;</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+
+                                        <!-- 灵敏度滑块 -->
+                                        <item>
+                                            <widget class="QSlider" name="mouseSpeed">
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="minimum">
+                                                    <number>1</number>
+                                                </property>
+                                                <property name="maximum">
+                                                    <number>20</number>
+                                                </property>
+                                                <property name="value">
+                                                    <number>5</number>
+                                                </property>
+                                                <property name="tickPosition">
+                                                    <enum>QSlider::TicksBelow</enum>
+                                                </property>
+                                                <property name="tickInterval">
+                                                    <number>1</number>
+                                                </property>
+                                            </widget>
+                                        </item>
+
+                                        <!-- 滑块值显示 -->
+                                        <item>
+                                            <widget class="QLabel" name="speedValueLabel">
+                                                <property name="text">
+                                                    <string>5</string>
+                                                </property>
+                                                <property name="styleSheet">
+                                                    <string notr="true">color: #505050; font-size:
+                                                        9pt; min-width:
+                                                        30px;</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+
+                                <!-- 切换控制 -->
+                                <item>
+                                    <layout class="QHBoxLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="toggleEnabledLabel">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QLineEdit" name="toggleEnabledKey">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+
+                                <!-- 控制回中 -->
+                                <item>
+                                    <layout class="QHBoxLayout" name="centerControlLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="centerControlLabel">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QLineEdit" name="centerControlKey">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+
+                                <!-- 启用自由视角 -->
+                                <item>
+                                    <layout class="QHBoxLayout" name="enableFreecamLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="enableFreecamLabel">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QLineEdit" name="enableFreecamKey">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+
+                                <!-- 自由视角回中 -->
+                                <item>
+                                    <layout class="QHBoxLayout" name="viewCenterLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="viewCenterLabel">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QLineEdit" name="viewCenterKey">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+
+                                <!-- 自由视角fov选项 -->
+                                <item>
+                                    <layout class="QHBoxLayout" name="cameraFovLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="cameraFovLabel">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QSpinBox" name="cameraFovSpinBox">
+                                                <property name="value">
+                                                    <number></number>
+                                                </property>
+                                                <property name="minimum">
+                                                    <number>40</number>
+                                                </property>
+                                                <property name="maximum">
+                                                    <number>160</number>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+
+                                <!-- 地面滑行模式 -->
+                                <item>
+                                    <layout class="QHBoxLayout" name="taxiModeLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="taxiModeLabel">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QLineEdit" name="taxiModeKey">
+                                                <property name="text">
+                                                    <string></string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+
+                                <!-- 垂直弹簧 -->
+                                <item>
+                                    <spacer name="verticalSpacer">
+                                        <property name="orientation">
+                                            <enum>Qt::Vertical</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                            <size>
+                                                <width>20</width>
+                                                <height>0</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </item>
+                            </layout>
+                        </widget>
+
+                        <!-- 选项页面 -->
+                        <widget class="QWidget" name="optionsTab">
+                            <attribute name="title">
+                                <string>OPTIONS</string>
+                            </attribute>
+                            <layout class="QVBoxLayout" name="verticalLayout2">
+                                <!-- 选项区域 -->
+                                <item>
+                                    <layout class="QVBoxLayout">
+                                        <property name="spacing">
+                                            <number>8</number>
+                                        </property>
+
+                                        <!-- 指针图标 -->
+                                        <item>
+                                            <layout class="QHBoxLayout">
+                                                <property name="spacing">
+                                                    <number>10</number>
+                                                </property>
+                                                <item>
+                                                    <widget class="QLabel" name="showCursorLabel">
+                                                        <property name="text">
+                                                            <string></string>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                                <item>
+                                                    <spacer>
+                                                        <property name="orientation">
+                                                            <enum>Qt::Horizontal</enum>
+                                                        </property>
+                                                        <property name="sizeHint" stdset="0">
+                                                            <size>
+                                                                <width>40</width>
+                                                                <height>20</height>
+                                                            </size>
+                                                        </property>
+                                                    </spacer>
+                                                </item>
+                                                <item>
+                                                    <widget class="QCheckBox"
+                                                        name="showCursorOption">
+                                                        <property name="checked">
+                                                            <bool>false</bool>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                            </layout>
+                                        </item>
+
+                                        <!-- 界面覆盖 -->
+                                        <item>
+                                            <layout class="QHBoxLayout">
+                                                <property name="spacing">
+                                                    <number>10</number>
+                                                </property>
+                                                <item>
+                                                    <widget class="QLabel" name="showHintLabel">
+                                                        <property name="text">
+                                                            <string></string>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                                <item>
+                                                    <spacer>
+                                                        <property name="orientation">
+                                                            <enum>Qt::Horizontal</enum>
+                                                        </property>
+                                                        <property name="sizeHint" stdset="0">
+                                                            <size>
+                                                                <width>40</width>
+                                                                <height>20</height>
+                                                            </size>
+                                                        </property>
+                                                    </spacer>
+                                                </item>
+                                                <item>
+                                                    <widget class="QCheckBox" name="showHintOption">
+                                                        <property name="checked">
+                                                            <bool>false</bool>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                            </layout>
+                                        </item>
+
+                                        <!-- 指示器 -->
+                                        <item>
+                                            <layout class="QHBoxLayout">
+                                                <property name="spacing">
+                                                    <number>10</number>
+                                                </property>
+                                                <item>
+                                                    <widget class="QLabel" name="showIndicatorLabel">
+                                                        <property name="text">
+                                                            <string></string>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                                <item>
+                                                    <spacer>
+                                                        <property name="orientation">
+                                                            <enum>Qt::Horizontal</enum>
+                                                        </property>
+                                                        <property name="sizeHint" stdset="0">
+                                                            <size>
+                                                                <width>40</width>
+                                                                <height>20</height>
+                                                            </size>
+                                                        </property>
+                                                    </spacer>
+                                                </item>
+                                                <item>
+                                                    <widget class="QCheckBox"
+                                                        name="showIndicatorOption">
+                                                        <property name="checked">
+                                                            <bool>false</bool>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                            </layout>
+                                        </item>
+
+                                        <!-- 鼠标按键映射 -->
+                                        <item>
+                                            <layout class="QHBoxLayout">
+                                                <property name="spacing">
+                                                    <number>10</number>
+                                                </property>
+                                                <item>
+                                                    <widget class="QLabel" name="buttonMappingLabel">
+                                                        <property name="text">
+                                                            <string></string>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                                <item>
+                                                    <spacer>
+                                                        <property name="orientation">
+                                                            <enum>Qt::Horizontal</enum>
+                                                        </property>
+                                                        <property name="sizeHint" stdset="0">
+                                                            <size>
+                                                                <width>40</width>
+                                                                <height>20</height>
+                                                            </size>
+                                                        </property>
+                                                    </spacer>
+                                                </item>
+                                                <item>
+                                                    <widget class="QCheckBox"
+                                                        name="buttonMappingOption">
+                                                        <property name="checked">
+                                                            <bool>false</bool>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                            </layout>
+                                        </item>
+
+                                        <!-- 鼠标位置记忆 -->
+                                        <item>
+                                            <layout class="QHBoxLayout">
+                                                <property name="spacing">
+                                                    <number>10</number>
+                                                </property>
+                                                <item>
+                                                    <widget class="QLabel"
+                                                        name="memorizeAxisPosLabel">
+                                                        <property name="text">
+                                                            <string></string>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                                <item>
+                                                    <spacer>
+                                                        <property name="orientation">
+                                                            <enum>Qt::Horizontal</enum>
+                                                        </property>
+                                                        <property name="sizeHint" stdset="0">
+                                                            <size>
+                                                                <width>40</width>
+                                                                <height>20</height>
+                                                            </size>
+                                                        </property>
+                                                    </spacer>
+                                                </item>
+                                                <item>
+                                                    <widget class="QCheckBox"
+                                                        name="memorizeAxisPosOption">
+                                                        <property name="checked">
+                                                            <bool>false</bool>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                            </layout>
+                                        </item>
+
+                                        <!-- 自由视角自动回中 -->
+                                        <item>
+                                            <layout class="QHBoxLayout">
+                                                <property name="spacing">
+                                                    <number>10</number>
+                                                </property>
+                                                <item>
+                                                    <widget class="QLabel"
+                                                        name="freecamAutoCenterLabel">
+                                                        <property name="text">
+                                                            <string></string>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                                <item>
+                                                    <spacer>
+                                                        <property name="orientation">
+                                                            <enum>Qt::Horizontal</enum>
+                                                        </property>
+                                                        <property name="sizeHint" stdset="0">
+                                                            <size>
+                                                                <width>40</width>
+                                                                <height>20</height>
+                                                            </size>
+                                                        </property>
+                                                    </spacer>
+                                                </item>
+                                                <item>
+                                                    <widget class="QCheckBox"
+                                                        name="freecamAutoCenterOption">
+                                                        <property name="checked">
+                                                            <bool>false</bool>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                            </layout>
+                                        </item>
+
+                                        <!-- 垂直弹簧 -->
+                                        <item>
+                                            <spacer name="verticalSpacer2">
+                                                <property name="orientation">
+                                                    <enum>Qt::Vertical</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>20</width>
+                                                        <height>0</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                    </layout>
+                                </item>
+                            </layout>
+                        </widget>
+
+                        <!-- 轴调整页面 -->
+                        <widget class="QWidget" name="axisTab">
+                            <attribute name="title">
+                                <string>AXIS</string>
+                            </attribute>
+                            <layout class="QVBoxLayout" name="verticalLayout3">
+                                <item>
+                                    <layout class="QHBoxLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="">
+                                                <property name="text">
+                                                    <string>X</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="xAxisButton">
+                                                <property name="text">
+                                                    <string>Modify</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+                                <item>
+                                    <layout class="QHBoxLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="">
+                                                <property name="text">
+                                                    <string>Y</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="yAxisButton">
+                                                <property name="text">
+                                                    <string>Modify</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+                                <item>
+                                    <layout class="QHBoxLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="">
+                                                <property name="text">
+                                                    <string>Z</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="zAxisButton">
+                                                <property name="text">
+                                                    <string>Modify</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+                                <item>
+                                    <layout class="QHBoxLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="">
+                                                <property name="text">
+                                                    <string>RX</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="rxAxisButton">
+                                                <property name="text">
+                                                    <string>Modify</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+                                <item>
+                                    <layout class="QHBoxLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="">
+                                                <property name="text">
+                                                    <string>RY</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="ryAxisButton">
+                                                <property name="text">
+                                                    <string>Modify</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+                                <item>
+                                    <layout class="QHBoxLayout">
+                                        <property name="spacing">
+                                            <number>10</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QLabel" name="">
+                                                <property name="text">
+                                                    <string>RZ</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="rzAxisButton">
+                                                <property name="text">
+                                                    <string>Modify</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+
+                                <!-- 垂直弹簧 -->
+                                <item>
+                                    <spacer name="verticalSpacer3">
+                                        <property name="orientation">
+                                            <enum>Qt::Vertical</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                            <size>
+                                                <width>20</width>
+                                                <height>0</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </item>
+                            </layout>
+                        </widget>
+
                     </widget>
-                </item>
-
-                <!-- 灵敏度设置行 -->
-                <item>
-                    <layout class="QVBoxLayout">
-                        <property name="spacing">
-                            <number>5</number>
-                        </property>
-
-                        <!-- 灵敏度标签 -->
-                        <item>
-                            <widget class="QLabel" name="speedLabel">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                                <property name="styleSheet">
-                                    <string notr="true">color: #000000;</string>
-                                </property>
-                            </widget>
-                        </item>
-
-                        <!-- 灵敏度滑块 -->
-                        <item>
-                            <widget class="QSlider" name="mouseSpeedSlider">
-                                <property name="orientation">
-                                    <enum>Qt::Horizontal</enum>
-                                </property>
-                                <property name="minimum">
-                                    <number>1</number>
-                                </property>
-                                <property name="maximum">
-                                    <number>20</number>
-                                </property>
-                                <property name="value">
-                                    <number>5</number>
-                                </property>
-                                <property name="tickPosition">
-                                    <enum>QSlider::TicksBelow</enum>
-                                </property>
-                                <property name="tickInterval">
-                                    <number>1</number>
-                                </property>
-                            </widget>
-                        </item>
-
-                        <!-- 滑块值显示 -->
-                        <item>
-                            <widget class="QLabel" name="speedValueLabel">
-                                <property name="text">
-                                    <string>5</string>
-                                </property>
-                                <property name="styleSheet">
-                                    <string notr="true">color: #505050; font-size: 9pt; min-width:
-                                        30px;</string>
-                                </property>
-                            </widget>
-                        </item>
-                    </layout>
-                </item>
-
-                <!-- 切换控制 -->
-                <item>
-                    <layout class="QHBoxLayout">
-                        <property name="spacing">
-                            <number>10</number>
-                        </property>
-                        <item>
-                            <widget class="QLabel" name="toggleEnabledLabel">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                        <item>
-                            <spacer>
-                                <property name="orientation">
-                                    <enum>Qt::Horizontal</enum>
-                                </property>
-                                <property name="sizeHint" stdset="0">
-                                    <size>
-                                        <width>40</width>
-                                        <height>20</height>
-                                    </size>
-                                </property>
-                            </spacer>
-                        </item>
-                        <item>
-                            <widget class="QLineEdit" name="toggleEnabledKey">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                    </layout>
-                </item>
-
-                <!-- 控制回中 -->
-                <item>
-                    <layout class="QHBoxLayout" name="centerControlLayout">
-                        <property name="spacing">
-                            <number>10</number>
-                        </property>
-                        <item>
-                            <widget class="QLabel" name="centerControlLabel">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                        <item>
-                            <spacer>
-                                <property name="orientation">
-                                    <enum>Qt::Horizontal</enum>
-                                </property>
-                                <property name="sizeHint" stdset="0">
-                                    <size>
-                                        <width>40</width>
-                                        <height>20</height>
-                                    </size>
-                                </property>
-                            </spacer>
-                        </item>
-                        <item>
-                            <widget class="QLineEdit" name="centerControlKey">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                    </layout>
-                </item>
-
-                <!-- 启用自由视角 -->
-                <item>
-                    <layout class="QHBoxLayout" name="enableFreecamLayout">
-                        <property name="spacing">
-                            <number>10</number>
-                        </property>
-                        <item>
-                            <widget class="QLabel" name="enableFreecamLabel">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                        <item>
-                            <spacer>
-                                <property name="orientation">
-                                    <enum>Qt::Horizontal</enum>
-                                </property>
-                                <property name="sizeHint" stdset="0">
-                                    <size>
-                                        <width>40</width>
-                                        <height>20</height>
-                                    </size>
-                                </property>
-                            </spacer>
-                        </item>
-                        <item>
-                            <widget class="QLineEdit" name="enableFreecamKey">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                    </layout>
-                </item>
-
-                <!-- 自由视角回中 -->
-                <item>
-                    <layout class="QHBoxLayout" name="viewCenterLayout">
-                        <property name="spacing">
-                            <number>10</number>
-                        </property>
-                        <item>
-                            <widget class="QLabel" name="viewCenterLabel">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                        <item>
-                            <spacer>
-                                <property name="orientation">
-                                    <enum>Qt::Horizontal</enum>
-                                </property>
-                                <property name="sizeHint" stdset="0">
-                                    <size>
-                                        <width>40</width>
-                                        <height>20</height>
-                                    </size>
-                                </property>
-                            </spacer>
-                        </item>
-                        <item>
-                            <widget class="QLineEdit" name="viewCenterKey">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                    </layout>
-                </item>
-
-                <!-- 自由视角fov选项 -->
-                <item>
-                    <layout class="QHBoxLayout" name="cameraFovLayout">
-                        <property name="spacing">
-                            <number>10</number>
-                        </property>
-                        <item>
-                            <widget class="QLabel" name="cameraFovLabel">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                        <item>
-                            <spacer>
-                                <property name="orientation">
-                                    <enum>Qt::Horizontal</enum>
-                                </property>
-                                <property name="sizeHint" stdset="0">
-                                    <size>
-                                        <width>40</width>
-                                        <height>20</height>
-                                    </size>
-                                </property>
-                            </spacer>
-                        </item>
-                        <item>
-                            <widget class="QSpinBox" name="cameraFovSpinBox">
-                                <property name="value">
-                                    <number></number>
-                                </property>
-                                <property name="minimum">
-                                    <number>40</number>
-                                </property>
-                                <property name="maximum">
-                                    <number>160</number>
-                                </property>
-                            </widget>
-                        </item>
-                    </layout>
-                </item>
-
-                <!-- 地面滑行模式 -->
-                <item>
-                    <layout class="QHBoxLayout" name="taxiModeLayout">
-                        <property name="spacing">
-                            <number>10</number>
-                        </property>
-                        <item>
-                            <widget class="QLabel" name="taxiModeLabel">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                        <item>
-                            <spacer>
-                                <property name="orientation">
-                                    <enum>Qt::Horizontal</enum>
-                                </property>
-                                <property name="sizeHint" stdset="0">
-                                    <size>
-                                        <width>40</width>
-                                        <height>20</height>
-                                    </size>
-                                </property>
-                            </spacer>
-                        </item>
-                        <item>
-                            <widget class="QLineEdit" name="taxiModeKey">
-                                <property name="text">
-                                    <string></string>
-                                </property>
-                            </widget>
-                        </item>
-                    </layout>
                 </item>
 
                 <!-- 控制器选择 -->
@@ -345,9 +845,11 @@
                                     </widget>
                                 </item>
                                 <item>
-                                    <widget class="QComboBox" name="controllerComboBox">
+                                    <widget class="QComboBox"
+                                        name="flightMode">
                                         <property name="sizePolicy">
-                                            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                                            <sizepolicy hsizetype="Expanding"
+                                                vsizetype="Fixed">
                                                 <horstretch>0</horstretch>
                                                 <verstretch>0</verstretch>
                                             </sizepolicy>
@@ -367,301 +869,9 @@
                     </layout>
                 </item>
 
-                <!-- 固定大小分隔符 -->
-                <item>
-                    <spacer>
-                        <property name="orientation">
-                            <enum>Qt::Vertical</enum>
-                        </property>
-                        <property name="sizeType">
-                            <enum>QSizePolicy::Fixed</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                            <size>
-                                <width>0</width>
-                                <height>10</height>
-                            </size>
-                        </property>
-                    </spacer>
-                </item>
-
-                <!-- 选项标题 -->
-                <item>
-                    <widget class="QLabel" name="optionsTitleLabel">
-                        <property name="text">
-                            <string></string>
-                        </property>
-                        <property name="alignment">
-                            <set>Qt::AlignCenter</set>
-                        </property>
-                        <property name="styleSheet">
-                            <string notr="true">font-size: 14pt; font-weight: bold;
-                                color: #000000;</string>
-                        </property>
-                    </widget>
-                </item>
-
-                <!-- 选项区域 -->
-                <item>
-                    <layout class="QVBoxLayout">
-                        <property name="spacing">
-                            <number>8</number>
-                        </property>
-
-                        <!-- 指针图标 -->
-                        <item>
-                            <layout class="QHBoxLayout">
-                                <property name="spacing">
-                                    <number>10</number>
-                                </property>
-                                <item>
-                                    <widget class="QLabel" name="showCursorLabel">
-                                        <property name="text">
-                                            <string></string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item>
-                                    <spacer>
-                                        <property name="orientation">
-                                            <enum>Qt::Horizontal</enum>
-                                        </property>
-                                        <property name="sizeHint" stdset="0">
-                                            <size>
-                                                <width>40</width>
-                                                <height>20</height>
-                                            </size>
-                                        </property>
-                                    </spacer>
-                                </item>
-                                <item>
-                                    <widget class="QCheckBox" name="showCursorOption">
-                                        <property name="checked">
-                                            <bool>false</bool>
-                                        </property>
-                                    </widget>
-                                </item>
-                            </layout>
-                        </item>
-
-                        <!-- 界面覆盖 -->
-                        <item>
-                            <layout class="QHBoxLayout">
-                                <property name="spacing">
-                                    <number>10</number>
-                                </property>
-                                <item>
-                                    <widget class="QLabel" name="showHintLabel">
-                                        <property name="text">
-                                            <string></string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item>
-                                    <spacer>
-                                        <property name="orientation">
-                                            <enum>Qt::Horizontal</enum>
-                                        </property>
-                                        <property name="sizeHint" stdset="0">
-                                            <size>
-                                                <width>40</width>
-                                                <height>20</height>
-                                            </size>
-                                        </property>
-                                    </spacer>
-                                </item>
-                                <item>
-                                    <widget class="QCheckBox" name="showHintOption">
-                                        <property name="checked">
-                                            <bool>false</bool>
-                                        </property>
-                                    </widget>
-                                </item>
-                            </layout>
-                        </item>
-
-                        <!-- 指示器 -->
-                        <item>
-                            <layout class="QHBoxLayout">
-                                <property name="spacing">
-                                    <number>10</number>
-                                </property>
-                                <item>
-                                    <widget class="QLabel" name="showIndicatorLabel">
-                                        <property name="text">
-                                            <string></string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item>
-                                    <spacer>
-                                        <property name="orientation">
-                                            <enum>Qt::Horizontal</enum>
-                                        </property>
-                                        <property name="sizeHint" stdset="0">
-                                            <size>
-                                                <width>40</width>
-                                                <height>20</height>
-                                            </size>
-                                        </property>
-                                    </spacer>
-                                </item>
-                                <item>
-                                    <widget class="QCheckBox" name="showIndicatorOption">
-                                        <property name="checked">
-                                            <bool>false</bool>
-                                        </property>
-                                    </widget>
-                                </item>
-                            </layout>
-                        </item>
-
-                        <!-- 鼠标按键映射 -->
-                        <item>
-                            <layout class="QHBoxLayout">
-                                <property name="spacing">
-                                    <number>10</number>
-                                </property>
-                                <item>
-                                    <widget class="QLabel" name="buttonMappingLabel">
-                                        <property name="text">
-                                            <string></string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item>
-                                    <spacer>
-                                        <property name="orientation">
-                                            <enum>Qt::Horizontal</enum>
-                                        </property>
-                                        <property name="sizeHint" stdset="0">
-                                            <size>
-                                                <width>40</width>
-                                                <height>20</height>
-                                            </size>
-                                        </property>
-                                    </spacer>
-                                </item>
-                                <item>
-                                    <widget class="QCheckBox" name="buttonMappingOption">
-                                        <property name="checked">
-                                            <bool>false</bool>
-                                        </property>
-                                    </widget>
-                                </item>
-                            </layout>
-                        </item>
-
-                        <!-- 鼠标位置记忆 -->
-                        <item>
-                            <layout class="QHBoxLayout">
-                                <property name="spacing">
-                                    <number>10</number>
-                                </property>
-                                <item>
-                                    <widget class="QLabel" name="memorizeAxisPosLabel">
-                                        <property name="text">
-                                            <string></string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item>
-                                    <spacer>
-                                        <property name="orientation">
-                                            <enum>Qt::Horizontal</enum>
-                                        </property>
-                                        <property name="sizeHint" stdset="0">
-                                            <size>
-                                                <width>40</width>
-                                                <height>20</height>
-                                            </size>
-                                        </property>
-                                    </spacer>
-                                </item>
-                                <item>
-                                    <widget class="QCheckBox" name="memorizeAxisPosOption">
-                                        <property name="checked">
-                                            <bool>false</bool>
-                                        </property>
-                                    </widget>
-                                </item>
-                            </layout>
-                        </item>
-
-                        <!-- 自由视角自动回中 -->
-                        <item>
-                            <layout class="QHBoxLayout">
-                                <property name="spacing">
-                                    <number>10</number>
-                                </property>
-                                <item>
-                                    <widget class="QLabel" name="freecamAutoCenterLabel">
-                                        <property name="text">
-                                            <string></string>
-                                        </property>
-                                    </widget>
-                                </item>
-                                <item>
-                                    <spacer>
-                                        <property name="orientation">
-                                            <enum>Qt::Horizontal</enum>
-                                        </property>
-                                        <property name="sizeHint" stdset="0">
-                                            <size>
-                                                <width>40</width>
-                                                <height>20</height>
-                                            </size>
-                                        </property>
-                                    </spacer>
-                                </item>
-                                <item>
-                                    <widget class="QCheckBox" name="freecamAutoCenterOption">
-                                        <property name="checked">
-                                            <bool>false</bool>
-                                        </property>
-                                    </widget>
-                                </item>
-                            </layout>
-                        </item>
-                    </layout>
-                </item>
-
-                <!-- 垂直弹簧 -->
-                <item>
-                    <spacer name="verticalSpacer">
-                        <property name="orientation">
-                            <enum>Qt::Vertical</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                            <size>
-                                <width>20</width>
-                                <height>0</height>
-                            </size>
-                        </property>
-                    </spacer>
-                </item>
-
-                <!-- 固定大小分隔符 -->
-                <item>
-                    <spacer>
-                        <property name="orientation">
-                            <enum>Qt::Vertical</enum>
-                        </property>
-                        <property name="sizeType">
-                            <enum>QSizePolicy::Fixed</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                            <size>
-                                <width>0</width>
-                                <height>5</height>
-                            </size>
-                        </property>
-                    </spacer>
-                </item>
-
                 <!-- 启动/停止按钮 -->
                 <item>
-                    <widget class="QPushButton" name="startBtn">
+                    <widget class="QPushButton" name="startButton">
                         <property name="text">
                             <string></string>
                         </property>
@@ -679,7 +889,6 @@
                         </property>
                     </widget>
                 </item>
-
             </layout>
         </widget>
     </widget>

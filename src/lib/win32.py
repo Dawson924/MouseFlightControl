@@ -1,7 +1,10 @@
 import ctypes
+import os
 from ctypes import wintypes
 from typing import Callable, Optional
 
+from PySide2 import QtWidgets
+from PySide2.QtGui import QScreen
 from PySide2.QtWidgets import QMessageBox, QWidget
 
 from common.win32 import SPI_GETMOUSESPEED, SPI_SETMOUSESPEED
@@ -13,9 +16,7 @@ def set_mouse_speed(speed):
 
 def get_mouse_speed():
     speed = ctypes.c_int()
-    ctypes.windll.user32.SystemParametersInfoW(
-        SPI_GETMOUSESPEED, 0, ctypes.byref(speed), 0
-    )
+    ctypes.windll.user32.SystemParametersInfoW(SPI_GETMOUSESPEED, 0, ctypes.byref(speed), 0)
     return speed.value
 
 
@@ -43,9 +44,7 @@ def get_process_dpi_awareness():
                 PROCESS_SYSTEM_DPI_AWARE: 'PROCESS_SYSTEM_DPI_AWARE',
                 PROCESS_PER_MONITOR_DPI_AWARE: 'PROCESS_PER_MONITOR_DPI_AWARE',
             }
-            return awareness.value, mode_names.get(
-                awareness.value, f'UNKNOWN ({awareness.value})'
-            )
+            return awareness.value, mode_names.get(awareness.value, f'UNKNOWN ({awareness.value})')
         else:
             return None, f'ERROR_CODE: {hr}'
     except Exception as e:
@@ -64,6 +63,29 @@ def set_process_dpi_awareness(mode):
             return True
     except Exception:
         return False
+
+
+def get_screen_geometry(window: int, screen: QScreen):
+    if not screen:
+        screen = QtWidgets.QApplication.primaryScreen()
+
+    logical_rect = screen.geometry()
+    width = logical_rect.width()
+    height = logical_rect.height()
+    center_x = width / 2
+    center_y = height / 2
+
+    scale = 1.0
+    if os.name == 'nt':
+        try:
+            user32 = ctypes.windll.user32
+            hwnd = window
+            dpi_x = user32.GetDpiForWindow(hwnd)
+            scale = dpi_x / 96.0
+        except:
+            scale = screen.devicePixelRatio()
+
+    return width, height, center_x, center_y, scale
 
 
 class MessageBox:
@@ -189,9 +211,7 @@ class MessageBox:
             msg_geo.moveCenter(parent_geo.center())
             msg_box.move(msg_geo.topLeft())
         else:
-            msg_box.move(
-                msg_box.screen().availableGeometry().center() - msg_box.rect().center()
-            )
+            msg_box.move(msg_box.screen().availableGeometry().center() - msg_box.rect().center())
 
         result = msg_box.exec_()
         return result

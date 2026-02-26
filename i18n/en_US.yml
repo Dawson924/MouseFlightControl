@@ -1,3 +1,4 @@
+AxisPage: 'AXIS'
 ButtonMapping: Mouse Button Mapping
 CameraFov: Freecam Field of View
 CenterControl: Center Control
@@ -7,7 +8,7 @@ ConfigSaveFailed: 'Configuration failed to save: '
 ConfigSaved: Configuration saved
 Controlled: Controlled
 Controller: Flight Controller
-ControlsTitle: CONTROLS
+ControlsPage: CONTROLS
 CurrentValue: Current value
 DebugEnabled: Debug mode is enabled
 DecreaseSpeed: Decrease speed
@@ -28,7 +29,7 @@ MemorizeAxisPos: Maintain Axis Position
 MouseFlight: MouseFlight
 NoControl: No Control
 None: None
-OptionsTitle: OPTIONS
+OptionsPage: OPTIONS
 PlaneController: Plane Mode
 RudderSpeed: Rudder speed
 RuntimeEnv: Environment
@@ -39,12 +40,12 @@ Sensitive: Sensitive
 ShowCaptions: Captions
 ShowCursor: Show Cursor
 ShowIndicator: Controls Indicator
-Start: Start
+Start: START
 StartupSuccessful: Launched successfully
 StartupTime: Time startup
 StatusStopped: Status:stopped
 StatusWorking: Status:working
-Stop: Stop
+Stop: STOP
 TaxiMode: Taxi Mode
 TaxiModeOff: 'Taxi mode: Off'
 TaxiModeOn: 'Taxi mode: On'

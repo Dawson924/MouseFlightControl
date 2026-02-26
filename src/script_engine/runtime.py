@@ -57,21 +57,14 @@ def load_lua_scripts(runtime: LuaRuntime, dir: str, language: str):
 
 
 def lua_table_to_python(lua_obj) -> Any:
-    """将Lua对象转换为Python对象"""
-    if hasattr(lua_obj, 'to_dict'):  # 是Lua表
+    if hasattr(lua_obj, 'to_dict'):
         try:
-            # 尝试判断是否为数组（键为连续整数1,2,3...）
             keys = list(lua_obj.keys())
             if keys == list(range(1, len(keys) + 1)):
-                return [
-                    lua_table_to_python(lua_obj[i]) for i in range(1, len(keys) + 1)
-                ]
+                return [lua_table_to_python(lua_obj[i]) for i in range(1, len(keys) + 1)]
             else:
-                # 键值对表，转换为Python字典
                 return {k: lua_table_to_python(v) for k, v in lua_obj.items()}
         except:
-            # 无法解析键时，默认按字典处理
             return {k: lua_table_to_python(v) for k, v in lua_obj.items()}
     else:
-        # 非表类型（数字、字符串等）直接返回
         return lua_obj
