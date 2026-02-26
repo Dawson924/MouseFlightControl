@@ -9,7 +9,8 @@
 build/
 dist/
 out/
-config.ini
+config.yml
+flight.yml
 script.ini
 *.egg-info/
 *.pyc
