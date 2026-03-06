@@ -1,4 +1,4 @@
-AxisPage: 'AXIS'
+AxisPage: AXIS
 ButtonMapping: Mouse Button Mapping
 CameraFov: Freecam Field of View
 CenterControl: Center Control
@@ -6,26 +6,29 @@ CollectiveSpeed: Collective speed
 ConfigLoadFailed: 'Configuration failed to load: '
 ConfigSaveFailed: 'Configuration failed to save: '
 ConfigSaved: Configuration saved
+ConnectPage: CONNECT
+Connected: Connected
 Controlled: Controlled
 Controller: Flight Controller
 ControlsPage: CONTROLS
 CurrentValue: Current value
 DebugEnabled: Debug mode is enabled
-DecreaseSpeed: Decrease speed
 DeviceNotFoundMessage: No available vJoy devices were found. Please visit the software's
   help page or the official vJoy website to find solutions
+Disconnected: Disconnected
 EnableFreecam: Enable Freecam
 Error: Runtime Error
+FlightSim: Flight Simulator
 FreecamAutoCenter: Freecam Auto Center
 General: General
 HelicopterController: Helicopter Mode
 HintOverlay: Hint Overlay
 ImportPreset: Import...
-IncreaseSpeed: Increase speed
 Installed: Installed
 Language: Language
 LogFile: Log file
 MemorizeAxisPos: Maintain Axis Position
+Modules: Modules
 MouseFlight: MouseFlight
 NoControl: No Control
 None: None
@@ -49,6 +52,8 @@ Stop: STOP
 TaxiMode: Taxi Mode
 TaxiModeOff: 'Taxi mode: Off'
 TaxiModeOn: 'Taxi mode: On'
+ThrottleDecrease: Decrease speed
+ThrottleIncrease: Increase speed
 ThrottleSpeed: Throttle speed
 Title: Mouse flight %{version}
 ToggleEnabled: Toggle Control

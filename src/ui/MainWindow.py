@@ -27,6 +27,11 @@ class Ui_MainWindow(object):
         self.tabWidget = QTabWidget(self.centralWidget)
         self.tabWidget.setObjectName(u"tabWidget")
         self.tabWidget.setTabPosition(QTabWidget.North)
+        self.connectTab = QWidget()
+        self.connectTab.setObjectName(u"connectTab")
+        self.connectPageLayout = QVBoxLayout(self.connectTab)
+        self.connectPageLayout.setObjectName(u"connectPageLayout")
+        self.tabWidget.addTab(self.connectTab, "")
         self.controlsTab = QWidget()
         self.controlsTab.setObjectName(u"controlsTab")
         self.verticalLayout = QVBoxLayout(self.controlsTab)
@@ -333,8 +338,8 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.optionsTab, "")
         self.axisTab = QWidget()
         self.axisTab.setObjectName(u"axisTab")
-        self.verticalLayout3 = QVBoxLayout(self.axisTab)
-        self.verticalLayout3.setObjectName(u"verticalLayout3")
+        self.verticalLayout4 = QVBoxLayout(self.axisTab)
+        self.verticalLayout4.setObjectName(u"verticalLayout4")
         self.hboxLayout7 = QHBoxLayout()
         self.hboxLayout7.setSpacing(10)
         self.hboxLayout7.setObjectName(u"hboxLayout7")
@@ -353,7 +358,7 @@ class Ui_MainWindow(object):
         self.hboxLayout7.addWidget(self.xAxisButton)
 
 
-        self.verticalLayout3.addLayout(self.hboxLayout7)
+        self.verticalLayout4.addLayout(self.hboxLayout7)
 
         self.hboxLayout8 = QHBoxLayout()
         self.hboxLayout8.setSpacing(10)
@@ -373,7 +378,7 @@ class Ui_MainWindow(object):
         self.hboxLayout8.addWidget(self.yAxisButton)
 
 
-        self.verticalLayout3.addLayout(self.hboxLayout8)
+        self.verticalLayout4.addLayout(self.hboxLayout8)
 
         self.hboxLayout9 = QHBoxLayout()
         self.hboxLayout9.setSpacing(10)
@@ -393,7 +398,7 @@ class Ui_MainWindow(object):
         self.hboxLayout9.addWidget(self.zAxisButton)
 
 
-        self.verticalLayout3.addLayout(self.hboxLayout9)
+        self.verticalLayout4.addLayout(self.hboxLayout9)
 
         self.hboxLayout10 = QHBoxLayout()
         self.hboxLayout10.setSpacing(10)
@@ -413,7 +418,7 @@ class Ui_MainWindow(object):
         self.hboxLayout10.addWidget(self.rxAxisButton)
 
 
-        self.verticalLayout3.addLayout(self.hboxLayout10)
+        self.verticalLayout4.addLayout(self.hboxLayout10)
 
         self.hboxLayout11 = QHBoxLayout()
         self.hboxLayout11.setSpacing(10)
@@ -433,7 +438,7 @@ class Ui_MainWindow(object):
         self.hboxLayout11.addWidget(self.ryAxisButton)
 
 
-        self.verticalLayout3.addLayout(self.hboxLayout11)
+        self.verticalLayout4.addLayout(self.hboxLayout11)
 
         self.hboxLayout12 = QHBoxLayout()
         self.hboxLayout12.setSpacing(10)
@@ -453,11 +458,11 @@ class Ui_MainWindow(object):
         self.hboxLayout12.addWidget(self.rzAxisButton)
 
 
-        self.verticalLayout3.addLayout(self.hboxLayout12)
+        self.verticalLayout4.addLayout(self.hboxLayout12)
 
         self.verticalSpacer3 = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
-        self.verticalLayout3.addItem(self.verticalSpacer3)
+        self.verticalLayout4.addItem(self.verticalSpacer3)
 
         self.tabWidget.addTab(self.axisTab, "")
 
@@ -515,6 +520,7 @@ class Ui_MainWindow(object):
     # setupUi
 
     def retranslateUi(self, MainWindow):
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.connectTab), QCoreApplication.translate("MainWindow", u"CONNECT", None))
         self.speedLabel.setText("")
         self.speedValueLabel.setText(QCoreApplication.translate("MainWindow", u"5", None))
         self.toggleEnabledLabel.setText("")

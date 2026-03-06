@@ -1,5 +1,5 @@
 CONFIG_FILE = 'config.yml'
-INPUT_FILE = 'flight.yml'
+FLIGHT_FILE = 'flight.yml'
 
 CONFIG = {
     'General': {
@@ -24,7 +24,7 @@ CONFIG = {
         'freecam_auto_center': 'boolean',
     },
     'Window': {
-        'w_size': 'integer(min=100)',
+        'width': 'integer()',
     },
     'Flight': {},
 }

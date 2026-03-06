@@ -11,8 +11,8 @@ class FixedWingController(BaseController):
     def __init__(self, device, input):
         super().__init__(device, input)
         self.throttle_speed = input.get('throttle_speed')
-        self.increase_speed = input.get('increase_speed')
-        self.decrease_speed = input.get('decrease_speed')
+        self.throttle_increase = input.get('throttle_increase')
+        self.throttle_decrease = input.get('throttle_decrease')
 
         self.throttle_accumulator = 0.0
         self.min_interval = MIN_INTERVAL
@@ -21,9 +21,9 @@ class FixedWingController(BaseController):
         if state.enabled and key.alt_ctrl_shift():
             self.throttle_accumulator += state.dt
             while self.throttle_accumulator >= self.min_interval:
-                if key.is_pressing(self.increase_speed):
+                if key.is_pressing(self.throttle_increase):
                     axis.th += self.throttle_speed
-                elif key.is_pressing(self.decrease_speed):
+                elif key.is_pressing(self.throttle_decrease):
                     axis.th -= self.throttle_speed
                 self.throttle_accumulator -= self.min_interval
 
@@ -34,15 +34,15 @@ FixedWingController.add_option(
     default=100,
     i18n_text='ThrottleSpeed',
 ).add_option(
-    name='increase_speed',
+    name='throttle_increase',
     widget=OptionWidget.LineEdit,
     default='shift',
-    i18n_text='IncreaseSpeed',
+    i18n_text='ThrottleIncrease',
 ).add_option(
-    name='decrease_speed',
+    name='throttle_decrease',
     widget=OptionWidget.LineEdit,
     default='ctrl',
-    i18n_text='DecreaseSpeed',
+    i18n_text='ThrottleDecrease',
 )
 
 

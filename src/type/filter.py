@@ -1,6 +1,6 @@
 from typing import Dict, Optional
 
-from type.axis import AxisName
+from common.axis import AxisName
 
 
 class Filter:

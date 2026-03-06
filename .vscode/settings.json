@@ -12,5 +12,7 @@
     "files.associations": {
         "*.ts": "xml",
         "*.spec": "python",
-    }
+    },
+    "trae.tab.enableRename": false,
+    "trae.tab.enableAutoImport": false
 }

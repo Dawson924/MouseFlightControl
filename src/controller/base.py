@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional
 
-from data.input import FlightInput
+from common.axis import AxisPos
+from data.flight import FlightData
 from input import InputStateMonitor
 from lib.joystick import JoystickDevice
-from type.axis import AxisPos
 
 
 class BaseController(ABC):
@@ -12,7 +12,7 @@ class BaseController(ABC):
     _option_defs: List[tuple]
     _i18n_defs: Dict[str, str]
 
-    def __init__(self, device: JoystickDevice, input: FlightInput):
+    def __init__(self, device: JoystickDevice, input: FlightData):
         self.device = device
         self.input = input
 

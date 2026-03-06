@@ -1,9 +1,6 @@
-import sys
-
 from PySide2.QtCore import QPointF, Qt, Slot
 from PySide2.QtGui import QBrush, QColor, QPainter, QPen
 from PySide2.QtWidgets import (
-    QApplication,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -14,8 +11,8 @@ from PySide2.QtWidgets import (
     QWidget,
 )
 
-from data.input import FlightInput
-from type.axis import AxisName
+from common.axis import AxisName
+from data.flight import FlightData
 from type.filter import Filter
 
 
@@ -146,7 +143,7 @@ class JoyAxisChart(QWidget):
 
 
 class JoyAxisWindow(QMainWindow):
-    def __init__(self, axis: AxisName, flightinput: FlightInput, parent=None):
+    def __init__(self, axis: AxisName, flightinput: FlightData, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f'Configure - Axis {axis.upper()}')
         self.setFixedSize(750, 465)

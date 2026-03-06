@@ -5,7 +5,7 @@ from typing import Any, List
 from lupa import LuaRuntime
 
 from common.constants import LUA_PATH
-from lib.logger import logger
+from loguru import logger
 from type.script import ScriptModule
 
 

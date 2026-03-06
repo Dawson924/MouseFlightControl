@@ -1,4 +1,4 @@
-AxisPage: 'Джойстик'
+AxisPage: Джойстик
 ButtonMapping: Назначение кнопок мыши
 CameraFov: Поле зрения свободного обзора
 CenterControl: Центрировать управление
@@ -6,26 +6,29 @@ CollectiveSpeed: Скорость общего шага
 ConfigLoadFailed: Не удалось загрузить конфигурационный файл
 ConfigSaveFailed: Не удалось сохранить конфигурационный файл
 ConfigSaved: Конфигурационный файл сохранен успешно
+ConnectPage: Подключение
+Connected: Подключено
 Controlled: Управляется
 Controller: Игровой контроллер
 ControlsPage: Управление
 CurrentValue: Текущее значение
 DebugEnabled: Режим отладки включен
-DecreaseSpeed: Снижение скорости
 DeviceNotFoundMessage: Не найдено доступных устройств vJoy. Пожалуйста, посетите страницу
   помощи программного обеспечения или официальный сайт vJoy, чтобы найти решения
+Disconnected: Отключено
 EnableFreecam: Включить свободный обзор
 Error: Исключение
+FlightSim: Симулятор полетов
 FreecamAutoCenter: Автоматическое центрирование свободного обзора
 General: Основные
 HelicopterController: Режим вертолета
 HintOverlay: Прозрачные подсказки
 ImportPreset: Импорт...
-IncreaseSpeed: Увеличьте скорость
 Installed: Установлено
 Language: Язык
 LogFile: Лог-файл
 MemorizeAxisPos: Сохранять положение осей
+Modules: Модули
 MouseFlight: Полет мышью
 NoControl: Без управления
 None: Не выбрано
@@ -49,6 +52,8 @@ Stop: Стоп
 TaxiMode: Режим таксировки
 TaxiModeOff: 'Режим таксировки: Выключен'
 TaxiModeOn: 'Режим таксировки: Включен'
+ThrottleDecrease: Снижение скорости
+ThrottleIncrease: Увеличьте скорость
 ThrottleSpeed: Регулировка скорости дросселя
 Title: Полет мышью %{version}
 ToggleEnabled: Переключить управление

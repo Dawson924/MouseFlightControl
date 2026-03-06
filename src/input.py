@@ -4,10 +4,9 @@ import time
 import pydirectinput
 import win32api
 import win32con
-from pynput import mouse
 
 from lib.axis import pos
-from lib.logger import logger
+from loguru import logger
 
 
 class InputStateMonitor:
@@ -18,32 +17,30 @@ class InputStateMonitor:
         pydirectinput.PAUSE = self.pause
         pydirectinput.FAILSAFE = False
 
-        # 初始化鼠标状态
         self.mouse_buttons = {
-            'LMB': False,  # 左键
-            'RMB': False,  # 右键
-            'MMB': False,  # 中键
-            'XMB1': False,  # 侧键1
-            'XMB2': False,  # 侧键2
+            'LMB': False,
+            'RMB': False,
+            'MMB': False,
+            'XMB1': False,  # 侧键1 (前进)
+            'XMB2': False,  # 侧键2 (后退)
+            'XMB3': False,  # 侧键3
+            'XMB4': False,  # 侧键4
+            'XMB5': False,  # 侧键5
+            'XMB6': False,  # 侧键6
+            'XMB7': False,  # 侧键7
+            'XMB8': False,  # 侧键8
         }
         self.prev_mouse_buttons = self.mouse_buttons.copy()
 
-        # 初始化键盘状态
         self.key_states = {}
         self.prev_key_states = {}
 
-        # 鼠标位置
         self.mouse_x = 0
         self.mouse_y = 0
 
-        # 鼠标滚轮状态
         self.wheel_delta = 0
         self.wheel_lock = threading.Lock()
 
-        # 滚轮监听器
-        self.mouse_listener = None
-
-        # 设置虚拟键码映射
         self.VK_MAP = {
             win32con.VK_SHIFT: 'shift',
             win32con.VK_CONTROL: 'ctrl',
@@ -83,187 +80,137 @@ class InputStateMonitor:
             win32con.VK_NUMLOCK: 'numlock',
         }
 
-        # 添加字母和数字键
         for i in range(ord('A'), ord('Z') + 1):
             self.VK_MAP[i] = chr(i).lower()
 
         for i in range(ord('0'), ord('9') + 1):
             self.VK_MAP[i] = chr(i)
 
-        # 添加特殊字符
         special_chars = {
-            0xBA: ';',  # VK_OEM_1
-            0xBB: '=',  # VK_OEM_PLUS
-            0xBC: ',',  # VK_OEM_COMMA
-            0xBD: '-',  # VK_OEM_MINUS
-            0xBE: '.',  # VK_OEM_PERIOD
-            0xBF: '/',  # VK_OEM_2
-            0xC0: '`',  # VK_OEM_3
-            0xDB: '[',  # VK_OEM_4
-            0xDC: '\\',  # VK_OEM_5
-            0xDD: ']',  # VK_OEM_6
-            0xDE: "'",  # VK_OEM_7
+            0xBA: ';',
+            0xBB: '=',
+            0xBC: ',',
+            0xBD: '-',
+            0xBE: '.',
+            0xBF: '/',
+            0xC0: '`',
+            0xDB: '[',
+            0xDC: '\\',
+            0xDD: ']',
+            0xDE: "'",
         }
         self.VK_MAP.update(special_chars)
 
-        # 启动滚轮监听
-        self.start_wheel_listener()
+    def start(self):
+        # 移除钩子线程，因为我们已经在main.py的nativeEvent中处理滚轮事件
+        pass
+
+    def stop(self):
+        # 移除钩子线程相关代码
+        pass
 
     def cleanup(self):
-        self.stop_wheel_listener()
-        try:
-            pydirectinput.releaseAll()
-        except:
-            pass
         self.mouse_buttons = {k: False for k in self.mouse_buttons}
         self.prev_mouse_buttons = self.mouse_buttons.copy()
         self.key_states = {}
         self.prev_key_states = {}
-        self.wheel_delta = 0
-
-    def stop_wheel_listener(self):
-        if self.mouse_listener and self.mouse_listener.is_alive():
-            self.mouse_listener.stop()
-            for _ in range(3):
-                if self.mouse_listener.is_alive():
-                    self.mouse_listener.join(timeout=0.5)
-                else:
-                    break
-            self.mouse_listener = None
-
-    def _on_scroll(self, x, y, dx, dy):
-        """pynput滚轮事件回调函数"""
         with self.wheel_lock:
-            self.wheel_delta += dy * 120
-
-    def start_wheel_listener(self):
-        """启动pynput滚轮监听器"""
-        if self.mouse_listener is None or not self.mouse_listener.is_alive():
-            self.mouse_listener = mouse.Listener(on_scroll=self._on_scroll, on_move=None, on_click=None)
-            self.mouse_listener.start()
+            self.wheel_delta = 0
 
     def update(self):
-        """更新所有输入状态并保存上一帧状态"""
-        # 保存当前状态到上一帧状态
         self.prev_mouse_buttons = self.mouse_buttons.copy()
         self.prev_key_states = self.key_states.copy()
-
-        # 更新当前状态
         self._update_mouse_state()
         self._update_keyboard_state()
         self._update_mouse_position()
 
     def _update_mouse_state(self):
-        """更新鼠标按钮状态"""
         self.mouse_buttons['LMB'] = win32api.GetAsyncKeyState(win32con.VK_LBUTTON) < 0
         self.mouse_buttons['RMB'] = win32api.GetAsyncKeyState(win32con.VK_RBUTTON) < 0
         self.mouse_buttons['MMB'] = win32api.GetAsyncKeyState(win32con.VK_MBUTTON) < 0
-        self.mouse_buttons['XMB1'] = win32api.GetAsyncKeyState(0x05) < 0  # VK_XBUTTON1
-        self.mouse_buttons['XMB2'] = win32api.GetAsyncKeyState(0x06) < 0  # VK_XBUTTON2
+        self.mouse_buttons['XMB1'] = win32api.GetAsyncKeyState(0x05) < 0
+        self.mouse_buttons['XMB2'] = win32api.GetAsyncKeyState(0x06) < 0
 
     def _update_keyboard_state(self):
-        """更新键盘按键状态"""
         for vk_code, key_name in self.VK_MAP.items():
-            state = win32api.GetAsyncKeyState(vk_code)
-            self.key_states[key_name] = (state & 0x8000) != 0
+            self.key_states[key_name] = (win32api.GetAsyncKeyState(vk_code) & 0x8000) != 0
 
     def _update_mouse_position(self):
-        """更新鼠标位置"""
         try:
             self.mouse_x, self.mouse_y = win32api.GetCursorPos()
         except Exception as e:
             logger.exception(f'Failed to get cursor position: {str(e)}')
 
     def is_mouse_pressing(self, button_name):
-        """检测鼠标按钮当前是否按下（当前帧按下）"""
         if isinstance(button_name, str):
-            button = button_name.upper()
-            return self.mouse_buttons.get(button, False)
+            return self.mouse_buttons.get(button_name.upper(), False)
         return False
 
     def is_mouse_pressed(self, button_name):
-        """检测鼠标按钮是否刚刚按下（上一帧未按下，当前帧按下）"""
         if isinstance(button_name, str):
             button = button_name.upper()
             return self.mouse_buttons.get(button, False) and not self.prev_mouse_buttons.get(button, False)
         return False
 
     def is_mouse_released(self, button_name):
-        """检测鼠标按钮是否刚刚释放（上一帧按下，当前帧未按下）"""
         if isinstance(button_name, str):
             button = button_name.upper()
             return not self.mouse_buttons.get(button, False) and self.prev_mouse_buttons.get(button, False)
         return False
 
-    def is_key_presssing(self, key_name):
-        """检测键盘按键当前是否按下（当前帧按下）"""
+    def is_key_pressing(self, key_name):
         if isinstance(key_name, str):
             return self.key_states.get(key_name.lower(), False)
         if isinstance(key_name, int):
-            key_name = self.VK_MAP.get(key_name, None)
-            if key_name:
-                return self.key_states.get(key_name, False)
+            mapped = self.VK_MAP.get(key_name)
+            if mapped:
+                return self.key_states.get(mapped, False)
         return False
 
     def is_key_pressed(self, key_name):
-        """检测键盘按键是否刚刚按下（上一帧未按下，当前帧按下）"""
         if isinstance(key_name, str):
             key = key_name.lower()
             return self.key_states.get(key, False) and not self.prev_key_states.get(key, False)
         if isinstance(key_name, int):
-            key_name = self.VK_MAP.get(key_name, None)
-            if key_name:
-                key = key_name.lower()
-                return self.key_states.get(key, False) and not self.prev_key_states.get(key, False)
+            mapped = self.VK_MAP.get(key_name)
+            if mapped:
+                return self.key_states.get(mapped, False) and not self.prev_key_states.get(mapped, False)
         return False
 
     def is_key_released(self, key_name):
-        """检测键盘按键是否刚刚释放（上一帧按下，当前帧未按下）"""
         if isinstance(key_name, str):
             key = key_name.lower()
             return not self.key_states.get(key, False) and self.prev_key_states.get(key, False)
         if isinstance(key_name, int):
-            key_name = self.VK_MAP.get(key_name, None)
-            if key_name:
-                key = key_name.lower()
-                return not self.key_states.get(key, False) and self.prev_key_states.get(key, False)
+            mapped = self.VK_MAP.get(key_name)
+            if mapped:
+                return not self.key_states.get(mapped, False) and self.prev_key_states.get(mapped, False)
         return False
 
     def is_pressed(self, name):
-        if self.is_key_pressed(name) or self.is_mouse_pressed(name):
-            return True
-        return False
+        return self.is_key_pressed(name) or self.is_mouse_pressed(name)
 
     def is_pressing(self, name):
-        if self.is_key_presssing(name) or self.is_mouse_pressing(name):
-            return True
-        return False
+        return self.is_key_pressing(name) or self.is_mouse_pressing(name)
 
     def is_released(self, name):
-        if self.is_key_released(name) or self.is_mouse_released(name):
-            return True
-        return False
+        return self.is_key_released(name) or self.is_mouse_released(name)
 
     def alt_ctrl_shift(self, alt: bool = False, ctrl: bool = False, shift: bool = False):
-        if (
-            self.is_key_presssing('alt') == alt
-            and self.is_key_presssing('ctrl') == ctrl
-            and self.is_key_presssing('shift') == shift
-        ):
-            return True
-        else:
-            return False
+        return (
+            self.is_key_pressing('alt') == alt
+            and self.is_key_pressing('ctrl') == ctrl
+            and self.is_key_pressing('shift') == shift
+        )
 
     def is_hotkey_pressed(self, hotkey_str):
         modifiers, main_key = self.parse_hotkey(hotkey_str)
-
-        ctrl_ok = ('ctrl' in modifiers) == self.is_key_presssing('ctrl')
-        alt_ok = ('alt' in modifiers) == self.is_key_presssing('alt')
-        shift_ok = ('shift' in modifiers) == self.is_key_presssing('shift')
-
-        if not (ctrl_ok and alt_ok and shift_ok):
+        if not (
+            ('ctrl' in modifiers) == self.is_key_pressing('ctrl')
+            and ('alt' in modifiers) == self.is_key_pressing('alt')
+            and ('shift' in modifiers) == self.is_key_pressing('shift')
+        ):
             return False
-
         return self.is_pressed(main_key)
 
     def get_mouse_position(self):
@@ -292,11 +239,9 @@ class InputStateMonitor:
             self.wheel_delta = 0
 
     def parse_hotkey(self, hotkey_str):
-        """解析组合键字符串"""
         keys = hotkey_str.split('+')
         modifiers = []
         main_key = None
-
         for key in keys:
             normalized = key.strip().lower()
             if normalized in ['ctrl', 'control']:
@@ -307,8 +252,4 @@ class InputStateMonitor:
                 modifiers.append('shift')
             else:
                 main_key = normalized
-
         return modifiers, main_key
-
-    def __del__(self):
-        self.stop_wheel_listener()

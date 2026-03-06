@@ -1,4 +1,4 @@
-AxisPage: '轴调整'
+AxisPage: 轴调整
 ButtonMapping: 鼠标按钮映射
 CameraFov: 自由视角视场角度
 CenterControl: 操控回中
@@ -6,25 +6,28 @@ CollectiveSpeed: 总距速度
 ConfigLoadFailed: 加载配置文件失败
 ConfigSaveFailed: 保存配置文件失败
 ConfigSaved: 配置文件保存成功
+ConnectPage: 连接
+Connected: 已连接
 Controlled: 正在控制
 Controller: 飞行控制器
 ControlsPage: 控制
 CurrentValue: 当前值
 DebugEnabled: 调试模式已启用
-DecreaseSpeed: 减少速度
 DeviceNotFoundMessage: 找不到可用的vJoy设备，请前往软件帮助页或者vJoy官网寻求解决方案
+Disconnected: 未连接
 EnableFreecam: 启用自由视角
 Error: 错误
+FlightSim: 模拟飞行
 FreecamAutoCenter: 自由视角自动回中
 General: 通用
 HelicopterController: 直升机模式
 HintOverlay: 提示覆盖
 ImportPreset: 导入...
-IncreaseSpeed: 增加速度
 Installed: 已安装
 Language: 语言
 LogFile: 日志文件
 MemorizeAxisPos: 维持摇杆位置
+Modules: 模块
 MouseFlight: 鼠标飞行
 NoControl: 无控制
 None: 未选择
@@ -48,6 +51,8 @@ Stop: 停止
 TaxiMode: 地面滑行模式
 TaxiModeOff: 地面滑行模式：禁用
 TaxiModeOn: 地面滑行模式：启用
+ThrottleDecrease: 减少速度
+ThrottleIncrease: 增加速度
 ThrottleSpeed: 节流阀速度
 Title: 鼠标飞行 %{version}
 ToggleEnabled: 开关控制

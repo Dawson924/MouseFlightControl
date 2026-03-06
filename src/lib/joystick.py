@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, Literal
 
-from type.axis import (
+from common.axis import (
     AXIS_CENTER,
     AXIS_MAX,
     AXIS_MIN,

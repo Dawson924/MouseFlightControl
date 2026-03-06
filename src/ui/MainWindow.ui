@@ -35,6 +35,16 @@
                         <property name="tabPosition">
                             <enum>QTabWidget::North</enum>
                         </property>
+
+                        <!-- 连接页面 -->
+                        <widget class="QWidget" name="connectTab">
+                            <attribute name="title">
+                                <string>CONNECT</string>
+                            </attribute>
+                            <layout class="QVBoxLayout" name="connectPageLayout">
+                            </layout>
+                        </widget>
+
                         <!-- 控制页面 -->
                         <widget class="QWidget" name="controlsTab">
                             <attribute name="title">
@@ -599,7 +609,7 @@
                             <attribute name="title">
                                 <string>AXIS</string>
                             </attribute>
-                            <layout class="QVBoxLayout" name="verticalLayout3">
+                            <layout class="QVBoxLayout" name="verticalLayout4">
                                 <item>
                                     <layout class="QHBoxLayout">
                                         <property name="spacing">

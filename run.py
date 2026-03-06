@@ -24,6 +24,9 @@ def run_python_script(script_path: str, args: List[str] = None):
         spec = importlib.util.spec_from_file_location('__main__', abs_script_path)
         script_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(script_module)
+    except Exception as e:
+        print(f'Error running Python script: {e}')
+        raise
     finally:
         sys.argv = original_argv
 
@@ -44,6 +47,9 @@ def run_command(command: List[str], cwd: str = None):
     except subprocess.CalledProcessError as e:
         print(f'Command execution failed: {e}')
         print(f'Error output: {e.stderr}')
+        raise
+    except Exception as e:
+        print(f'Error running command: {e}')
         raise
 
 

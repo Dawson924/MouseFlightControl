@@ -1,5 +1,5 @@
+from common.axis import AXIS_LENGTH, AXIS_MAX, AXIS_MIN, AxisPos
 from common.constants import FOV_RANGE
-from type.axis import AXIS_LENGTH, AXIS_MAX, AXIS_MIN, AxisPos
 from utils import check_overflow
 
 

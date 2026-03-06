@@ -16,5 +16,6 @@ DLL_PATH = os.path.dirname(os.path.abspath(sys.executable)) if IS_FROZEN else os
 LUA_PATH = os.path.join(DLL_PATH if IS_FROZEN else os.curdir, 'Lua')
 SCRIPT_PATH = 'scripts'
 SCRIPT_INI_PATH = 'script.ini'
+MODULES_PATH = 'modules'
 
 FOV_RANGE = (0, 160)
