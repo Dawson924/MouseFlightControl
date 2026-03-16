@@ -1,12 +1,37 @@
 import os
 from enum import Enum
-from typing import Any, Dict
+from typing import Dict, Tuple, TypedDict
 
 from configobj import ConfigObj, ConfigObjError
-from validate import Validator
 from loguru import logger
+from validate import Validator
 
 from common.constants import MODULES_PATH
+
+
+class ManifestConfig(TypedDict):
+    model: str
+    title: str
+    platform: str
+    connect: str
+
+
+class DataConfig(TypedDict):
+    flight_mode: int
+    camera_fov: int
+    throttle_speed: int
+    collective_speed: int
+    pedals_speed: int
+    throttle_increase: str
+    throttle_decrease: str
+
+
+class ModuleConfig(TypedDict):
+    Manifest: ManifestConfig
+    Data: DataConfig
+
+
+ModuleData = Dict[str, Tuple[str, ModuleConfig]]
 
 
 class FlightSim(str, Enum):
@@ -15,7 +40,7 @@ class FlightSim(str, Enum):
 
     @property
     def full_name(self):
-        names = {FlightSim.DCS: 'DCS World', FlightSim.FS2020: 'Microsoft Flight Simulator'}
+        names = {FlightSim.DCS: 'DCS World', FlightSim.FS2020: 'MSFS 2020'}
         return names[self]
 
 
@@ -38,7 +63,7 @@ MODULE_SPEC = {
 }
 
 
-def load_modules(base_dir: str = MODULES_PATH) -> Dict[str, Dict[str, Any]]:
+def load_modules(base_dir: str = MODULES_PATH) -> ModuleData:
     map = {}
 
     if not os.path.isdir(base_dir):

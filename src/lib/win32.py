@@ -66,26 +66,42 @@ def set_process_dpi_awareness(mode):
 
 
 def get_screen_geometry(window: int, screen: QScreen):
-    if not screen:
-        screen = QtWidgets.QApplication.primaryScreen()
+    from lib.logger import logger
 
-    logical_rect = screen.geometry()
-    width = logical_rect.width()
-    height = logical_rect.height()
-    center_x = width / 2
-    center_y = height / 2
+    try:
+        if not screen:
+            screen = QtWidgets.QApplication.primaryScreen()
 
-    scale = 1.0
-    if os.name == 'nt':
-        try:
-            user32 = ctypes.windll.user32
-            hwnd = window
-            dpi_x = user32.GetDpiForWindow(hwnd)
-            scale = dpi_x / 96.0
-        except:
-            scale = screen.devicePixelRatio()
+        logical_rect = screen.geometry()
+        width = logical_rect.width()
+        height = logical_rect.height()
+        center_x = width / 2
+        center_y = height / 2
 
-    return width, height, center_x, center_y, scale
+        scale = 1.0
+        if os.name == 'nt':
+            try:
+                user32 = ctypes.windll.user32
+                hwnd = window if window != 0 else None
+                if hwnd is not None and hwnd > 0:
+                    dpi_x = user32.GetDpiForWindow(hwnd)
+                    scale = dpi_x / 96.0
+                else:
+                    # Fallback to devicePixelRatio if window handle is invalid
+                    scale = screen.devicePixelRatio()
+            except Exception as e:
+                logger.error(f'Failed to get DPI for window {window}: {e}')
+                try:
+                    scale = screen.devicePixelRatio()
+                except Exception as e2:
+                    logger.error(f'Fallback to devicePixelRatio also failed: {e2}')
+                    scale = 1.0
+
+        return width, height, center_x, center_y, scale
+    except Exception as e:
+        logger.error(f'Failed to get screen geometry: {e}')
+        # 返回默认值
+        return 1920, 1080, 960, 540, 1.0
 
 
 class MessageBox:

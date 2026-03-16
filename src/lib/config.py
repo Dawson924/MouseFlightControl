@@ -2,12 +2,12 @@ import os
 from typing import Tuple
 
 import yaml
+from loguru import logger
 
 import i18n
 from common.config import CONFIG_FILE, FLIGHT_FILE
 from data.config import ConfigData
 from data.flight import FlightData
-from loguru import logger
 
 ConfigList = Tuple[ConfigData, FlightData]
 
@@ -27,9 +27,11 @@ def load_all_data() -> ConfigList:
 def save_all_data(configs: ConfigList) -> None:
     try:
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            yaml.dump(configs[0], f, default_flow_style=False, sort_keys=False)
+            f.write(configs[0].to_yaml())
+
         with open(FLIGHT_FILE, 'w', encoding='utf-8') as f:
-            yaml.dump(configs[1], f, default_flow_style=False, sort_keys=False)
+            f.write(configs[1].to_yaml())
+
         logger.success(i18n.t('ConfigSaved'))
     except Exception as e:
         logger.error(f'{i18n.t("ConfigSaveFailed")}: {e}')

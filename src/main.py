@@ -1,4 +1,3 @@
-import ctypes
 import os
 import sys
 import threading
@@ -40,11 +39,11 @@ from lib.event import EventEmitter
 from lib.fs import open_directory
 from lib.joystick import get_joystick_device
 from lib.logger import get_logger, init_logger, logger
+from lib.screen import Screen
 from lib.script import get_default, load_data, save_data, validate_config
 from lib.win32 import (
     MessageBox,
     get_mouse_speed,
-    get_screen_geometry,
     set_mouse_speed,
     set_process_dpi_awareness,
 )
@@ -53,11 +52,10 @@ from script_engine.runtime import load_lua_scripts
 from type.script import ScriptModule
 from type.widget import OptionWidget
 from ui.MainWindow import Ui_MainWindow
-from ui.page.connect import ConnectModel, ConnectView, ConnectViewModel
+from ui.page import ConnectPage, ControlsPage, OptionsPage, TunePage
 from ui.screen.CursorGraph import CursorGraph
 from ui.screen.HintLabel import HintLabel
 from ui.screen.IndicatorWindow import IndicatorWindow
-from ui.window.axis import JoyAxisWindow
 from ui.window.script import ScriptWindow
 from utils import check_overflow, wheel_step
 
@@ -79,13 +77,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        (
-            self.screen_width,
-            self.screen_height,
-            self.center_x,
-            self.center_y,
-            self.scale,
-        ) = get_screen_geometry(self.winId(), self.screen())
+        screen = Screen(self.winId(), self.screen())
+
+        self.screen_width = screen.screen_width
+        self.screen_height = screen.screen_height
+        self.center_x = screen.center_x
+        self.center_y = screen.center_y
+        self.scale = screen.scale
+        self.px = screen.to_pixels
+
         self.min_w_size = self.px(300)
         self.max_w_size = self.px(500)
         self.input_width = 100
@@ -128,33 +128,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setup_widgets(self.flightdata.get('flight_mode'))
 
         self.retranslate_ui()
-        self.update_states()
+        self.update_ui()
 
         self.ui.startButton.clicked.connect(self.on_startButton_clicked)
         self.ui.flightMode.currentIndexChanged.connect(self.on_flightMode_currentIndexChanged)
-        self.ui.mouseSpeed.valueChanged.connect(self.on_mouseSpeed_valueChanged)
-        self.ui.mouseSpeed.setRange(1, 20)
-        self.ui.mouseSpeed.setValue(self.config.get('mouse_speed'))
-        self.ui.toggleEnabledKey.textChanged.connect(lambda text: self.data('config.key_toggle', text))
-        self.ui.centerControlKey.textChanged.connect(lambda text: self.data('config.key_center', text))
-        self.ui.enableFreecamKey.textChanged.connect(lambda text: self.data('config.key_freecam', text))
-        self.ui.viewCenterKey.textChanged.connect(lambda text: self.data('config.key_view_center', text))
-        self.ui.cameraFovSpinBox.valueChanged.connect(lambda value: self.flightdata.set('camera_fov', value))
-        self.ui.taxiModeKey.textChanged.connect(lambda text: self.data('config.key_taxi', text))
-        self.ui.showCursorOption.stateChanged.connect(lambda state: self.data('config.show_cursor', bool(state)))
-        self.ui.showHintOption.stateChanged.connect(lambda state: self.data('config.show_hint', bool(state)))
-        self.ui.showIndicatorOption.stateChanged.connect(lambda state: self.data('config.show_indicator', bool(state)))
-        self.ui.buttonMappingOption.stateChanged.connect(lambda state: self.data('config.button_mapping', bool(state)))
-        self.ui.memorizeAxisPosOption.stateChanged.connect(lambda state: self.data('config.memorize_axis_pos', bool(state)))
-        self.ui.freecamAutoCenterOption.stateChanged.connect(
-            lambda state: self.data('freecam_auto_center', bool(state))
-        )
-        self.ui.xAxisButton.clicked.connect(self.on_axisButton_clicked)
-        self.ui.yAxisButton.clicked.connect(self.on_axisButton_clicked)
-        self.ui.zAxisButton.clicked.connect(self.on_axisButton_clicked)
-        self.ui.rxAxisButton.clicked.connect(self.on_axisButton_clicked)
-        self.ui.ryAxisButton.clicked.connect(self.on_axisButton_clicked)
-        self.ui.rzAxisButton.clicked.connect(self.on_axisButton_clicked)
 
         self.hintLabel = HintLabel(self)
         self.showMessage.connect(self.hintLabel.show_message)
@@ -173,7 +150,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show()
         self.move(self.center_x - self.config.get('width') / 2, self.center_y - self.height() / 2)
 
-        input.start()
         logger.done(self.show_message)
 
     def get_stylesheet(self):
@@ -340,16 +316,26 @@ class MainWindow(QtWidgets.QMainWindow):
         font.setWeight(QFont.Normal)
         QtWidgets.QApplication.instance().setFont(font)
         QMetaObject.connectSlotsByName(self)
-        self.init_models()
+        self.init_pages()
 
-    def init_models(self):
+    def init_pages(self):
+        # Initialize Connect Page
         self.modules = load_modules()
-        self._connect_model = ConnectModel(self.modules)
-        self._connect_vm = ConnectViewModel(self._connect_model, self.flightdata)
-        self.connect_view = ConnectView()
-        self.connect_view.bind(self._connect_vm)
-        self.connect_view.state_changed.connect(self.update)
-        self.ui.connectPageLayout.addWidget(self.connect_view)
+        self.connect_page = ConnectPage(self.config, self.flightdata, self.modules)
+        self.connect_page.state_changed.connect(self.update_ui)
+        self.ui.connectPageLayout.addWidget(self.connect_page)
+
+        # Initialize Controls Page
+        self.controls_page = ControlsPage(self.config, self.flightdata)
+        self.ui.controlsPageLayout.addWidget(self.controls_page)
+
+        # Initialize Options Page
+        self.options_page = OptionsPage(self.config, self.flightdata)
+        self.ui.optionsPageLayout.addWidget(self.options_page)
+
+        # Initialize Axis Tune Page
+        self.tune_page = TunePage(self.config, self.flightdata)
+        self.ui.axisTunePageLayout.addWidget(self.tune_page)
 
     def setup_controllers(self):
         controllers.register(0, None, {'name': i18n.t('None')})
@@ -665,6 +651,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.script_menu.setTitle(i18n.t('Script'))
         self.script_action.setText(i18n.t('Installed') + f' ({self.scripts.__len__()})')
 
+        self.connect_page.retranslate_ui()
+        self.controls_page.retranslate_ui()
+        self.options_page.retranslate_ui()
+        self.tune_page.retranslate_ui()
+
         for id, action in self._script_actions.items():
             script = self.get_script(id)
             script.set_language(self.config.get('language'))
@@ -674,51 +665,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tabWidget.setTabText(0, i18n.t('ConnectPage'))
         self.ui.tabWidget.setTabText(1, i18n.t('ControlsPage'))
         self.ui.tabWidget.setTabText(2, i18n.t('OptionsPage'))
-        self.ui.tabWidget.setTabText(3, i18n.t('AxisPage'))
+        self.ui.tabWidget.setTabText(3, i18n.t('TunePage'))
         self.ui.statusLabel.setText(i18n.t('StatusStopped') if not enabled else i18n.t('StatusWorking'))
-        self.ui.speedLabel.setText(i18n.t('Sensitive'))
-        self.ui.speedValueLabel.setText(i18n.t('CurrentValue') + f': {str(self.config.get("mouse_speed"))}')
-        self.ui.mouseSpeed.setValue(self.config.get('mouse_speed'))
-        self.ui.toggleEnabledLabel.setText(i18n.t('ToggleEnabled'))
-        self.ui.toggleEnabledKey.setText(self.config.get('key_toggle'))
-        self.ui.centerControlLabel.setText(i18n.t('CenterControl'))
-        self.ui.centerControlKey.setText(self.config.get('key_center'))
-        self.ui.enableFreecamLabel.setText(i18n.t('EnableFreecam'))
-        self.ui.enableFreecamKey.setText(self.config.get('key_freecam'))
-        self.ui.viewCenterLabel.setText(i18n.t('ViewCenter'))
-        self.ui.viewCenterKey.setText(self.config.get('key_view_center'))
-        self.ui.cameraFovLabel.setText(i18n.t('CameraFov'))
-        self.ui.cameraFovSpinBox.setValue(self.flightdata.get('camera_fov'))
-        self.ui.taxiModeLabel.setText(i18n.t('TaxiMode'))
-        self.ui.taxiModeKey.setText(self.config.get('key_taxi'))
         self.ui.controllerLabel.setText(i18n.t('Controller'))
         self.ui.flightMode.setCurrentIndex(self.flightdata.get('flight_mode'))
         self.ui.flightMode.setCurrentText(controllers.get_name(self.flightdata.get('flight_mode')))
-        self.ui.showCursorLabel.setText(i18n.t('ShowCursor'))
-        self.ui.showCursorOption.setChecked(self.config.get('show_cursor'))
-        self.ui.showHintLabel.setText(i18n.t('HintOverlay'))
-        self.ui.showHintOption.setChecked(self.config.get('show_hint'))
-        self.ui.showIndicatorLabel.setText(i18n.t('ShowIndicator'))
-        self.ui.showIndicatorOption.setChecked(self.config.get('show_indicator'))
-        self.ui.buttonMappingLabel.setText(i18n.t('ButtonMapping'))
-        self.ui.buttonMappingOption.setChecked(self.config.get('button_mapping'))
-        self.ui.memorizeAxisPosLabel.setText(i18n.t('MemorizeAxisPos'))
-        self.ui.memorizeAxisPosOption.setChecked(self.config.get('memorize_axis_pos'))
-        self.ui.freecamAutoCenterLabel.setText(i18n.t('FreecamAutoCenter'))
-        self.ui.freecamAutoCenterOption.setChecked(self.config.get('freecam_auto_center'))
-
-    @Slot(int)
-    def on_mouseSpeed_valueChanged(self, value):
-        self.config.set('mouse_speed', value)
-        self.lua_globals.Mouse.speed = value
-        self.ui.speedValueLabel.setText(f'{i18n.t("CurrentValue")}: {str(self.ui.mouseSpeed.value())}')
-        self.update_states()
 
     @Slot(int)
     def on_flightMode_currentIndexChanged(self, value):
         self.flightdata.set('flight_mode', value)
-        self.setup_widgets(value)
-        self.update_states()
+        self.update_ui()
 
     @Slot()
     def on_startButton_clicked(self):
@@ -730,45 +686,18 @@ class MainWindow(QtWidgets.QMainWindow):
             self.toggle_enabled(False)
             self.stop_main_thread()
 
+        self.update_ui()
+
     def on_scriptButton_clicked(self, script: ScriptModule):
         window = ScriptWindow(script, self.script_db.get(script.id), self)
         window.show()
 
-    def on_axisButton_clicked(self):
-        button = self.sender()
-        if not button:
-            return
-
-        button_name = button.objectName()
-        axis_map = {
-            'xAxisButton': AXIS_X,
-            'yAxisButton': AXIS_Y,
-            'zAxisButton': AXIS_Z,
-            'rxAxisButton': AXIS_RX,
-            'ryAxisButton': AXIS_RY,
-            'rzAxisButton': AXIS_RZ,
-        }
-        axis_id = axis_map.get(button_name, None)
-        window = JoyAxisWindow(axis_id, self.flightdata, parent=self)
-        window.show()
-
-    def data(self, key: str, value):
-        path = key.split('.')
-        store = getattr(self, path[0])
-        store[path[1]] = value
-        self.update_states()
-
-    def update_states(self):
+    def update_ui(self):
+        self.setup_widgets(self.flightdata.get('flight_mode'))
         disabled = self.running
         self.ui.startButton.setText(i18n.t('Start') if not self.running else i18n.t('Stop'))
         self.ui.statusLabel.setText(i18n.t('StatusWorking') if disabled else i18n.t('StatusStopped'))
-        self.ui.mouseSpeed.setDisabled(disabled)
-        self.ui.toggleEnabledKey.setDisabled(disabled)
-        self.ui.centerControlKey.setDisabled(disabled)
         self.ui.flightMode.setDisabled(disabled)
-        self.ui.enableFreecamKey.setDisabled(disabled)
-        self.ui.viewCenterKey.setDisabled(disabled)
-        self.ui.taxiModeKey.setDisabled(disabled)
         for option, controls in self.dynamic_widgets.items():
             if 'checkbox' in controls:
                 controls['checkbox'].setDisabled(disabled)
@@ -776,17 +705,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 controls['line_edit'].setDisabled(disabled)
             elif 'spin_box' in controls:
                 controls['spin_box'].setDisabled(disabled)
-        self.ui.showCursorOption.setDisabled(disabled)
-        self.ui.showHintOption.setDisabled(disabled)
-        self.ui.showIndicatorOption.setDisabled(disabled)
-        self.ui.buttonMappingOption.setDisabled(disabled)
-        self.ui.memorizeAxisPosOption.setDisabled(disabled)
-        self.ui.freecamAutoCenterOption.setDisabled(disabled)
-        self.ui.cameraFovSpinBox.setDisabled(disabled)
-
-    def update(self):
-        self.retranslate_ui()
-        self.update_states()
 
     def start_main_thread(self):
         global stop_thread, enabled
@@ -795,8 +713,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if self.main_thread and self.main_thread.is_alive():
             return
-
-        self.update_states()
 
         if self.config.get('show_indicator'):
             self.indicator.show_overlay(True)
@@ -812,7 +728,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.main_thread and self.main_thread.is_alive():
             self.main_thread.join()
 
-        self.update_states()
         self.indicator.show_overlay(False)
 
         self.main_thread = None
@@ -825,21 +740,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.main_thread:
             self.main_thread.join()
 
-        if input is not None:
-            input.stop()
+        if input:
+            input.stop_wheel_listener()
 
         self.config.set('width', int(self.size().width() / self.scale))
         save_all_data((self.config, self.flightdata))
         save_data(SCRIPT_INI_PATH, self.script_db.to_dict())
         event.accept()
-
-    # def nativeEvent(self, event_type, message):
-    #     msg = ctypes.wintypes.MSG.from_address(int(message))
-    #     if msg.message == 0x020A:  # WM_MOUSEWHEEL
-    #         delta = ctypes.c_short(msg.wParam >> 16).value
-    #         with input.wheel_lock:
-    #             input.wheel_delta += delta
-    #     return super().nativeEvent(event_type, message)
 
     def toggle_enabled(self, flag):
         if not self.running:
@@ -863,6 +770,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def main(self):
         global delta_x, delta_y, enabled, input
         try:
+            if not input:
+                input = InputStateMonitor()
+
             self.joystick.update_filters(self.flightdata.get_filters())
 
             key_toggle = self.config.get('key_toggle')
@@ -1097,19 +1007,6 @@ class MainWindow(QtWidgets.QMainWindow):
         finally:
             set_mouse_speed(self.original_mouse_speed)
             self.joystick.reset()
-            input.cleanup()
-
-    def px(self, pt: int):
-        return int(pt * self.scale)
-
-    def axis_to_screen(self, axis_x, axis_y):
-        x_percent = axis_x / AXIS_MAX
-        y_percent = axis_y / AXIS_MAX
-
-        screen_x = self.center_x + x_percent * (self.screen_width / 2)
-        screen_y = self.center_y + y_percent * (self.screen_height / 2)
-
-        return screen_x, screen_y
 
     def update_indicator(self, x, y, throttle, rudder):
         self.indicator.set_xy_values(x, y)
@@ -1126,33 +1023,54 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == '__main__':
-    init_logger()
-    set_process_dpi_awareness(2)
-    QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+    try:
+        init_logger()
+        logger.info('Starting MouseFlight...')
+        
+        set_process_dpi_awareness(2)
+        QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-    app = App(sys.argv)
-    app.setWindowIcon(QIcon('assets/icon.ico'))
+        app = App(sys.argv)
+        logger.info('App created successfully')
+        
+        try:
+            app.setWindowIcon(QIcon('assets/icon.ico'))
+            logger.info('Window icon set successfully')
+        except Exception as e:
+            logger.warning(f'Error setting window icon: {e}')
 
-    input = InputStateMonitor(pause=0.004, retry=3)
+        if not os.path.exists('i18n'):
+            error_msg = QtWidgets.QMessageBox()
+            error_msg.setIcon(QtWidgets.QMessageBox.Critical)
+            error_msg.setText('Missing translation files')
+            error_msg.setInformativeText(
+                "Cannot find 'i18n' directory. Please verify the program's files are installed correctly."
+            )
+            error_msg.setWindowTitle('PATH NOT FOUND')
+            error_msg.exec_()
+            sys.exit(1)
 
-    if not os.path.exists('i18n'):
+        i18n.load_path.append('i18n')
+        i18n.set('available_locales', [lang['code'] for lang in LANGUAGE_CONFIG])
+        i18n.set('skip_locale_root_data', True)
+        i18n.set('filename_format', '{locale}.{format}')
+        i18n.set('locale', 'en_US')
+        i18n.set('fallback', 'en_US')
+        logger.info('i18n initialized successfully')
+
+        window = MainWindow()
+        logger.info('MainWindow created successfully')
+
+        sys.exit(app.exec_())
+    except Exception as e:
+        logger.critical(f'Critical error during startup: {e}')
+        import traceback
+        traceback.print_exc()
+        # 显示错误消息
         error_msg = QtWidgets.QMessageBox()
         error_msg.setIcon(QtWidgets.QMessageBox.Critical)
-        error_msg.setText('Missing translation files')
-        error_msg.setInformativeText(
-            "Cannot find 'i18n' directory. Please verify the program's files are installed correctly."
-        )
-        error_msg.setWindowTitle('PATH NOT FOUND')
+        error_msg.setText('Critical Error')
+        error_msg.setInformativeText(f"An error occurred during startup: {e}")
+        error_msg.setWindowTitle('ERROR')
         error_msg.exec_()
         sys.exit(1)
-
-    i18n.load_path.append('i18n')
-    i18n.set('available_locales', [lang['code'] for lang in LANGUAGE_CONFIG])
-    i18n.set('skip_locale_root_data', True)
-    i18n.set('filename_format', '{locale}.{format}')
-    i18n.set('locale', 'en_US')
-    i18n.set('fallback', 'en_US')
-
-    window = MainWindow()
-
-    sys.exit(app.exec_())

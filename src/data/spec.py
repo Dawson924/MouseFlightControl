@@ -6,15 +6,15 @@ from typing import Any, Dict, Optional
 import yaml
 
 
-class _YamlMixin:
-    """Load from / dump to YAML.  Requires to_dict / from_dict on the subclass."""
+class YAMLConfig:
+    SPEC: Dict[str, Dict[str, Any]] = {}
 
     @classmethod
     def from_yaml(
         cls,
         yaml_str: Optional[str] = None,
         file_path: Optional[str] = None,
-    ) -> '_YamlMixin':
+    ) -> 'YAMLConfig':
         if file_path:
             with open(file_path, 'r', encoding='utf-8') as f:
                 raw = yaml.safe_load(f)
@@ -28,10 +28,77 @@ class _YamlMixin:
         return cls.from_dict(raw)
 
     def to_yaml(self) -> str:
-        return yaml.dump(self.to_dict(), default_flow_style=False, allow_unicode=True)
+        # Get the data dictionary
+        data = self.to_dict()
+
+        # Build YAML string with proper spacing and order
+        result = []
+
+        # Process sections in the order they appear in SPEC
+        first_section = True
+        for section in self.SPEC:
+            if section not in data:
+                continue
+
+            # Add blank line before section (except first)
+            if not first_section:
+                result.append('')
+            first_section = False
+
+            # Add section header
+            result.append(f'{section}:')
+
+            # Process section content
+            section_data = data[section]
+            if isinstance(section_data, dict):
+                if section == 'Axis':
+                    # Process Axis section with spacing between entries
+                    first_axis = True
+                    for axis in self.SPEC[section]:
+                        if axis not in section_data:
+                            continue
+                        
+                        # Add blank line between axis entries (except first)
+                        if not first_axis:
+                            result.append('')
+                        first_axis = False
+
+                        # Add axis header
+                        result.append(f'  {axis}:')
+                        
+                        # Add axis fields
+                        axis_data = section_data[axis]
+                        for key in self.SPEC[section][axis].get('fields', {}):
+                            if key in axis_data:
+                                # Use yaml to properly quote values
+                                value = axis_data[key]
+                                if isinstance(value, str):
+                                    # Quote strings that contain special characters
+                                    if any(c in value for c in '`\'"\n\r'):
+                                        result.append(f"    {key}: '{value}'")
+                                    else:
+                                        result.append(f'    {key}: {value}')
+                                else:
+                                    result.append(f'    {key}: {value}')
+                else:
+                    # Process regular section fields
+                    for field in self.SPEC[section]:
+                        if field in section_data:
+                            # Use yaml to properly quote values
+                            value = section_data[field]
+                            if isinstance(value, str):
+                                # Quote strings that contain special characters
+                                if any(c in value for c in '`\'"\n\r'):
+                                    result.append(f"  {field}: '{value}'")
+                                else:
+                                    result.append(f'  {field}: {value}')
+                            else:
+                                result.append(f'  {field}: {value}')
+
+        return '\n'.join(result) + '\n'
 
 
-class FlatConfig(_YamlMixin):
+class FlatConfig(YAMLConfig):
     SPEC: Dict[str, Dict[str, Any]] = {}
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -85,6 +152,17 @@ class FlatConfig(_YamlMixin):
         else:
             self._set(key, value)
 
+    def __getitem__(self, key: str) -> Any:
+        if key.startswith('_') or key not in self.__class__._flat_spec:
+            raise AttributeError(key)
+        return self._data[self._field_group[key]][key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        if key.startswith('_') or key not in self.__class__._flat_spec:
+            super().__setattr__(key, value)
+        else:
+            self._set(key, value)
+
     def set(self, field: str, value: Any) -> None:
         if field in self._flat_spec:
             self._set(field, value)
@@ -106,11 +184,15 @@ class FlatConfig(_YamlMixin):
             if group in data and isinstance(data[group], dict):
                 for field in fields:
                     if field in data[group]:
-                        instance._set(field, data[group][field])
+                        try:
+                            instance._set(field, data[group][field])
+                        except (ValueError, TypeError):
+                            # Use default value for invalid data
+                            pass
         return instance
 
 
-class Config(_YamlMixin):
+class Config(YAMLConfig):
     SPEC: Dict[str, Dict[str, Any]] = {}
 
     def __init__(self) -> None:
@@ -189,5 +271,9 @@ class Config(_YamlMixin):
             if group in data and isinstance(data[group], dict):
                 for field in fields:
                     if field in data[group]:
-                        instance._set(group, field, data[group][field])
+                        try:
+                            instance._set(group, field, data[group][field])
+                        except (ValueError, TypeError):
+                            # Use default value for invalid data
+                            pass
         return instance

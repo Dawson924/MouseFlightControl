@@ -1,4 +1,3 @@
-AxisPage: AXIS
 ButtonMapping: Mouse Button Mapping
 CameraFov: Freecam Field of View
 CenterControl: Center Control
@@ -11,7 +10,7 @@ Connected: Connected
 Controlled: Controlled
 Controller: Flight Controller
 ControlsPage: CONTROLS
-CurrentValue: Current value
+CurrentValue: 'Current value: %{value}'
 DebugEnabled: Debug mode is enabled
 DeviceNotFoundMessage: No available vJoy devices were found. Please visit the software's
   help page or the official vJoy website to find solutions
@@ -25,6 +24,7 @@ HelicopterController: Helicopter Mode
 HintOverlay: Hint Overlay
 ImportPreset: Import...
 Installed: Installed
+JoyAxis: Joy %{axis}
 Language: Language
 LogFile: Log file
 MemorizeAxisPos: Maintain Axis Position
@@ -57,5 +57,6 @@ ThrottleIncrease: Increase speed
 ThrottleSpeed: Throttle speed
 Title: Mouse flight %{version}
 ToggleEnabled: Toggle Control
+TunePage: AXIS
 VersionInfo: Version
 ViewCenter: View Center

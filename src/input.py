@@ -4,9 +4,10 @@ import time
 import pydirectinput
 import win32api
 import win32con
+from loguru import logger
+from pynput import mouse
 
 from lib.axis import pos
-from loguru import logger
 
 
 class InputStateMonitor:
@@ -21,14 +22,6 @@ class InputStateMonitor:
             'LMB': False,
             'RMB': False,
             'MMB': False,
-            'XMB1': False,  # 侧键1 (前进)
-            'XMB2': False,  # 侧键2 (后退)
-            'XMB3': False,  # 侧键3
-            'XMB4': False,  # 侧键4
-            'XMB5': False,  # 侧键5
-            'XMB6': False,  # 侧键6
-            'XMB7': False,  # 侧键7
-            'XMB8': False,  # 侧键8
         }
         self.prev_mouse_buttons = self.mouse_buttons.copy()
 
@@ -38,6 +31,7 @@ class InputStateMonitor:
         self.mouse_x = 0
         self.mouse_y = 0
 
+        self.mouse_listener = None
         self.wheel_delta = 0
         self.wheel_lock = threading.Lock()
 
@@ -101,13 +95,26 @@ class InputStateMonitor:
         }
         self.VK_MAP.update(special_chars)
 
-    def start(self):
-        # 移除钩子线程，因为我们已经在main.py的nativeEvent中处理滚轮事件
-        pass
+        self.start_wheel_listener()
 
-    def stop(self):
-        # 移除钩子线程相关代码
-        pass
+    def stop_wheel_listener(self):
+        if self.mouse_listener and self.mouse_listener.is_alive():
+            self.mouse_listener.stop()
+            self.mouse_listener = None
+
+    def _on_scroll(self, x, y, dx, dy):
+        with self.wheel_lock:
+            self.wheel_delta += dy * 120
+
+    def start_wheel_listener(self):
+        try:
+            if self.mouse_listener is None or not self.mouse_listener.is_alive():
+                self.mouse_listener = mouse.Listener(
+                    on_scroll=self._on_scroll, on_move=None, on_click=None, daemon=True
+                )
+                self.mouse_listener.start()
+        except Exception as e:
+            logger.error(f'Failed to start wheel listener: {e}')
 
     def cleanup(self):
         self.mouse_buttons = {k: False for k in self.mouse_buttons}

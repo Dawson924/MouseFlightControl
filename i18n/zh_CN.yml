@@ -1,4 +1,3 @@
-AxisPage: 轴调整
 ButtonMapping: 鼠标按钮映射
 CameraFov: 自由视角视场角度
 CenterControl: 操控回中
@@ -11,7 +10,7 @@ Connected: 已连接
 Controlled: 正在控制
 Controller: 飞行控制器
 ControlsPage: 控制
-CurrentValue: 当前值
+CurrentValue: 当前值：%{value}
 DebugEnabled: 调试模式已启用
 DeviceNotFoundMessage: 找不到可用的vJoy设备，请前往软件帮助页或者vJoy官网寻求解决方案
 Disconnected: 未连接
@@ -24,6 +23,7 @@ HelicopterController: 直升机模式
 HintOverlay: 提示覆盖
 ImportPreset: 导入...
 Installed: 已安装
+JoyAxis: '%{axis} 轴'
 Language: 语言
 LogFile: 日志文件
 MemorizeAxisPos: 维持摇杆位置
@@ -56,5 +56,6 @@ ThrottleIncrease: 增加速度
 ThrottleSpeed: 节流阀速度
 Title: 鼠标飞行 %{version}
 ToggleEnabled: 开关控制
+TunePage: 轴调整
 VersionInfo: 版本信息
 ViewCenter: 自由视角归中

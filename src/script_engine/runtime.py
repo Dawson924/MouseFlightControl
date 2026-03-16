@@ -2,10 +2,10 @@ import glob
 import os
 from typing import Any, List
 
+from loguru import logger
 from lupa import LuaRuntime
 
 from common.constants import LUA_PATH
-from loguru import logger
 from type.script import ScriptModule
 
 
