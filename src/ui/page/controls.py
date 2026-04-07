@@ -11,14 +11,15 @@ from PySide2.QtWidgets import (
 import i18n
 from data.config import ConfigData
 from data.flight import FlightData
+from lib.screen import ScreenGeometry
 from ui.page import AbstractPage
 
 
 class ControlsPage(AbstractPage):
-    def __init__(self, config: ConfigData, flight: FlightData, parent=None):
-        super().__init__(config, flight, parent)
+    def __init__(self, win: ScreenGeometry, config: ConfigData, flight: FlightData, parent=None):
+        super().__init__(win, config, flight, parent)
 
-        self.controlsPageLayout = self.page_layout
+        self.controlsLayout = self.page_layout
 
         sensitivity_layout = QVBoxLayout()
         sensitivity_layout.setSpacing(5)
@@ -32,7 +33,7 @@ class ControlsPage(AbstractPage):
         self.mouse_speed.setMaximum(20)
         self.mouse_speed.setTickPosition(QSlider.TicksBelow)
         self.mouse_speed.setTickInterval(1)
-        self.mouse_speed.valueChanged.connect(lambda v: self.set_config('mouse_speed', v))
+        self.mouse_speed.valueChanged.connect(self.on_speed_changed)
         sensitivity_layout.addWidget(self.mouse_speed)
         self.ui_elements.update({'mouse_speed': [int]})
 
@@ -41,7 +42,7 @@ class ControlsPage(AbstractPage):
         self.mouse_speed_status_label.setStyleSheet('color: #505050; font-size: 9pt; min-width: 30px;')
         sensitivity_layout.addWidget(self.mouse_speed_status_label)
 
-        self.controlsPageLayout.addLayout(sensitivity_layout)
+        self.controlsLayout.addLayout(sensitivity_layout)
 
         # Toggle enabled key
         toggle_control_layout = QHBoxLayout()
@@ -52,7 +53,7 @@ class ControlsPage(AbstractPage):
         self.key_toggle = QLineEdit()
         self.key_toggle.textChanged.connect(lambda t: self.set_config('key_toggle', t))
         toggle_control_layout.addWidget(self.key_toggle)
-        self.controlsPageLayout.addLayout(toggle_control_layout)
+        self.controlsLayout.addLayout(toggle_control_layout)
         self.ui_elements.update({'key_toggle': [str]})
 
         # Center control key
@@ -64,7 +65,7 @@ class ControlsPage(AbstractPage):
         self.key_center = QLineEdit()
         self.key_center.textChanged.connect(lambda t: self.set_config('key_center', t))
         center_control_layout.addWidget(self.key_center)
-        self.controlsPageLayout.addLayout(center_control_layout)
+        self.controlsLayout.addLayout(center_control_layout)
         self.ui_elements.update({'key_center': [str]})
 
         # Enable freecam key
@@ -76,7 +77,7 @@ class ControlsPage(AbstractPage):
         self.key_freecam = QLineEdit()
         self.key_freecam.textChanged.connect(lambda t: self.set_config('key_freecam', t))
         enable_freecam_layout.addWidget(self.key_freecam)
-        self.controlsPageLayout.addLayout(enable_freecam_layout)
+        self.controlsLayout.addLayout(enable_freecam_layout)
         self.ui_elements.update({'key_freecam': [str]})
 
         # View center key
@@ -88,7 +89,7 @@ class ControlsPage(AbstractPage):
         self.key_view_center = QLineEdit()
         self.key_view_center.textChanged.connect(lambda t: self.set_config('key_view_center', t))
         view_center_layout.addWidget(self.key_view_center)
-        self.controlsPageLayout.addLayout(view_center_layout)
+        self.controlsLayout.addLayout(view_center_layout)
         self.ui_elements.update({'key_view_center': [str]})
 
         # Camera FOV
@@ -102,7 +103,7 @@ class ControlsPage(AbstractPage):
         self.camera_fov.setMaximum(160)
         self.camera_fov.valueChanged.connect(lambda v: self.set_flight_data('camera_fov', v))
         camera_fov_layout.addWidget(self.camera_fov)
-        self.controlsPageLayout.addLayout(camera_fov_layout)
+        self.controlsLayout.addLayout(camera_fov_layout)
         self.ui_elements.update({'camera_fov': [int]})
 
         # Taxi mode key
@@ -114,17 +115,17 @@ class ControlsPage(AbstractPage):
         self.key_taxi = QLineEdit()
         self.key_taxi.textChanged.connect(lambda t: self.set_config('key_taxi', t))
         taxi_mode_layout.addWidget(self.key_taxi)
-        self.controlsPageLayout.addLayout(taxi_mode_layout)
+        self.controlsLayout.addLayout(taxi_mode_layout)
         self.ui_elements.update({'key_taxi': [str]})
 
-        self.controlsPageLayout.addStretch()
+        self.controlsLayout.addStretch()
 
         self.update_states()
         self.retranslate_ui()
 
-    def set_mouse_speed(self, speed):
-        self.mouse_speed.setValue(speed)
-        self.mouse_speed_status_label.setText(i18n.t('CurrentValue') + f': {str(speed)}')
+    def on_speed_changed(self, speed):
+        self.config.set('mouse_speed', speed)
+        self.mouse_speed_status_label.setText(i18n.t('CurrentValue', value=str(speed)))
 
     def retranslate_ui(self):
         self.mouse_speed_label.setText(i18n.t('Sensitive'))

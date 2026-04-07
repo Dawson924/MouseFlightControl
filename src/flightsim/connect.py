@@ -2,6 +2,8 @@ import json
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Type, TypeVar
 
+from flightsim.module import FlightSim
+
 T = TypeVar('T', bound='FlightData')
 
 
@@ -36,7 +38,7 @@ class FlightData:
 
 
 class FlightConnect(ABC):
-    def __init__(self, platform: str):
+    def __init__(self, platform: FlightSim):
         self.platform = platform
 
     def _create_flight_data(self, raw_data: Dict) -> FlightData:

@@ -57,7 +57,7 @@ class YAMLConfig:
                     for axis in self.SPEC[section]:
                         if axis not in section_data:
                             continue
-                        
+
                         # Add blank line between axis entries (except first)
                         if not first_axis:
                             result.append('')
@@ -65,7 +65,7 @@ class YAMLConfig:
 
                         # Add axis header
                         result.append(f'  {axis}:')
-                        
+
                         # Add axis fields
                         axis_data = section_data[axis]
                         for key in self.SPEC[section][axis].get('fields', {}):

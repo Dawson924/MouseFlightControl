@@ -5,13 +5,16 @@ from PySide2.QtWidgets import QVBoxLayout, QWidget
 
 from data.config import ConfigData
 from data.flight import FlightData
+from lib.screen import ScreenGeometry
 
 
 class AbstractPage(QWidget):
     state_changed = Signal()
 
-    def __init__(self, config: ConfigData, flight: FlightData, parent=None):
+    def __init__(self, win: ScreenGeometry, config: ConfigData, flight: FlightData, parent=None):
         super().__init__(parent)
+
+        self.win = win
 
         self.config = config
         self.flight = flight

@@ -13,7 +13,7 @@ local diff = {
 						["hardwareDetentMax"] = 0,
 						["invert"] = false,
 						["saturationX"] = 1,
-						["saturationY"] = 0.85,
+						["saturationY"] = 0.75,
 						["slider"] = false,
 					},
 					["key"] = "JOY_Y",
@@ -34,7 +34,7 @@ local diff = {
 						["hardwareDetentMax"] = 0,
 						["invert"] = false,
 						["saturationX"] = 1,
-						["saturationY"] = 0.85,
+						["saturationY"] = 0.75,
 						["slider"] = false,
 					},
 					["key"] = "JOY_X",
@@ -55,7 +55,7 @@ local diff = {
 						["hardwareDetentMax"] = 0,
 						["invert"] = false,
 						["saturationX"] = 1,
-						["saturationY"] = 0.35,
+						["saturationY"] = 0.38,
 						["slider"] = false,
 					},
 					["key"] = "JOY_RX",
@@ -76,7 +76,7 @@ local diff = {
 						["hardwareDetentMax"] = 0,
 						["invert"] = false,
 						["saturationX"] = 1,
-						["saturationY"] = 0.4,
+						["saturationY"] = 0.5,
 						["slider"] = false,
 					},
 					["key"] = "JOY_RY",
@@ -94,14 +94,6 @@ local diff = {
 		},
 	},
 	["keyDiffs"] = {
-		["d3002pnilu3002cd13vd1vpnilvu0"] = {
-			["added"] = {
-				[1] = {
-					["key"] = "JOY_BTN1",
-				},
-			},
-			["name"] = "Extinguish Left Engine (reserve manual sequence) - press button",
-		},
 		["d3003pnilu3003cd13vd1vpnilvu0"] = {
 			["added"] = {
 				[1] = {
@@ -109,6 +101,14 @@ local diff = {
 				},
 			},
 			["name"] = "Extinguish Right Engine (main manual sequence) - press button",
+		},
+		["d350pnilu351cdnilvdnilvpnilvunil"] = {
+			["added"] = {
+				[1] = {
+					["key"] = "JOY_BTN1",
+				},
+			},
+			["name"] = "Release weapons",
 		},
 	},
 }

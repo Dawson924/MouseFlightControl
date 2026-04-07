@@ -2,27 +2,21 @@ from PySide2.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QVBoxLayout,
-    QWidget,
 )
 
 import i18n
 from data.config import ConfigData
 from data.flight import FlightData
+from lib.screen import ScreenGeometry
+from ui.page.abstract import AbstractPage
 from ui.window.axis import JoyAxisWindow
 
 
-class TunePage(QWidget):
-    def __init__(self, config: ConfigData, flight: FlightData, parent=None):
-        super().__init__(parent)
+class TunePage(AbstractPage):
+    def __init__(self, win: ScreenGeometry, config: ConfigData, flight: FlightData, parent=None):
+        super().__init__(win, config, flight, parent)
 
-        self.config = config
-        self.flight = flight
-
-        # Create the main layout
-        self.axisTunePageLayout = QVBoxLayout(self)
-        self.axisTunePageLayout.setSpacing(10)
-        self.axisTunePageLayout.setContentsMargins(0, 0, 0, 0)
+        self.tuneLayout = self.page_layout
 
         # Create labels
         self.x_label = QLabel()
@@ -40,7 +34,7 @@ class TunePage(QWidget):
         self.xAxisButton = QPushButton()
         self.xAxisButton.clicked.connect(lambda: self.open_axis_window('x'))
         x_axis_layout.addWidget(self.xAxisButton)
-        self.axisTunePageLayout.addLayout(x_axis_layout)
+        self.tuneLayout.addLayout(x_axis_layout)
 
         # Y Axis
         y_axis_layout = QHBoxLayout()
@@ -50,7 +44,7 @@ class TunePage(QWidget):
         self.yAxisButton = QPushButton()
         self.yAxisButton.clicked.connect(lambda: self.open_axis_window('y'))
         y_axis_layout.addWidget(self.yAxisButton)
-        self.axisTunePageLayout.addLayout(y_axis_layout)
+        self.tuneLayout.addLayout(y_axis_layout)
 
         # Z Axis
         z_axis_layout = QHBoxLayout()
@@ -60,7 +54,7 @@ class TunePage(QWidget):
         self.zAxisButton = QPushButton()
         self.zAxisButton.clicked.connect(lambda: self.open_axis_window('z'))
         z_axis_layout.addWidget(self.zAxisButton)
-        self.axisTunePageLayout.addLayout(z_axis_layout)
+        self.tuneLayout.addLayout(z_axis_layout)
 
         # RX Axis
         rx_axis_layout = QHBoxLayout()
@@ -70,7 +64,7 @@ class TunePage(QWidget):
         self.rxAxisButton = QPushButton()
         self.rxAxisButton.clicked.connect(lambda: self.open_axis_window('rx'))
         rx_axis_layout.addWidget(self.rxAxisButton)
-        self.axisTunePageLayout.addLayout(rx_axis_layout)
+        self.tuneLayout.addLayout(rx_axis_layout)
 
         # RY Axis
         ry_axis_layout = QHBoxLayout()
@@ -80,7 +74,7 @@ class TunePage(QWidget):
         self.ryAxisButton = QPushButton()
         self.ryAxisButton.clicked.connect(lambda: self.open_axis_window('ry'))
         ry_axis_layout.addWidget(self.ryAxisButton)
-        self.axisTunePageLayout.addLayout(ry_axis_layout)
+        self.tuneLayout.addLayout(ry_axis_layout)
 
         # RZ Axis
         rz_axis_layout = QHBoxLayout()
@@ -90,12 +84,12 @@ class TunePage(QWidget):
         self.rzAxisButton = QPushButton()
         self.rzAxisButton.clicked.connect(lambda: self.open_axis_window('rz'))
         rz_axis_layout.addWidget(self.rzAxisButton)
-        self.axisTunePageLayout.addLayout(rz_axis_layout)
+        self.tuneLayout.addLayout(rz_axis_layout)
 
         # Initialize UI texts
         self.retranslate_ui()
 
-        self.axisTunePageLayout.addStretch()
+        self.tuneLayout.addStretch()
 
     def retranslate_ui(self):
         self.x_label.setText(i18n.t('JoyAxis', axis='X'))

@@ -1,34 +1,26 @@
 import os
 from enum import Enum
-from typing import Dict, Tuple, TypedDict
+from typing import Any, Dict, Tuple, TypedDict
 
 from configobj import ConfigObj, ConfigObjError
 from loguru import logger
 from validate import Validator
 
 from common.constants import MODULES_PATH
+from controller.control import FixedWingController, HelicopterController
+from controller.manager import ControllerManager
 
 
-class ManifestConfig(TypedDict):
+class ModuleConfig(TypedDict):
     model: str
     title: str
     platform: str
     connect: str
 
 
-class DataConfig(TypedDict):
-    flight_mode: int
-    camera_fov: int
-    throttle_speed: int
-    collective_speed: int
-    pedals_speed: int
-    throttle_increase: str
-    throttle_decrease: str
-
-
 class ModuleConfig(TypedDict):
-    Manifest: ManifestConfig
-    Data: DataConfig
+    Module: ModuleConfig
+    Data: Dict[str, Any]
 
 
 ModuleData = Dict[str, Tuple[str, ModuleConfig]]
@@ -45,10 +37,10 @@ class FlightSim(str, Enum):
 
 
 MODULE_SPEC = {
-    'Manifest': {
+    'Module': {
         'model': 'string()',
         'title': 'string()',
-        'platform': 'option("DCS", "MSFS2020")',
+        'platform': f'option({FlightSim.DCS.value}, {FlightSim.FS2020.value})',
         'connect': 'option("serial", "simconnect", "dcs-bios")',
     },
     'Data': {
@@ -71,19 +63,23 @@ def load_modules(base_dir: str = MODULES_PATH) -> ModuleData:
         return map
 
     for root, _, files in os.walk(base_dir):
-        if 'module.ini' in files:
-            ini_file_path = os.path.join(root, 'module.ini')
+        if 'manifest.ini' in files:
+            ini_file_path = os.path.join(root, 'manifest.ini')
 
             try:
-                config = ConfigObj(
+                manifest = ConfigObj(
                     ini_file_path, encoding='utf-8', configspec=MODULE_SPEC, raise_errors=False, file_error=True
                 )
 
                 validator = Validator()
-                config.validate(validator)
+                valid = manifest.validate(validator)
 
-                if 'Manifest' in config:
-                    model = config['Manifest']['model']
+                if valid is not True:
+                    logger.error('Invalid manifest in {}: \n{}', ini_file_path, valid)
+                    continue
+
+                if 'Module' in manifest:
+                    model = manifest['Module']['model']
                     key = model
                 else:
                     key = os.path.basename(root)
@@ -92,7 +88,7 @@ def load_modules(base_dir: str = MODULES_PATH) -> ModuleData:
                     logger.warning(
                         "Duplicate model key '{}' found, {} will overwrite existing configuration", key, ini_file_path
                     )
-                map[key] = (root, dict(config))
+                map[key] = (root, dict(manifest))
 
             except ConfigObjError as e:
                 logger.exception('Invalid configuration format in {}: {}', ini_file_path, str(e))
@@ -100,3 +96,17 @@ def load_modules(base_dir: str = MODULES_PATH) -> ModuleData:
                 logger.exception('Error parsing {}: {}', ini_file_path, str(e))
 
     return map
+
+
+controller_manager = ControllerManager()
+
+controller_manager.register(
+    1,
+    FixedWingController,
+    {'name': 'Fixed Wing', 'options': FixedWingController.get_options(), 'i18n': FixedWingController.get_i18n()},
+)
+controller_manager.register(
+    2,
+    HelicopterController,
+    {'name': 'Helicopter', 'options': HelicopterController.get_options(), 'i18n': HelicopterController.get_i18n()},
+)

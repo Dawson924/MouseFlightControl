@@ -4,8 +4,8 @@ from common.axis import AXIS_MAX
 from lib.win32 import get_screen_geometry
 
 
-class Screen:
-    def __init__(self, window_handle: int, screen_object):
+class ScreenGeometry:
+    def __init__(self, winId: int, screen):
         try:
             (
                 self.screen_width,
@@ -13,7 +13,7 @@ class Screen:
                 self.center_x,
                 self.center_y,
                 self.scale,
-            ) = get_screen_geometry(window_handle, screen_object)
+            ) = get_screen_geometry(winId, screen)
         except Exception as e:
             from lib.logger import logger
 
@@ -24,7 +24,7 @@ class Screen:
             self.center_y = 540
             self.scale = 1.0
 
-    def to_pixels(self, pt: int) -> int:
+    def px(self, pt: int) -> int:
         return int(pt * self.scale)
 
     def axis_to_screen(self, axis_x: float, axis_y: float) -> Tuple[float, float]:

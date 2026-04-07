@@ -23,7 +23,10 @@ class ConfigData(FlatConfig):
             'freecam_auto_center': {'type': bool, 'default': False},
             'freecam_toggle': {'type': bool, 'default': False},
         },
-        'Window': {'width': {'type': int, 'min': 200, 'max': 800, 'default': 350}},
+        'Window': {
+            'width': {'type': int, 'default': 0},
+            'height': {'type': int, 'default': 0},
+        },
     }
 
 

@@ -1,62 +1,63 @@
+BackToModules: 'В МОДУЛИ'
 ButtonMapping: Назначение кнопок мыши
-CameraFov: Поле зрения свободного обзора
-CenterControl: Центрировать управление
-CollectiveSpeed: Скорость общего шага
-ConfigLoadFailed: Не удалось загрузить конфигурационный файл
-ConfigSaveFailed: Не удалось сохранить конфигурационный файл
-ConfigSaved: Конфигурационный файл сохранен успешно
-ConnectPage: Подключение
+CameraFov: Поле зрения свободной камеры
+CenterControl: Центрирование управления
+CollectiveSpeed: Скорость коллектива
+ConfigLoadFailed: 'Не удалось загрузить конфигурацию: '
+ConfigSaveFailed: 'Не удалось сохранить конфигурацию: '
+ConfigSaved: Конфигурация сохранена
+ConnectPage: ПОДКЛЮЧЕНИЕ
 Connected: Подключено
 Controlled: Управляется
-Controller: Игровой контроллер
-ControlsPage: Управление
+Controller: Контроллер полета
+ControlsPage: УПРАВЛЕНИЕ
 CurrentValue: 'Текущее значение: %{value}'
 DebugEnabled: Режим отладки включен
 DeviceNotFoundMessage: Не найдено доступных устройств vJoy. Пожалуйста, посетите страницу
   помощи программного обеспечения или официальный сайт vJoy, чтобы найти решения
 Disconnected: Отключено
-EnableFreecam: Включить свободный обзор
-Error: Исключение
+EnableFreecam: Включить свободную камеру
+Error: Ошибка выполнения
 FlightSim: Симулятор полетов
-FreecamAutoCenter: Автоматическое центрирование свободного обзора
-General: Основные
+FreecamAutoCenter: Автоцентрирование свободной камеры
+General: Общие
 HelicopterController: Режим вертолета
-HintOverlay: Прозрачные подсказки
+HintOverlay: Подсказки
 ImportPreset: Импорт...
 Installed: Установлено
 JoyAxis: Ось %{axis}
 Language: Язык
 LogFile: Лог-файл
-MemorizeAxisPos: Сохранять положение осей
+MemorizeAxisPos: Сохранение позиции осей
 Modules: Модули
-MouseFlight: Полет мышью
+MouseFlight: MouseFlight
 NoControl: Без управления
-None: Не выбрано
-OptionsPage: Параметры
+None: Нет
+OptionsPage: ОПЦИИ
 PlaneController: Режим самолета
-RudderSpeed: Скорость руля направления
-RuntimeEnv: Операционная среда
+RudderSpeed: Скорость руля
+RuntimeEnv: Окружение
 Scale: Масштаб
 ScreenInfo: Информация о экране
 Script: Скрипт
 Sensitive: Чувствительность
-ShowCaptions: Показать подсказки
+ShowCaptions: Подписи
 ShowCursor: Показать курсор
 ShowIndicator: Индикатор управления
-Start: Старт
-StartupSuccessful: Запуск выполнен успешно
+Start: СТАРТ
+StartupSuccessful: Успешно запущено
 StartupTime: Время запуска
 StatusStopped: 'Состояние: остановлено'
 StatusWorking: 'Состояние: работает'
-Stop: Стоп
+Stop: СТОП
 TaxiMode: Режим таксировки
 TaxiModeOff: 'Режим таксировки: Выключен'
 TaxiModeOn: 'Режим таксировки: Включен'
-ThrottleDecrease: Снижение скорости
-ThrottleIncrease: Увеличьте скорость
-ThrottleSpeed: Регулировка скорости дросселя
-Title: Полет мышью %{version}
+ThrottleDecrease: Уменьшить скорость
+ThrottleIncrease: Увеличить скорость
+ThrottleSpeed: Скорость дросселя
+Title: Mouse Flight %{version}
 ToggleEnabled: Переключить управление
-TunePage: Джойстик
-VersionInfo: Информация о версии
-ViewCenter: Центрирование свободного обзора
+TunePage: ОСИ
+VersionInfo: Версия
+ViewCenter: Центр вида

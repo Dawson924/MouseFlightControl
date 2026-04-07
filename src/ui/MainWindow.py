@@ -50,39 +50,6 @@ class Ui_MainWindow(object):
 
         self.centralLayout.addWidget(self.tabWidget)
 
-        self.vboxLayout = QVBoxLayout()
-        self.vboxLayout.setSpacing(5)
-        self.vboxLayout.setObjectName(u"vboxLayout")
-        self.controllerLayout = QVBoxLayout()
-        self.controllerLayout.setSpacing(5)
-        self.controllerLayout.setObjectName(u"controllerLayout")
-        self.controllerLabel = QLabel(self.centralWidget)
-        self.controllerLabel.setObjectName(u"controllerLabel")
-
-        self.controllerLayout.addWidget(self.controllerLabel)
-
-        self.flightMode = QComboBox(self.centralWidget)
-        self.flightMode.setObjectName(u"flightMode")
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.flightMode.sizePolicy().hasHeightForWidth())
-        self.flightMode.setSizePolicy(sizePolicy)
-
-        self.controllerLayout.addWidget(self.flightMode)
-
-
-        self.vboxLayout.addLayout(self.controllerLayout)
-
-
-        self.centralLayout.addLayout(self.vboxLayout)
-
-        self.ControllerVerticalLayout = QVBoxLayout()
-        self.ControllerVerticalLayout.setSpacing(8)
-        self.ControllerVerticalLayout.setObjectName(u"ControllerVerticalLayout")
-
-        self.centralLayout.addLayout(self.ControllerVerticalLayout)
-
         self.startButton = QPushButton(self.centralWidget)
         self.startButton.setObjectName(u"startButton")
 
@@ -106,7 +73,6 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.controlsTab), QCoreApplication.translate("MainWindow", u"CONTROLS", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.optionsTab), QCoreApplication.translate("MainWindow", u"OPTIONS", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.axisTab), QCoreApplication.translate("MainWindow", u"AXIS", None))
-        self.controllerLabel.setText("")
         self.startButton.setText("")
         self.statusLabel.setText("")
         pass

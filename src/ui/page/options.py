@@ -2,25 +2,21 @@ from PySide2.QtWidgets import (
     QCheckBox,
     QHBoxLayout,
     QLabel,
-    QVBoxLayout,
 )
 
 import i18n
 from data.config import ConfigData
 from data.flight import FlightData
+from lib.screen import ScreenGeometry
 from ui.page import AbstractPage
 
 
 class OptionsPage(AbstractPage):
-    def __init__(self, config: ConfigData, flight: FlightData, parent=None):
-        super().__init__(config, flight, parent)
+    def __init__(self, win: ScreenGeometry, config: ConfigData, flight: FlightData, parent=None):
+        super().__init__(win, config, flight, parent)
 
-        # Create the main layout
-        self.optionsPageLayout = self.page_layout
-
-        # Options area
-        options_layout = QVBoxLayout()
-        options_layout.setSpacing(8)
+        self.options_layout = self.page_layout
+        self.options_layout.setSpacing(8)
 
         # Show cursor option
         show_cursor_layout = QHBoxLayout()
@@ -31,7 +27,7 @@ class OptionsPage(AbstractPage):
         self.show_cursor = QCheckBox()
         self.show_cursor.stateChanged.connect(lambda state: self.set_config('show_cursor', bool(state)))
         show_cursor_layout.addWidget(self.show_cursor)
-        options_layout.addLayout(show_cursor_layout)
+        self.options_layout.addLayout(show_cursor_layout)
         self.ui_elements.update({'show_cursor': [bool]})
 
         # Show hint option
@@ -43,7 +39,7 @@ class OptionsPage(AbstractPage):
         self.show_hint = QCheckBox()
         self.show_hint.stateChanged.connect(lambda state: self.set_config('show_hint', bool(state)))
         show_hint_layout.addWidget(self.show_hint)
-        options_layout.addLayout(show_hint_layout)
+        self.options_layout.addLayout(show_hint_layout)
         self.ui_elements.update({'show_hint': [bool]})
 
         # Show indicator option
@@ -55,7 +51,7 @@ class OptionsPage(AbstractPage):
         self.show_indicator = QCheckBox()
         self.show_indicator.stateChanged.connect(lambda state: self.set_config('show_indicator', bool(state)))
         show_indicator_layout.addWidget(self.show_indicator)
-        options_layout.addLayout(show_indicator_layout)
+        self.options_layout.addLayout(show_indicator_layout)
         self.ui_elements.update({'show_indicator': [bool]})
 
         # Button mapping option
@@ -67,7 +63,7 @@ class OptionsPage(AbstractPage):
         self.button_mapping = QCheckBox()
         self.button_mapping.stateChanged.connect(lambda state: self.set_config('button_mapping', bool(state)))
         button_mapping_layout.addWidget(self.button_mapping)
-        options_layout.addLayout(button_mapping_layout)
+        self.options_layout.addLayout(button_mapping_layout)
         self.ui_elements.update({'button_mapping': [bool]})
 
         # Memorize axis position option
@@ -79,7 +75,7 @@ class OptionsPage(AbstractPage):
         self.memorize_axis_pos = QCheckBox()
         self.memorize_axis_pos.stateChanged.connect(lambda state: self.set_config('memorize_axis_pos', bool(state)))
         memorize_axis_layout.addWidget(self.memorize_axis_pos)
-        options_layout.addLayout(memorize_axis_layout)
+        self.options_layout.addLayout(memorize_axis_layout)
         self.ui_elements.update({'memorize_axis_pos': [bool]})
 
         # Freecam auto center option
@@ -89,16 +85,12 @@ class OptionsPage(AbstractPage):
         freecam_auto_center_layout.addWidget(self.freecamAutoCenterLabel)
         freecam_auto_center_layout.addStretch()
         self.freecam_auto_center = QCheckBox()
-        self.freecam_auto_center.stateChanged.connect(
-            lambda state: self.set_flight_data('freecam_auto_center', bool(state))
-        )
+        self.freecam_auto_center.stateChanged.connect(lambda state: self.set_config('freecam_auto_center', bool(state)))
         freecam_auto_center_layout.addWidget(self.freecam_auto_center)
-        options_layout.addLayout(freecam_auto_center_layout)
+        self.options_layout.addLayout(freecam_auto_center_layout)
         self.ui_elements.update({'freecam_auto_center': [bool]})
 
-        options_layout.addStretch()
-
-        self.optionsPageLayout.addLayout(options_layout)
+        self.options_layout.addStretch()
 
         self.update_states()
         self.retranslate_ui()

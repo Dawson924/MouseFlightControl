@@ -5,11 +5,12 @@ import time
 from typing import Optional
 
 from flightsim.connect import FlightConnect, FlightData
+from flightsim.module import FlightSim
 
 
 class DCSConnect(FlightConnect):
     def __init__(self, tcp_host='127.0.0.1', tcp_port=42070, udp_host='127.0.0.1', udp_port=42069):
-        super().__init__()
+        super().__init__(FlightSim.DCS)
         self.tcp_host = tcp_host
         self.tcp_port = tcp_port
         self.udp_host = udp_host

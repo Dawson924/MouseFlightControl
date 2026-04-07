@@ -1,7 +1,6 @@
 import os
 from typing import Tuple
 
-import yaml
 from loguru import logger
 
 import i18n
