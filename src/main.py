@@ -28,15 +28,17 @@ from common.axis import (
 )
 from common.config import LANGUAGE_CONFIG
 from common.constants import APP_VERSION, SCRIPT_INI_PATH
+from connect.module import controllers, load_modules
+from connect.serial.dcs import DCSConnect
 from controller.base import BaseController
-from flightsim.module import controller_manager, load_modules
 from input import InputStateMonitor
 from lib.axis import axis2fov, fov, set_axis
 from lib.config import load_all_data, save_all_data
+from lib.container import store
 from lib.event import EventEmitter
 from lib.fs import open_directory
 from lib.joystick import get_joystick_device
-from lib.logger import get_logger, init_logger, logger
+from lib.log import get_logger, init_logger, logger
 from lib.screen import ScreenGeometry
 from lib.script import get_default, load_data, save_data, validate_config
 from lib.win32 import (
@@ -80,8 +82,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.scale = self.win.scale
         self.px = self.win.px
 
-        self.min_w_size = self.win.px(350)
-        self.max_w_size = self.win.px(550)
+        self.min_w_size = self.px(350)
+        self.max_w_size = self.px(550)
         self.input_width = 100
 
         self.apply_stylesheet()
@@ -113,7 +115,13 @@ class MainWindow(QtWidgets.QMainWindow):
         i18n.set('locale', self.config.get('language'))
 
         self.init_joystick()
+        self.init_connect()
         self.init_scripts()
+
+        store.singleton('config', self.config)
+        store.singleton('flightdata', self.flightdata)
+        store.singleton('joystick', self.joystick)
+        store.singleton('connector', self.connector)
 
         self.init_ui()
         self.create_menu()
@@ -314,7 +322,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def init_pages(self):
         self.modules = load_modules()
         self.connect_page = ConnectPage(self.win, self.config, self.flightdata, self.modules)
-        self.connect_page.state_changed.connect(self.update_ui)
         self.ui.connectPageLayout.addWidget(self.connect_page)
 
         self.controls_page = ControlsPage(self.win, self.config, self.flightdata)
@@ -326,6 +333,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tune_page = TunePage(self.win, self.config, self.flightdata)
         self.ui.axisTunePageLayout.addWidget(self.tune_page)
 
+        self.ui.tabWidget.currentChanged.connect(self.on_tab_changed)
+
+        self._pages = [
+            self.connect_page,
+            self.controls_page,
+            self.options_page,
+            self.tune_page,
+        ]
+
+    def on_tab_changed(self, index):
+        if 0 <= index < len(self._pages):
+            self._pages[index].update_ui()
+
     def init_joystick(self):
         try:
             self.axis = AxisPos(0, 0, AXIS_MIN, 0, 0, 0, fov(self.flightdata.get('camera_fov')))
@@ -333,6 +353,14 @@ class MainWindow(QtWidgets.QMainWindow):
         except RuntimeError as e:
             logger.error(str(e))
             self.message_box.error(i18n.t('Error'), i18n.t('DeviceNotFoundMessage'))
+
+    def init_connect(self):
+        try:
+            logger.info('Attempting to connect...')
+            self.connector = DCSConnect(timeout=0.16)
+            self.connector.connect()
+        except Exception as e:
+            logger.exception(str(e))
 
     def init_scripts(self):
         self.lua_globals = self.lua.globals()
@@ -578,12 +606,6 @@ class MainWindow(QtWidgets.QMainWindow):
             config = self.config
             flight = self.flightdata
 
-            Class = controller_manager.get_class(flight['Input']['flight_mode'])
-            if Class:
-                controller = Class(self.joystick, self.flightdata)
-            else:
-                controller = None
-
             self.lua_globals.Control.mode = flight['Input']['flight_mode']
 
             input.set_mouse_position(self.center_x, self.center_y)
@@ -744,8 +766,9 @@ class MainWindow(QtWidgets.QMainWindow):
                         if ground_taxi:
                             self.axis.rd = self.axis.x
 
-                if controller and isinstance(controller, BaseController):
-                    controller.update(
+                self.controller = controllers.update(flight)
+                if self.controller and isinstance(self.controller, BaseController):
+                    self.controller.update(
                         self.axis,
                         input,
                         SimpleNamespace(enabled=enabled, dt=delta_time),
@@ -853,9 +876,11 @@ if __name__ == '__main__':
         i18n.set('fallback', 'en_US')
         logger.info('i18n initialized successfully')
 
+        logger.info('Creating MainWindow...')
         window = MainWindow()
         logger.info('Window created successfully')
 
+        logger.info('Starting application event loop...')
         sys.exit(app.exec_())
     except Exception as e:
         logger.critical(f'Critical error during startup: {e}')

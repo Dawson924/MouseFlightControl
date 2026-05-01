@@ -1,43 +1,50 @@
 import os
+from typing import Any
 
 from PySide2.QtCore import QSize, Qt, QTimer, Signal
-from PySide2.QtGui import QDoubleValidator, QIntValidator, QPainter, QPainterPath, QPixmap, QColor
+from PySide2.QtGui import QColor, QDoubleValidator, QIntValidator, QLinearGradient, QPainter, QPainterPath, QPixmap
 from PySide2.QtWidgets import (
     QCheckBox,
-    QComboBox,
     QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QScrollArea,
     QSizePolicy,
     QSpacerItem,
-    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
 import i18n
-from data.config import ConfigData
-from data.flight import FlightData
-from flightsim.dcs.connect import DCSConnect
-from flightsim.module import FlightSim, ModuleData, controller_manager
+from connect.flight import FlightConnect
+from connect.module import FlightSim, ModuleRegistry, controllers
+from data.config import Config
+from data.flight import FlightInput
+from lib.container import store
 from lib.screen import ScreenGeometry
 from type.widget import OptionWidget
+from ui.widgets import ComboBox, LineEdit, SpinBox
+from ui.factory import WidgetFactory
 
 from . import AbstractPage
 
 
 class ImagePixmap(QLabel):
-    def __init__(self, parent=None, radius=4, opacity=1):
+    def __init__(self, parent=None, radius=4, opacity=1, gradient=0):
         super().__init__(parent)
         self.setAlignment(Qt.AlignCenter)
         self._pixmap = QPixmap()
         self.radius = radius
         self.opacity = opacity
+        self.alpha = gradient
 
     def setPixmap(self, pixmap):
         self._pixmap = pixmap
+        self.update()
+
+    def setGradientAlpha(self, alpha):
+        self.alpha = alpha
         self.update()
 
     def paintEvent(self, event):
@@ -62,28 +69,32 @@ class ImagePixmap(QLabel):
 
         painter.drawPixmap(x, y, scaled_pixmap)
 
+        # Background overlay
         overlay_path = QPainterPath()
         overlay_path.addRoundedRect(rect, self.radius, self.radius)
         painter.fillPath(overlay_path, QColor(0, 0, 0, 255 * (1 - self.opacity)))
+
+        # Background gradient
+        gradient = QLinearGradient(0, 0, 0, rect.height())
+        gradient.setColorAt(0, QColor(0, 0, 0, 0))
+        gradient.setColorAt(1, QColor(0, 0, 0, self.alpha))
+        painter.fillPath(overlay_path, gradient)
 
 
 class ImageCard(QFrame):
     clicked = Signal(str)
 
-    def __init__(self, module_id, module_name, parent=None):
+    def __init__(self, id, text, parent=None):
         super().__init__(parent)
-        self.module_id = module_id
-        self.module_name = module_name
+        self.id = id
+        self.text = text
 
         self.setStyleSheet("""
             ImageCard {
                 background-color: #f8f9fa;
-                border-radius: 8px;
-                border: 1px solid #e9ecef;
             }
             ImageCard:hover {
                 background-color: #eef2f7;
-                border-color: #dee2e6;
             }
         """)
 
@@ -99,12 +110,12 @@ class ImageCard(QFrame):
         container_layout = QVBoxLayout(self.image_container)
         container_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.bg_image_label = ImagePixmap(self.image_container, radius=8, opacity=0.9)
+        self.bg_image_label = ImagePixmap(self.image_container, radius=8, opacity=1, gradient=100)
         self.bg_image_label.setObjectName('bgImageLabel')
         self.bg_image_label.setMinimumHeight(130)
         container_layout.addWidget(self.bg_image_label)
 
-        self.name_label = QLabel(module_name, self.image_container)
+        self.name_label = QLabel(text, self.image_container)
         self.name_label.setObjectName('nameLabel')
         self.name_label.setAlignment(Qt.AlignLeft | Qt.AlignBottom)
 
@@ -126,20 +137,6 @@ class ImageCard(QFrame):
         container_h = self.image_container.height()
         self.name_label.setGeometry(0, container_h - h, w, h)
 
-    def _linear_gradient(self, alpha):
-        return f"""
-            ImageCard #nameLabel {{
-                font-size: 14px;
-                font-weight: 500;
-                color: #d0d0d0;
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 transparent, stop:1 rgba(0, 0, 0, {alpha}));
-                border-bottom-left-radius: 10px;
-                border-bottom-right-radius: 10px;
-                padding: 18px 8px 6px 8px;
-            }}
-        """
-
     def _start_transition(self, target_alpha):
         self._target_alpha = target_alpha
         if not self._transition_timer.isActive():
@@ -151,7 +148,7 @@ class ImageCard(QFrame):
             self._current_alpha = min(self._current_alpha + step, self._target_alpha)
         elif self._current_alpha > self._target_alpha:
             self._current_alpha = max(self._current_alpha - step, self._target_alpha)
-        self.name_label.setStyleSheet(self._linear_gradient(self._current_alpha))
+        self.bg_image_label.setGradientAlpha(self._current_alpha)
         if self._current_alpha == self._target_alpha:
             self._transition_timer.stop()
 
@@ -167,32 +164,32 @@ class ImageCard(QFrame):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.clicked.emit(self.module_id)
+            self.clicked.emit(self.id)
         super().mousePressEvent(event)
 
     def set_background_image(self, image_path):
         self.bg_image_label.setPixmap(QPixmap())
 
-        if not image_path or not os.path.exists(image_path):
-            self._has_image = False
-            self.bg_image_label.setStyleSheet("""
-                ImageCard #bgImageLabel {
-                    background-color: #dcdcdc;
-                    border-radius: 8px;
-                    padding: 0px;
-                }
-            """)
-            self.name_label.setStyleSheet("""
-                ImageCard #nameLabel {
-                    font-size: 14px;
-                    font-weight: 500;
-                    color: #2c3e50;
-                    background-color: transparent;
-                    margin-left: 4px;
-                    padding-bottom: 6px;
-                }
-            """)
-            return
+        # if not image_path or not os.path.exists(image_path):
+        #     self._has_image = False
+        #     self.bg_image_label.setStyleSheet("""
+        #         ImageCard #bgImageLabel {
+        #             background-color: #dcdcdc;
+        #             border-radius: 8px;
+        #             padding: 0px;
+        #         }
+        #     """)
+        #     self.name_label.setStyleSheet("""
+        #         ImageCard #nameLabel {
+        #             font-size: 14px;
+        #             font-weight: 500;
+        #             color: #2c3e50;
+        #             background-color: transparent;
+        #             margin-left: 4px;
+        #             padding-bottom: 6px;
+        #         }
+        #     """)
+        #     return
 
         pixmap = QPixmap(image_path)
         if not pixmap.isNull():
@@ -200,22 +197,17 @@ class ImageCard(QFrame):
             self.bg_image_label.setPixmap(scaled_pixmap)
 
             self._has_image = True
-            self.bg_image_label.setStyleSheet("""
-                ImageCard #bgImageLabel {
-                    border-radius: 8px;
-                    padding: 0px;
+            self.name_label.setStyleSheet("""
+                ImageCard #nameLabel {
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #d0d0d0;
+                    background-color: transparent;
+                    padding: 18px 8px 6px 8px;
                 }
             """)
-            self.name_label.setStyleSheet(self._linear_gradient(self._current_alpha))
         else:
             self._has_image = False
-            self.bg_image_label.setStyleSheet("""
-                ImageCard #bgImageLabel {
-                    background-color: #dcdcdc;
-                    border-radius: 8px;
-                    padding: 0px;
-                }
-            """)
             self.name_label.setStyleSheet("""
                 ImageCard #nameLabel {
                     font-size: 14px;
@@ -229,16 +221,22 @@ class ImageCard(QFrame):
 
 
 class ConnectPage(AbstractPage):
-    def __init__(
-        self, win: ScreenGeometry, config: ConfigData, flight: FlightData, module_data: ModuleData, parent=None
-    ):
+    def __init__(self, win: ScreenGeometry, config: Config, flight: FlightInput, modules: ModuleRegistry, parent=None):
         super().__init__(win, config, flight, parent)
         self.flightsims = {
-            FlightSim.DCS: {'name': FlightSim.DCS.full_name, 'image_path': 'assets/DCS.jpg'},
-            FlightSim.FS2020: {'name': FlightSim.FS2020.full_name, 'image_path': 'assets/FS2020.jpg'},
+            FlightSim.DCS: {'name': FlightSim.DCS.full_name, 'image_path': 'assets/Default.jpg'},
+            FlightSim.FS2020: {'name': FlightSim.FS2020.full_name, 'image_path': 'assets/Default.jpg'},
         }
         self.modules = {}
-        self.connector = DCSConnect(self.flight)
+        self._controller_widgets = {}
+        self.connector: FlightConnect = store.get('connector')
+
+        self._image_cache = {}
+        self._last_image_path = None
+
+        self.status_timer = QTimer(self)
+        self.status_timer.timeout.connect(self.check_connection)
+        self.status_timer.start(1000)
 
         self.connectLayout = self.page_layout
         self.connectLayout.setSpacing(10)
@@ -254,38 +252,7 @@ class ConnectPage(AbstractPage):
             }
         """)
         h_layout.addWidget(self.flightSimLabel)
-        self.flightSimSelect = QComboBox()
-        size_policy = self.flightSimSelect.sizePolicy()
-        size_policy.setVerticalPolicy(size_policy.Fixed)
-        self.flightSimSelect.setSizePolicy(size_policy)
-        self.flightSimSelect.setMinimumWidth(120)
-        self.flightSimSelect.setStyleSheet(
-            """
-            QComboBox {
-                border: 1px solid #e0e0e0;
-                border-radius: 6px;
-                padding: 6px 10px;
-                background: white;
-                font-size: 13px;
-            }
-            QComboBox:hover {
-                border-color: #4a90e2;
-            }
-            QComboBox:focus {
-                border-color: #4a90e2;
-                outline: none;
-            }
-            QComboBox::drop-down {
-                border: none;
-                background: transparent;
-            }
-            QComboBox::down-arrow {
-                width: 18px;
-                height: 18px;
-                image: url(assets/down_arrow.svg);
-            }
-        """
-        )
+        self.flightSimSelect = ComboBox()
         self.flightSimSelect.currentIndexChanged.connect(self.on_platform_changed)
         h_layout.addWidget(self.flightSimSelect)
         self.connectLayout.addLayout(h_layout)
@@ -331,38 +298,49 @@ class ConnectPage(AbstractPage):
         self.panel_layout.setSpacing(8)
 
         image_section = QWidget()
-        image_layout = QVBoxLayout(image_section)
+        image_layout = QGridLayout(image_section)
         image_layout.setContentsMargins(0, 0, 0, 0)
         image_layout.setSpacing(0)
 
         self.image_label = ImagePixmap(radius=8, opacity=0.7)
         self.image_label.setMinimumHeight(80)
         self.image_label.setMaximumHeight(120)
-        image_layout.addWidget(self.image_label)
+        image_layout.addWidget(self.image_label, 0, 0)
 
-        self.module_name_label = QLabel()
-        self.module_name_label.setParent(self.image_label)
-        self.module_name_label.setStyleSheet("""
+        self.title_container = QWidget()
+        self.title_container.setStyleSheet("""
+            QWidget {
+                background-color: transparent;
+            }
+        """)
+        self.title_container.setFixedHeight(50)
+        self.title_layout = QVBoxLayout(self.title_container)
+        self.title_layout.setContentsMargins(8, 6, 6, 6)
+        self.title_layout.setSpacing(0)
+
+        self.sim_label = QLabel()
+        self.sim_label.setStyleSheet("""
             QLabel {
                 font-size: 14px;
                 font-weight: 600;
                 color: #ffffff;
                 background: transparent;
-                padding: 4px 4px;
             }
         """)
+        self.title_layout.addWidget(self.sim_label)
 
-        self.status_label = QLabel()
-        self.status_label.setParent(self.image_label)
-        self.status_label.setStyleSheet("""
+        self.module_label = QLabel()
+        self.module_label.setStyleSheet("""
             QLabel {
                 font-size: 10px;
                 font-weight: 500;
                 color: #d4d4d4;
                 background: transparent;
-                padding: 24px 6px;
             }
         """)
+        self.title_layout.addWidget(self.module_label)
+
+        image_layout.addWidget(self.title_container, 0, 0, Qt.AlignTop | Qt.AlignLeft)
 
         flight_panel = QWidget()
         flight_panel.setObjectName('flightPanel')
@@ -378,11 +356,11 @@ class ConnectPage(AbstractPage):
         self.flight_layout = QVBoxLayout(flight_panel)
         self.flight_layout.setContentsMargins(10, 10, 10, 10)
 
-        return_label = QLabel()
-        return_label.setText(i18n.t('BackToModules'))
-        return_label.setObjectName('returnLabel')
-        return_label.setAlignment(Qt.AlignCenter)
-        return_label.setStyleSheet("""
+        self.returnLabel = QLabel()
+        self.returnLabel.setText(i18n.t('BackToModules'))
+        self.returnLabel.setObjectName('returnLabel')
+        self.returnLabel.setAlignment(Qt.AlignCenter)
+        self.returnLabel.setStyleSheet("""
             #returnLabel {
                 font-size: 11px;
                 font-weight: 400;
@@ -395,16 +373,16 @@ class ConnectPage(AbstractPage):
                 background-color: #e0e0e0;
             }
         """)
-        size_policy = return_label.sizePolicy()
+        size_policy = self.returnLabel.sizePolicy()
         size_policy.setHorizontalPolicy(QSizePolicy.Minimum)
-        return_label.setSizePolicy(size_policy)
-        return_label.adjustSize()
-        return_label.setCursor(Qt.PointingHandCursor)
-        return_label.mousePressEvent = self.on_return_clicked
+        self.returnLabel.setSizePolicy(size_policy)
+        self.returnLabel.adjustSize()
+        self.returnLabel.setCursor(Qt.PointingHandCursor)
+        self.returnLabel.mousePressEvent = self.on_return_clicked
 
         self.panel_layout.addWidget(image_section)
         self.panel_layout.addWidget(flight_panel, 1)
-        self.panel_layout.addWidget(return_label, 0, Qt.AlignCenter)
+        self.panel_layout.addWidget(self.returnLabel, 0, Qt.AlignCenter)
 
         self.panel_container.hide()
 
@@ -415,49 +393,34 @@ class ConnectPage(AbstractPage):
 
         self._module_list = {}
 
-        self.init_modules(module_data)
+        self.init_modules(modules)
         self.init_ui()
         self.retranslate_ui()
 
-    def init_modules(self, module_data: ModuleData):
-        for mod_id, data in module_data.items():
-            dir, manifest = data
-            if 'Module' in manifest:
-                mod_id = manifest['Module']['model']
-                sim_id = manifest['Module']['platform']
-                name = manifest['Module']['title']
-                module = {
-                    'key': mod_id,
-                    'name': name,
-                    'image_path': os.path.join(dir, 'bg_image.jpg'),
-                    'control': manifest['Data']['flight_mode'],
-                    'platform': FlightSim(sim_id),
-                    'data': manifest['Data'],
-                }
-                self.modules[mod_id] = module
-
-        self._current_model = self.flight['Connect']['model']
-        self._current_platform = self.get_platform(self._current_model) if self._current_model else None
+    def init_modules(self, module_data: ModuleRegistry):
+        self.modules = module_data
+        self._model = self.flight['Connect']['model']
+        self._platform = self.get_platform(self._model)
 
     def init_ui(self):
         platforms = [(simid, detail['name']) for simid, detail in self.flightsims.items()]
-        self._populate_selections(platforms)
+        self._populate_platforms(platforms)
 
-        if self._current_model and self._current_platform:
-            index = self.flightSimSelect.findData(self._current_platform)
+        if self._model and self._platform:
+            index = self.flightSimSelect.findData(self._platform)
             if index >= 0:
                 self.flightSimSelect.setCurrentIndex(index)
             self.scroll_area.hide()
             self.panel_container.show()
-            self._populate_modules(self._current_platform)
-            self.update_panel(self._current_platform, self._current_model)
+            self._populate_modules(self._platform)
+            self.update_ui()
         elif platforms:
             self.flightSimSelect.setCurrentIndex(0)
             self._populate_modules(platforms[0][0])
             self.scroll_area.show()
             self.panel_container.hide()
 
-    def _populate_selections(self, platforms):
+    def _populate_platforms(self, platforms):
         self.flightSimSelect.blockSignals(True)
         self.flightSimSelect.clear()
         for simid, name in platforms:
@@ -465,179 +428,182 @@ class ConnectPage(AbstractPage):
         self.flightSimSelect.blockSignals(False)
 
     def _populate_modules(self, platform):
-        for module in self.modules.values():
-            key = module['key']
-            if key not in self._module_list:
-                card = ImageCard(key, module['name'])
-                card.clicked.connect(lambda key=key: self.on_module_clicked(key))
-                self._module_list[key] = card
-                self.list_layout.addWidget(card)
+        grouped_modules = {}
 
-                image_path = module['image_path']
+        for mod_id, module in self.modules.items():
+            if module['platform'] != platform:
+                continue
+
+            image_path = module['image_path']
+            name = module['name']
+            key = (image_path, name)
+
+            if key not in grouped_modules:
+                grouped_modules[key] = {'ids': [], 'module': module}
+            grouped_modules[key]['ids'].append(mod_id)
+
+        for (image_path, name), data in grouped_modules.items():
+            ids = data['ids']
+            module = data['module']
+
+            display_name = f'{name} ({len(ids)})' if len(ids) > 1 else name
+            primary_id = ids[0]
+
+            if primary_id not in self._module_list:
+                card = ImageCard(primary_id, display_name)
+                card.clicked.connect(lambda key=primary_id: self.on_module_clicked(key))
+                self._module_list[primary_id] = card
+                self.list_layout.addWidget(card)
                 card._image_path = image_path
                 card.set_background_image(image_path)
+                card._model_ids = ids
+            else:
+                card = self._module_list[primary_id]
+                card.text = display_name
+                card._model_ids = ids
+                card.name_label.setText(display_name)
 
-        for key, card in self._module_list.items():
-            module = self.modules.get(key)
-            if module:
-                card.setVisible(module['platform'] == platform)
+        for card_id, card in self._module_list.items():
+            module = self.modules.get(card_id)
+            card.setVisible(module is not None and module['platform'] == platform)
 
-        self._current_platform = platform
+        self._platform = platform
+
+    def _set_module_label(self, text, active=False):
+        if active:
+            self.module_label.setText(text)
+            self.module_label.setStyleSheet("""
+                QLabel {
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: #d4d4d4;
+                    background: transparent;
+                }
+            """)
+        else:
+            self.module_label.setText(text)
+            self.module_label.setStyleSheet("""
+                QLabel {
+                    font-size: 10px;
+                    font-weight: 500;
+                    color: #d4d4d4;
+                    background: transparent;
+                }
+            """)
+
+    def _set_image_label(self, image_path):
+        if image_path == self._last_image_path:
+            return
+
+        self._last_image_path = image_path
+
+        if not image_path:
+            self.image_label.setPixmap(None)
+            self.image_label.setStyleSheet("""
+                ImageLabel {
+                    background-color: #f8f9fa;
+                    border-top-left-radius: 8px;
+                    border-top-right-radius: 8px;
+                }
+            """)
+            return
+
+        cache_key = image_path
+
+        if cache_key in self._image_cache:
+            scaled_pixmap = self._image_cache[cache_key]
+        else:
+            pixmap = QPixmap(image_path)
+            if pixmap.isNull():
+                self.image_label.setPixmap(None)
+                self.image_label.setStyleSheet("""
+                    ImageLabel {
+                        background-color: #f8f9fa;
+                        border-top-left-radius: 8px;
+                        border-top-right-radius: 8px;
+                    }
+                """)
+                return
+
+            width = self.image_label.width()
+            height = self.image_label.height()
+            scaled_pixmap = pixmap.scaled(
+                width,
+                height,
+                Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+
+            self._image_cache[cache_key] = scaled_pixmap
+
+        self.image_label.setPixmap(scaled_pixmap)
+        self.image_label.setScaledContents(True)
 
     def _render_controllers(self, name):
         self._clear_controllers()
 
-        metadata = controller_manager.get_metadata(name)
+        metadata = controllers.get_metadata(name)
         if not metadata or 'options' not in metadata:
             return
 
+        spec_group = {}
         for option, widget, default in metadata['options']:
-            h_layout = QHBoxLayout()
-            h_layout.setSpacing(10)
-            h_layout.setContentsMargins(0, 0, 0, 0)
-
-            text = metadata.get('i18n', {}).get(option, {})
-            name = f'{option}Label'
-            label = QLabel()
-            label.setText(i18n.t(text))
-            label.setObjectName(name)
-            label.setMinimumWidth(120)
-            h_layout.addWidget(label)
-
-            spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-            h_layout.addItem(spacer)
-
+            widget_type = ''
             if widget == OptionWidget.CheckBox:
-                checkbox = QCheckBox()
-                checkbox.setObjectName(f'{option}Option')
-                if self.flight.has(option):
-                    value = self.flight.get(option)
-                    if isinstance(value, str):
-                        if value.lower() == 'true':
-                            value = True
-                        elif value.lower() == 'false':
-                            value = False
-                        else:
-                            value = False
-                    checkbox.setChecked(bool(value))
-                else:
-                    self.flight.set(option, default)
-                    checkbox.setChecked(default)
-
-                checkbox.stateChanged.connect(lambda state, opt=option: self.flight.set(opt, bool(state)))
-                h_layout.addWidget(checkbox)
-
-                self._controller_widgets[option] = {
-                    'label': label,
-                    'checkbox': checkbox,
-                    'layout': h_layout,
-                }
-
+                widget_type = 'CheckBox'
             elif widget == OptionWidget.LineEdit:
-                line_edit = QLineEdit()
-                line_edit.setObjectName(f'{option}Option')
-                line_edit.setStyleSheet(
-                    """
-                    QLineEdit {
-                        border: 1px solid #e0e0e0;
-                        border-radius: 6px;
-                        padding: 6px 10px;
-                        background: white;
-                        min-width: %dpx;
-                        max-width: %dpx;
-                        font-size: 13px;
-                    }
-                    QLineEdit:hover {
-                        border-color: #4a90e2;
-                    }
-                    QLineEdit:focus {
-                        border-color: #4a90e2;
-                        outline: none;
-                    }
-                """
-                    % (100, 100)
-                )
-
-                if self.flight.has(option):
-                    value = self.flight.get(option)
-                else:
-                    value = default
-                    self.flight.set(option, value)
-
-                if isinstance(value, int):
-                    line_edit.setValidator(QIntValidator())
-                elif isinstance(value, float):
-                    line_edit.setValidator(QDoubleValidator())
-
-                line_edit.setText(str(value))
-
-                line_edit.textChanged.connect(lambda text, opt=option: self.flight.set(opt, str(text)))
-
-                h_layout.addWidget(line_edit)
-
-                self._controller_widgets[option] = {
-                    'label': label,
-                    'line_edit': line_edit,
-                    'layout': h_layout,
-                }
-
+                widget_type = 'LineEdit'
             elif widget == OptionWidget.SpinBox:
-                spin_box = QSpinBox()
-                spin_box.setObjectName(f'{option}Option')
-                spin_box.setStyleSheet(
-                    """
-                    QSpinBox {
-                        border: 1px solid #e0e0e0;
-                        border-radius: 6px;
-                        padding: 6px 10px;
-                        background: white;
-                        min-width: %dpx;
-                        max-width: %dpx;
-                        font-size: 13px;
-                    }
-                    QSpinBox:hover {
-                        border-color: #4a90e2;
-                    }
-                    QSpinBox:focus {
-                        border-color: #4a90e2;
-                        outline: none;
-                    }
-                    QSpinBox::up-button, QSpinBox::down-button {
-                        background: transparent;
-                        border: none;
-                        width: 16px;
-                    }
-                """
-                    % (100, 100)
-                )
-                spin_box.setMinimum(0)
-                spin_box.setMaximum(1000000)
+                widget_type = 'SpinBox'
 
-                if self.flight.has(option):
-                    value = self.flight.get(option)
+            if self.flight.has(option):
+                value = self.flight.get(option)
+            else:
+                value = default
+                self.flight.set(option, value)
+
+            spec_group[option] = {
+                'widget': widget_type,
+                'i18n': metadata.get('i18n', {}).get(option, ''),
+                'default': default,
+                'value': value
+            }
+
+        self._controller_widgets = WidgetFactory.populate_from_spec(
+            self.flight_layout,
+            spec_group,
+            self.set_flight_option,
+            self
+        )
+
+        for option, spec in spec_group.items():
+            widget = self._controller_widgets.get(option)
+            if widget:
+                if spec['widget'] == 'CheckBox':
+                    if isinstance(spec['value'], str):
+                        if spec['value'].lower() == 'true':
+                            spec['value'] = True
+                        elif spec['value'].lower() == 'false':
+                            spec['value'] = False
+                        else:
+                            spec['value'] = False
+                    widget.setChecked(bool(spec['value']))
+                elif spec['widget'] == 'LineEdit':
+                    widget.setText(str(spec['value']))
+                    if isinstance(spec['value'], int):
+                        widget.setValidator(QIntValidator())
+                    elif isinstance(spec['value'], float):
+                        widget.setValidator(QDoubleValidator())
+                elif spec['widget'] == 'SpinBox':
                     try:
-                        value = int(value)
+                        widget.setValue(int(spec['value']))
                     except ValueError:
-                        value = default
-                else:
-                    value = default
-                    self.flight.set(option, value)
+                        widget.setValue(spec['default'])
 
-                spin_box.setValue(value)
+        WidgetFactory.add_stretch(self.flight_layout)
 
-                spin_box.valueChanged.connect(lambda value, opt=option: self.flight.set(opt, value))
-
-                h_layout.addWidget(spin_box)
-
-                self._controller_widgets[option] = {
-                    'label': label,
-                    'spin_box': spin_box,
-                    'layout': h_layout,
-                }
-
-            self.flight_layout.addLayout(h_layout)
-
-        self.flight_layout.addStretch(1)
+    def set_flight_option(self, key: str, value: Any):
+        self.flight.set(key, value)
 
     def _clear_controllers(self):
         while self.flight_layout.count():
@@ -663,8 +629,8 @@ class ConnectPage(AbstractPage):
         layout.deleteLater()
 
     def update_ui(self):
-        model = self._current_model
-        platform = self._current_platform
+        model = self._model
+        platform = self._platform
 
         self.flightSimSelect.blockSignals(True)
         if platform:
@@ -676,7 +642,10 @@ class ConnectPage(AbstractPage):
         if model and platform:
             self.scroll_area.hide()
             self.panel_container.show()
-            self.update_panel(platform, model)
+            self.sim_label.setText(self.flightsims[platform]['name'])
+            module = self.get_module(model)
+            if module:
+                self._render_controllers(module.get('control', 0))
         else:
             self.scroll_area.show()
             self.panel_container.hide()
@@ -685,42 +654,36 @@ class ConnectPage(AbstractPage):
         self.scroll_area.show()
         self.panel_container.hide()
 
-    def update_panel(self, sim_id, module_id):
-        module = self.get_module(module_id)
+    def check_connection(self):
+        data = self.connector.get_data()
+        if not data:
+            self._set_module_label('NO CONNECTION', False)
+            if self._platform:
+                image_path = self.flightsims[self._platform]['image_path']
+                self._set_image_label(image_path)
+            return
 
-        if module:
-            module_name = module.get('name', module_id)
-            self.module_name_label.setText(module_name)
-            self.module_name_label.adjustSize()
-            self.status_label.setText(f'NO CONNECTION TO {self.flightsims[sim_id]["name"].upper()}')
-            self.status_label.adjustSize()
+        elif data.model == 'Spectator':
+            #     self._set_module_label('CONNECTED', False)
+            #     if self._platform:
+            #         image_path = self.flightsims[self._platform]['image_path']
+            #         self._set_image_label(image_path)
+            #     return
+            return
 
-            image_path = module.get('image_path')
-            if not image_path or not os.path.exists(image_path):
-                image_path = self.flightsims[sim_id]['image_path']
+        elif data.model != self._model and self.config['auto_connect']:
+            print(data.model)
+            self.change_module(data.model)
+            self.update_ui()
 
-            pixmap = QPixmap(image_path)
-            if image_path and not pixmap.isNull():
-                scaled_pixmap = pixmap.scaled(
-                    self.image_label.width(),
-                    self.image_label.height(),
-                    Qt.AspectRatioMode.KeepAspectRatioByExpanding,
-                    Qt.TransformationMode.SmoothTransformation,
-                )
-                self.image_label.setPixmap(scaled_pixmap)
-                self.image_label.setScaledContents(True)
-            else:
-                self.image_label.setPixmap(None)
-                self.image_label.setStyleSheet("""
-                    ImageLabel {
-                        background-color: #f8f9fa;
-                        border-top-left-radius: 8px;
-                        border-top-right-radius: 8px;
-                    }
-                """)
-
-            flight_mode = module.get('control', 0)
-            self._render_controllers(flight_mode)
+            module = self.get_module(self._model)
+            if module:
+                name = module.get('name', self._model)
+                self._set_module_label(name, True)
+                image_path = module.get('image_path')
+                if not image_path or not os.path.exists(image_path):
+                    image_path = self.flightsims[self._platform]['image_path']
+                self._set_image_label(image_path)
 
     def on_platform_changed(self):
         platform = self.flightSimSelect.currentData()
@@ -730,6 +693,11 @@ class ConnectPage(AbstractPage):
             self.panel_container.hide()
 
     def on_module_clicked(self, module_id):
+        self.config['auto_connect'] = False
+        self.change_module(module_id)
+        self.update_ui()
+
+    def change_module(self, module_id):
         module = self.get_module(module_id)
         if not module:
             return
@@ -739,11 +707,8 @@ class ConnectPage(AbstractPage):
             k: module['data'][k] if k in module['data'] else v for k, v in self.flight['Input'].items()
         }
 
-        self._current_model = module_id
-        self._current_platform = module['platform']
-
-        self.state_changed.emit()
-        self.update_ui()
+        self._model = module_id
+        self._platform = module['platform']
 
     def get_module(self, module_id):
         return self.modules.get(module_id)
@@ -753,21 +718,18 @@ class ConnectPage(AbstractPage):
         return module['platform'] if module else None
 
     def retranslate_ui(self):
-        """Update UI translations."""
         self.flightSimLabel.setText(i18n.t('FlightSim'))
+        self.returnLabel.setText(i18n.t('BackToModules'))
 
-        if self._controller_widgets:
-            if self._current_model:
-                module = self.get_module(self._current_model)
-                if module:
-                    flight_mode = module.get('control', 0)
-                    metadata = controller_manager.get_metadata(flight_mode)
-                    if metadata and 'options' in metadata:
-                        for option, widget, default in metadata['options']:
-                            if option in self._controller_widgets and 'label' in self._controller_widgets[option]:
-                                text = metadata.get('i18n', {}).get(option, {})
-                                self._controller_widgets[option]['label'].setText(i18n.t(text))
-
-        for widget in self.panel_container.findChildren(QLabel):
-            if widget.objectName() == 'returnLabel':
-                widget.setText(i18n.t('BackToModules'))
+        if self._controller_widgets and self._model:
+            module = self.get_module(self._model)
+            if module:
+                flight_mode = module.get('control', 0)
+                metadata = controllers.get_metadata(flight_mode)
+                if metadata and 'options' in metadata:
+                    spec_group = {}
+                    for option, widget, default in metadata['options']:
+                        spec_group[option] = {
+                            'i18n': metadata.get('i18n', {}).get(option, '')
+                        }
+                    WidgetFactory.retranslate_from_spec(spec_group, self)

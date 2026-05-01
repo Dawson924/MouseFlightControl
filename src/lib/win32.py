@@ -66,7 +66,7 @@ def set_process_dpi_awareness(mode):
 
 
 def get_screen_geometry(window: int, screen: QScreen):
-    from lib.logger import logger
+    from lib.log import logger
 
     try:
         if not screen:
@@ -81,26 +81,39 @@ def get_screen_geometry(window: int, screen: QScreen):
         scale = 1.0
         if os.name == 'nt':
             try:
+                scale = screen.devicePixelRatio()
+
                 user32 = ctypes.windll.user32
                 hwnd = window if window != 0 else None
                 if hwnd is not None and hwnd > 0:
-                    dpi_x = user32.GetDpiForWindow(hwnd)
-                    scale = dpi_x / 96.0
-                else:
-                    # Fallback to devicePixelRatio if window handle is invalid
-                    scale = screen.devicePixelRatio()
+                    try:
+                        GetDpiForWindow = user32.GetDpiForWindow
+                        GetDpiForWindow.argtypes = [ctypes.c_void_p]
+                        GetDpiForWindow.restype = ctypes.c_int
+
+                        dpi_x = GetDpiForWindow(hwnd)
+                        if dpi_x > 0:
+                            scale = dpi_x / 96.0
+                    except Exception as e:
+                        logger.error(f'Failed to get DPI for window {window}: {e}')
+                        import traceback
+
+                        traceback.print_exc()
+
             except Exception as e:
-                logger.error(f'Failed to get DPI for window {window}: {e}')
-                try:
-                    scale = screen.devicePixelRatio()
-                except Exception as e2:
-                    logger.error(f'Fallback to devicePixelRatio also failed: {e2}')
-                    scale = 1.0
+                logger.error(f'Failed to get DPI: {e}')
+                import traceback
+
+                traceback.print_exc()
+                scale = 1.0
 
         return width, height, center_x, center_y, scale
     except Exception as e:
         logger.error(f'Failed to get screen geometry: {e}')
-        # 返回默认值
+        import traceback
+
+        traceback.print_exc()
+
         return 1920, 1080, 960, 540, 1.0
 
 

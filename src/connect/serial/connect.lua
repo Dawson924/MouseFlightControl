@@ -1,8 +1,9 @@
-log.write("MouseFlight", log.INFO)
-
+NAMESPACE = "FLIGHT CONNECT"
 HOST_ADDRESS = "127.0.0.1"
-TCP_PORT = 42070
-UDP_PORT = 42069
+TCP_PORT = 20070
+UDP_PORT = 20069
+
+log.write(NAMESPACE, log.INFO)
 
 local tcpServer                        = nil
 local udpSpeaker                       = nil
@@ -16,48 +17,12 @@ local upstreamLuaExportStart           = LuaExportStart
 local upstreamLuaExportAfterNextFrame  = LuaExportAfterNextFrame
 local upstreamLuaExportBeforeNextFrame = LuaExportBeforeNextFrame
 
-if not math.round then
-    function math.round(x)
-        return x >= 0 and math.floor(x + 0.5) or math.ceil(x - 0.5)
-    end
-end
-
-local function formattedDegree(radian)
-    -- 180/π
-    local degree = (radian * 57.29577951308232) % 360
-    degree = math.round(degree)
-    degree = degree == 360 and 0 or degree
-    return degree
-end
-
-local function formattedSignedDegree(radian)
-    local degree = radian * 57.29577951308232
-    degree = math.round(degree)
-    if degree > 180 then
-        degree = degree - 360
-    elseif degree < -180 then
-        degree = degree + 360
-    end
-    return degree
-end
-
-local function MsToKnots(ms_value)
-    if type(ms_value) ~= "number" then
-        return 0
-    end
-    ms_value = math.max(ms_value, 0)
-
-    local KNOTS_PER_MS = 3600 / 1852
-    local knots = ms_value * KNOTS_PER_MS
-
-    return math.round(knots)
-end
 
 function LuaExportStart()
     if upstreamLuaExportStart ~= nil then
         successful, err = pcall(upstreamLuaExportStart)
         if not successful then
-            log.write("MouseFlight", log.ERROR, "Error in upstream LuaExportStart function" .. tostring(err))
+            log.write(NAMESPACE, log.ERROR, "Error in upstream LuaExportStart function" .. tostring(err))
         end
     end
 
@@ -82,7 +47,7 @@ function LuaExportBeforeNextFrame()
     if upstreamLuaExportBeforeNextFrame ~= nil then
         successful, err = pcall(upstreamLuaExportBeforeNextFrame)
         if not successful then
-            log.write("MouseFlight", log.ERROR, "Error in upstream LuaExportBeforeNextFrame function" .. tostring(err))
+            log.write(NAMESPACE, log.ERROR, "Error in upstream LuaExportBeforeNextFrame function" .. tostring(err))
         end
     end
 
@@ -126,12 +91,12 @@ function LuaExportBeforeNextFrame()
             client:settimeout(10)
             data, err = client:receive()
             if err then
-                log.write("MouseFlight", log.ERROR, "Error at receiving: " .. err)
+                log.write(NAMESPACE, log.ERROR, "Error at receiving: " .. err)
             end
 
             if data then
                 local keys = JSON:decode(data)
-                if keys["type"] == "actions" then
+                if keys["type"] == "action" then
                     busy = true
                 end
             end
@@ -143,7 +108,7 @@ function LuaExportAfterNextFrame()
     if upstreamLuaExportAfterNextFrame ~= nil then
         successful, err = pcall(upstreamLuaExportAfterNextFrame)
         if not successful then
-            log.write("MouseFlight", log.ERROR, "Error in upstream LuaExportAfterNextFrame function" .. tostring(err))
+            log.write(NAMESPACE, log.ERROR, "Error in upstream LuaExportAfterNextFrame function" .. tostring(err))
         end
     end
 
@@ -157,25 +122,30 @@ function LuaExportAfterNextFrame()
     local selfData = LoGetSelfData()
     local module = selfData and selfData['Name'] or 'Spectator'
     local message = {}
+
     message["module"] = module
-    message['heading'] = tostring(formattedDegree(LoGetMagneticYaw()))
-    message['pitch'] = formattedSignedDegree(pitch)
-    message['bank'] = formattedSignedDegree(bank)
-    message['yaw'] = formattedDegree(yaw or selfData['Heading'])
-    message['airspeed'] = tostring(MsToKnots(LoGetIndicatedAirSpeed()))
-    message['mach'] = tostring(LoGetMachNumber())
+    message['heading'] = LoGetMagneticYaw()
+    message['pitch'] = pitch
+    message['bank'] = bank
+    message['yaw'] = yaw
+    message['airspeed'] = {}
+    message['airspeed']['indicated'] = LoGetIndicatedAirSpeed()
+    message['airspeed']['true'] = LoGetTrueAirSpeed()
+    message['aoa'] = LoGetAngleOfAttack()
+    message['mach'] = LoGetMachNumber()
     message["coords"] = {}
     message["coords"]["lat"] = tostring(coords.latitude)
     message["coords"]["long"] = tostring(coords.longitude)
     message["elev"] = tostring(elevation)
+    message["mech"] = LoGetMechInfo()
     local toSend = JSON:encode(message)
 
     if pcall(function()
             socket.try(udpSpeaker:sendto(toSend, HOST_ADDRESS, UDP_PORT))
         end) then
     else
-        log.write("MouseFlight", log.ERROR, "Unable to send data")
+        log.write(NAMESPACE, log.ERROR, "Unable to send data")
     end
 end
 
-log.write("MouseFlight", log.INFO, "Done")
+log.write(NAMESPACE, log.INFO, "Done")

@@ -3,20 +3,20 @@ from typing import Any, Dict
 import yaml
 
 from common.axis import AxisName
-from data.spec import Config
+from data.store import ObjectStorage
 from type.filter import Filter
 
 AXIS_NAMES = ['x', 'y', 'z', 'rx', 'ry', 'rz', 'sl', 'sl2']
 
 
-class FlightData(Config):
+class FlightInput(ObjectStorage):
     SPEC = {
         'Connect': {
             'model': {'type': str, 'default': ''},
         },
         'Input': {
             'flight_mode': {'type': int, 'allowed': [-1, 0, 1, 2], 'default': 0},
-            'camera_fov': {'type': int, 'min': 60, 'max': 160, 'default': 100},
+            'camera_fov': {'type': int, 'min': 40, 'max': 160, 'default': 100},
             'throttle_speed': {'type': int, 'min': 100, 'max': 1000, 'default': 500},
             'collective_speed': {'type': int, 'min': 100, 'max': 1000, 'default': 140},
             'pedals_speed': {'type': int, 'min': 100, 'max': 1000, 'default': 120},
@@ -67,14 +67,14 @@ class FlightData(Config):
         self._data[key] = value
 
 
-def flight_config_representer(dumper: yaml.Dumper, config: FlightData) -> yaml.Node:
+def flight_config_representer(dumper: yaml.Dumper, config: FlightInput) -> yaml.Node:
     return dumper.represent_mapping('tag:yaml.org,2002:map', config.to_dict())
 
 
-def flight_config_constructor(loader: yaml.Loader, node: yaml.Node) -> FlightData:
+def flight_config_constructor(loader: yaml.Loader, node: yaml.Node) -> FlightInput:
     data = loader.construct_mapping(node, deep=True)
-    return FlightData.from_dict(data)
+    return FlightInput.from_dict(data)
 
 
-yaml.add_representer(FlightData, flight_config_representer)
+yaml.add_representer(FlightInput, flight_config_representer)
 yaml.add_constructor('!FlightConfig', flight_config_constructor)

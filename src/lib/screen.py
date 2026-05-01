@@ -15,7 +15,7 @@ class ScreenGeometry:
                 self.scale,
             ) = get_screen_geometry(winId, screen)
         except Exception as e:
-            from lib.logger import logger
+            from lib.log import logger
 
             logger.error(f'Failed to get screen geometry: {e}')
             self.screen_width = 1920

@@ -1,3 +1,6 @@
+import math
+
+
 def is_integer(string):
     try:
         cleaned_str = string.strip()
@@ -18,3 +21,11 @@ def is_float(string):
         return True
     except (ValueError, TypeError):
         return False
+
+
+def radians_to_degrees(radians: float) -> float:
+    return math.degrees(radians)
+
+
+def normalize_degrees(degrees: float) -> float:
+    return degrees % 360

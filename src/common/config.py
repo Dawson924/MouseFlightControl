@@ -1,34 +1,6 @@
 CONFIG_FILE = 'config.yml'
 FLIGHT_FILE = 'flight.yml'
 
-CONFIG = {
-    'General': {
-        'language': 'string(min=1)',
-        'flight_mode': 'integer(min=0)',
-        'camera_fov': 'integer(min=1, max=180)',
-    },
-    'Controls': {
-        'mouse_speed': 'integer(min=1, max=100)',
-        'key_toggle': 'string(min=1)',
-        'key_center': 'string(min=1)',
-        'key_freecam': 'string(min=1)',
-        'key_view_center': 'string(min=1)',
-        'key_taxi': 'string(min=1)',
-    },
-    'Options': {
-        'show_cursor': 'boolean',
-        'show_hint': 'boolean',
-        'show_indicator': 'boolean',
-        'button_mapping': 'boolean',
-        'memorize_axis_pos': 'boolean',
-        'freecam_auto_center': 'boolean',
-    },
-    'Window': {
-        'width': 'integer()',
-    },
-    'Flight': {},
-}
-
 CONFIGURABLE = {
     'target_fps': (int, 60, 500),
     'attempts': (int, 1, None),

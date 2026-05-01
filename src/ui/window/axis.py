@@ -12,7 +12,7 @@ from PySide2.QtWidgets import (
 )
 
 from common.axis import AxisName
-from data.flight import FlightData
+from data.flight import FlightInput
 from type.filter import Filter
 
 
@@ -143,7 +143,7 @@ class JoyAxisChart(QWidget):
 
 
 class JoyAxisWindow(QMainWindow):
-    def __init__(self, axis: AxisName, flightinput: FlightData, parent=None):
+    def __init__(self, axis: AxisName, flightinput: FlightInput, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f'Configure - Axis {axis.upper()}')
         self.setFixedSize(750, 465)

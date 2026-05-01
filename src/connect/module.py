@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-from typing import Any, Dict, Tuple, TypedDict
+from typing import Any, Dict, List, TypedDict, Union
 
 from configobj import ConfigObj, ConfigObjError
 from loguru import logger
@@ -8,11 +8,11 @@ from validate import Validator
 
 from common.constants import MODULES_PATH
 from controller.control import FixedWingController, HelicopterController
-from controller.manager import ControllerManager
+from controller.manager import FlightControllers
 
 
 class ModuleConfig(TypedDict):
-    model: str
+    model: Union[str, List[str]]
     title: str
     platform: str
     connect: str
@@ -21,9 +21,6 @@ class ModuleConfig(TypedDict):
 class ModuleConfig(TypedDict):
     Module: ModuleConfig
     Data: Dict[str, Any]
-
-
-ModuleData = Dict[str, Tuple[str, ModuleConfig]]
 
 
 class FlightSim(str, Enum):
@@ -36,10 +33,23 @@ class FlightSim(str, Enum):
         return names[self]
 
 
+class FlightModule(TypedDict):
+    id: str
+    name: str
+    image_path: str
+    control: int
+    platform: FlightSim
+    data: Dict[str, Any]
+
+
+ModuleRegistry = Dict[str, FlightModule]
+
+
 MODULE_SPEC = {
     'Module': {
-        'model': 'string()',
-        'title': 'string()',
+        'model': 'string(default=None)',
+        'models': 'list(default=None)',
+        'title': 'string',
         'platform': f'option({FlightSim.DCS.value}, {FlightSim.FS2020.value})',
         'connect': 'option("serial", "simconnect", "dcs-bios")',
     },
@@ -55,16 +65,16 @@ MODULE_SPEC = {
 }
 
 
-def load_modules(base_dir: str = MODULES_PATH) -> ModuleData:
-    map = {}
+def load_modules(base_dir: str = MODULES_PATH) -> ModuleRegistry:
+    registry = {}
 
     if not os.path.isdir(base_dir):
         logger.error('Directory {} does not exist', base_dir)
-        return map
+        return registry
 
-    for root, _, files in os.walk(base_dir):
+    for dir, _, files in os.walk(base_dir):
         if 'manifest.ini' in files:
-            ini_file_path = os.path.join(root, 'manifest.ini')
+            ini_file_path = os.path.join(dir, 'manifest.ini')
 
             try:
                 manifest = ConfigObj(
@@ -78,34 +88,60 @@ def load_modules(base_dir: str = MODULES_PATH) -> ModuleData:
                     logger.error('Invalid manifest in {}: \n{}', ini_file_path, valid)
                     continue
 
-                if 'Module' in manifest:
-                    model = manifest['Module']['model']
-                    key = model
-                else:
-                    key = os.path.basename(root)
+                if 'Module' not in manifest:
+                    logger.error('Missing [Module] section in {}', ini_file_path)
+                    continue
 
-                if key in map:
-                    logger.warning(
-                        "Duplicate model key '{}' found, {} will overwrite existing configuration", key, ini_file_path
-                    )
-                map[key] = (root, dict(manifest))
+                model = manifest['Module'].get('model')
+                models = manifest['Module'].get('models')
+
+                if model and models:
+                    logger.warning("Both 'model' and 'models' found in {}, using 'model' only", ini_file_path)
+                    mod_ids = [model]
+                elif model:
+                    mod_ids = [model]
+                elif models and isinstance(models, list):
+                    mod_ids = [m.strip() for m in models if m.strip()]
+                else:
+                    continue
+
+                for mod_id in mod_ids:
+                    if mod_id in registry:
+                        logger.warning(
+                            "Duplicate model key '{}' found, {} will overwrite existing configuration",
+                            mod_id,
+                            ini_file_path,
+                        )
+                    if 'Module' in manifest:
+                        sim_id = manifest['Module']['platform']
+                        name = manifest['Module']['title']
+
+                        module: FlightModule = {
+                            'id': mod_id,
+                            'name': name,
+                            'platform': FlightSim(sim_id),
+                            'control': manifest['Data']['flight_mode'],
+                            'data': manifest['Data'],
+                            'image_path': os.path.join(dir, 'bg_image.jpg'),
+                        }
+                        registry[mod_id] = module
 
             except ConfigObjError as e:
                 logger.exception('Invalid configuration format in {}: {}', ini_file_path, str(e))
             except Exception as e:
                 logger.exception('Error parsing {}: {}', ini_file_path, str(e))
 
-    return map
+    return registry
 
 
-controller_manager = ControllerManager()
+controllers = FlightControllers()
 
-controller_manager.register(
+controllers.register(
     1,
     FixedWingController,
     {'name': 'Fixed Wing', 'options': FixedWingController.get_options(), 'i18n': FixedWingController.get_i18n()},
 )
-controller_manager.register(
+controllers.register(
     2,
     HelicopterController,
     {'name': 'Helicopter', 'options': HelicopterController.get_options(), 'i18n': HelicopterController.get_i18n()},

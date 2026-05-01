@@ -3,15 +3,15 @@ from typing import Any, Dict
 from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QVBoxLayout, QWidget
 
-from data.config import ConfigData
-from data.flight import FlightData
+from data.config import Config
+from data.flight import FlightInput
 from lib.screen import ScreenGeometry
 
 
 class AbstractPage(QWidget):
     state_changed = Signal()
 
-    def __init__(self, win: ScreenGeometry, config: ConfigData, flight: FlightData, parent=None):
+    def __init__(self, win: ScreenGeometry, config: Config, flight: FlightInput, parent=None):
         super().__init__(parent)
 
         self.win = win
@@ -54,8 +54,9 @@ class AbstractPage(QWidget):
         method_name = self._get_setter_method_name(setter_type)
         method = getattr(widget, method_name, None)
 
-        # Try to get value from config first, then flight data
-        arg = self.config.get(field) or self.flight.get(field)
+        arg = self.config.get(field)
+        if arg is None:
+            arg = self.flight.get(field)
 
         if arg is not None and method and callable(method):
             # Convert argument to the expected type
@@ -92,3 +93,7 @@ class AbstractPage(QWidget):
     def retranslate_ui(self):
         """Override this method to handle UI translation updates."""
         pass
+
+    def update_ui(self):
+        """Update UI elements when page is switched to."""
+        self.update_states()

@@ -98,7 +98,7 @@ class YAMLConfig:
         return '\n'.join(result) + '\n'
 
 
-class FlatConfig(YAMLConfig):
+class HashStorage(YAMLConfig):
     SPEC: Dict[str, Dict[str, Any]] = {}
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -178,7 +178,7 @@ class FlatConfig(YAMLConfig):
         return {group: fields.copy() for group, fields in self._data.items()}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Dict[str, Any]]) -> 'FlatConfig':
+    def from_dict(cls, data: Dict[str, Dict[str, Any]]) -> 'HashStorage':
         instance = cls()
         for group, fields in cls.SPEC.items():
             if group in data and isinstance(data[group], dict):
@@ -192,7 +192,7 @@ class FlatConfig(YAMLConfig):
         return instance
 
 
-class Config(YAMLConfig):
+class ObjectStorage(YAMLConfig):
     SPEC: Dict[str, Dict[str, Any]] = {}
 
     def __init__(self) -> None:
@@ -265,7 +265,7 @@ class Config(YAMLConfig):
         return {group: fields.copy() for group, fields in self._data.items()}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Dict[str, Any]]) -> 'Config':
+    def from_dict(cls, data: Dict[str, Dict[str, Any]]) -> 'ObjectStorage':
         instance = cls()
         for group, fields in cls.SPEC.items():
             if group in data and isinstance(data[group], dict):

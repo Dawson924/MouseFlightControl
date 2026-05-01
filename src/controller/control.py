@@ -8,8 +8,8 @@ MIN_INTERVAL = 1 / 60
 class FixedWingController(BaseController):
     _name = 'PlaneController'
 
-    def __init__(self, device, input):
-        super().__init__(device, input)
+    def __init__(self, input):
+        super().__init__(input)
         self.throttle_speed = input.get('throttle_speed')
         self.throttle_increase = input.get('throttle_increase')
         self.throttle_decrease = input.get('throttle_decrease')
@@ -29,28 +29,28 @@ class FixedWingController(BaseController):
 
 
 FixedWingController.add_option(
-    name='throttle_speed',
+    id='throttle_speed',
     widget=OptionWidget.SpinBox,
     default=100,
-    i18n_text='ThrottleSpeed',
+    i18n='ThrottleSpeed',
 ).add_option(
-    name='throttle_increase',
+    id='throttle_increase',
     widget=OptionWidget.LineEdit,
     default='shift',
-    i18n_text='ThrottleIncrease',
+    i18n='ThrottleIncrease',
 ).add_option(
-    name='throttle_decrease',
+    id='throttle_decrease',
     widget=OptionWidget.LineEdit,
     default='ctrl',
-    i18n_text='ThrottleDecrease',
+    i18n='ThrottleDecrease',
 )
 
 
 class HelicopterController(BaseController):
     _name = 'HelicopterController'
 
-    def __init__(self, device, input):
-        super().__init__(device, input)
+    def __init__(self, input):
+        super().__init__(input)
         self.col_speed = self.input.get('collective_speed')
         self.rud_speed = self.input.get('pedals_speed')
         self.collective_accumulator = 0.0
@@ -83,13 +83,13 @@ class HelicopterController(BaseController):
 
 
 HelicopterController.add_option(
-    name='collective_speed',
+    id='collective_speed',
     widget=OptionWidget.SpinBox,
     default=125,
-    i18n_text='CollectiveSpeed',
+    i18n='CollectiveSpeed',
 ).add_option(
-    name='pedals_speed',
+    id='pedals_speed',
     widget=OptionWidget.SpinBox,
     default=125,
-    i18n_text='RudderSpeed',
+    i18n='RudderSpeed',
 )

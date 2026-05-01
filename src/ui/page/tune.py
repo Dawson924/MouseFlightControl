@@ -5,15 +5,15 @@ from PySide2.QtWidgets import (
 )
 
 import i18n
-from data.config import ConfigData
-from data.flight import FlightData
+from data.config import Config
+from data.flight import FlightInput
 from lib.screen import ScreenGeometry
 from ui.page.abstract import AbstractPage
 from ui.window.axis import JoyAxisWindow
 
 
 class TunePage(AbstractPage):
-    def __init__(self, win: ScreenGeometry, config: ConfigData, flight: FlightData, parent=None):
+    def __init__(self, win: ScreenGeometry, config: Config, flight: FlightInput, parent=None):
         super().__init__(win, config, flight, parent)
 
         self.tuneLayout = self.page_layout
@@ -104,6 +104,9 @@ class TunePage(AbstractPage):
         self.rxAxisButton.setText(i18n.t('Modify'))
         self.ryAxisButton.setText(i18n.t('Modify'))
         self.rzAxisButton.setText(i18n.t('Modify'))
+
+    def update_ui(self):
+        pass
 
     def open_axis_window(self, axis_name: str):
         window = JoyAxisWindow(axis_name, self.flight, self)
