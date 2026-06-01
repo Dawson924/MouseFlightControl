@@ -20,6 +20,8 @@ KEYS = {
     Qt.Key_End: 'End',
     Qt.Key_PageUp: 'PageUp',
     Qt.Key_PageDown: 'PageDown',
+    Qt.Key_CapsLock: 'CapsLock',
+    Qt.Key_Meta: 'Win',
     Qt.Key_F1: 'F1',
     Qt.Key_F2: 'F2',
     Qt.Key_F3: 'F3',
@@ -32,5 +34,4 @@ KEYS = {
     Qt.Key_F10: 'F10',
     Qt.Key_F11: 'F11',
     Qt.Key_F12: 'F12',
-    Qt.Key_Tab: 'Tab',
 }

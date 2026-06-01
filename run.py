@@ -66,6 +66,7 @@ def build():
 def lint():
     run_command(['ruff', 'format', '.'])
     run_command(['ruff', 'check', '--fix', '.'])
+    run_python_script('localizer.py', args=['format'])
 
 
 def i18n():

@@ -66,9 +66,51 @@ def process_yaml_files(key, action):
     return True
 
 
+def format_yaml_files():
+    if not os.path.isdir(I18N_DIR):
+        print(f'Error: Directory {I18N_DIR} does not exist!', file=sys.stderr)
+        return False
+
+    yml_files = [f for f in os.listdir(I18N_DIR) if f.endswith('.yml')]
+    if not yml_files:
+        print(f'Warning: No YAML files found in {I18N_DIR}', file=sys.stdout)
+        return True
+
+    for file_name in yml_files:
+        file_path = os.path.join(I18N_DIR, file_name)
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f) or {}
+        except yaml.YAMLError as e:
+            print(f'Error reading {file_name}: {e}', file=sys.stderr)
+            return False
+
+        sorted_data = dict(sorted(data.items()))
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                yaml.dump(
+                    sorted_data,
+                    f,
+                    allow_unicode=True,
+                    sort_keys=False,
+                    default_flow_style=False,
+                )
+        except yaml.YAMLError as e:
+            print(f'Error writing to {file_name}: {e}', file=sys.stderr)
+            return False
+
+    print(f'Successfully formatted all YAML files in {I18N_DIR}')
+    return True
+
+
 def main():
+    if len(sys.argv) > 1:
+        if sys.argv[1].lower() == 'format':
+            format_yaml_files()
+            return
+
     print(
-        "YAML Localization Manager - Use 'add <key>', 'del <key>', 'rename <old_key> <new_key>' to manage keys, 'exit' to quit"
+        "YAML Localization Manager - Use 'add <key>', 'del <key>', 'rename <old_key> <new_key>', 'format' to manage keys, 'exit' to quit"
     )
     while True:
         user_input = input('> ').strip()
@@ -78,10 +120,14 @@ def main():
             print('Exiting program...')
             sys.exit(0)
 
+        if user_input.lower() == 'format':
+            format_yaml_files()
+            continue
+
         parts = user_input.split(maxsplit=2)
         if len(parts) < 2:
             print(
-                "Error: Invalid command. Use 'add <key>', 'del <key>', 'rename <old_key> <new_key>'",
+                "Error: Invalid command. Use 'add <key>', 'del <key>', 'rename <old_key> <new_key>', 'format'",
                 file=sys.stderr,
             )
             continue
@@ -108,7 +154,7 @@ def main():
             action = 'rename'
         else:
             print(
-                "Error: Invalid action. Only 'add', 'del', 'rename' (or 'ren') are allowed",
+                "Error: Invalid action. Only 'add', 'del', 'rename' (or 'ren'), 'format' are allowed",
                 file=sys.stderr,
             )
             continue

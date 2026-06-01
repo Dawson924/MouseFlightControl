@@ -42,7 +42,7 @@ class FlightModule(TypedDict):
     data: Dict[str, Any]
 
 
-ModuleRegistry = Dict[str, FlightModule]
+FlightModules = Dict[str, FlightModule]
 
 
 MODULE_SPEC = {
@@ -56,16 +56,14 @@ MODULE_SPEC = {
     'Data': {
         'flight_mode': 'integer(default=1, min=-1, max=2)',
         'camera_fov': 'integer(default=90, min=20, max=180)',
-        'throttle_speed': 'integer(default=250, min=100, max=1000)',
+        'thrust_speed': 'integer(default=500, min=100, max=1000)',
         'collective_speed': 'integer(default=140, min=100, max=1000)',
-        'pedals_speed': 'integer(default=120, min=100, max=1000)',
-        'throttle_increase': 'string(default="x")',
-        'throttle_decrease': 'string(default="z")',
+        'rudder_speed': 'integer(default=120, min=100, max=1000)',
     },
 }
 
 
-def load_modules(base_dir: str = MODULES_PATH) -> ModuleRegistry:
+def load_modules(base_dir: str = MODULES_PATH) -> FlightModules:
     registry = {}
 
     if not os.path.isdir(base_dir):
@@ -139,10 +137,10 @@ controllers = FlightControllers()
 controllers.register(
     1,
     FixedWingController,
-    {'name': 'Fixed Wing', 'options': FixedWingController.get_options(), 'i18n': FixedWingController.get_i18n()},
+    {'name': 'Fixed Wing'},
 )
 controllers.register(
     2,
     HelicopterController,
-    {'name': 'Helicopter', 'options': HelicopterController.get_options(), 'i18n': HelicopterController.get_i18n()},
+    {'name': 'Helicopter'},
 )

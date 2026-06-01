@@ -1,6 +1,5 @@
 from controller.base import BaseController
 from lib.joystick import AXIS_MIN
-from type.widget import OptionWidget
 
 MIN_INTERVAL = 1 / 60
 
@@ -10,7 +9,7 @@ class FixedWingController(BaseController):
 
     def __init__(self, input):
         super().__init__(input)
-        self.throttle_speed = input.get('throttle_speed')
+        self.thrust_speed = input.get('thrust_speed')
         self.throttle_increase = input.get('throttle_increase')
         self.throttle_decrease = input.get('throttle_decrease')
 
@@ -22,28 +21,10 @@ class FixedWingController(BaseController):
             self.throttle_accumulator += state.dt
             while self.throttle_accumulator >= self.min_interval:
                 if key.is_pressing(self.throttle_increase):
-                    axis.th += self.throttle_speed
+                    axis.th += self.thrust_speed
                 elif key.is_pressing(self.throttle_decrease):
-                    axis.th -= self.throttle_speed
+                    axis.th -= self.thrust_speed
                 self.throttle_accumulator -= self.min_interval
-
-
-FixedWingController.add_option(
-    id='throttle_speed',
-    widget=OptionWidget.SpinBox,
-    default=100,
-    i18n='ThrottleSpeed',
-).add_option(
-    id='throttle_increase',
-    widget=OptionWidget.LineEdit,
-    default='shift',
-    i18n='ThrottleIncrease',
-).add_option(
-    id='throttle_decrease',
-    widget=OptionWidget.LineEdit,
-    default='ctrl',
-    i18n='ThrottleDecrease',
-)
 
 
 class HelicopterController(BaseController):
@@ -51,8 +32,12 @@ class HelicopterController(BaseController):
 
     def __init__(self, input):
         super().__init__(input)
-        self.col_speed = self.input.get('collective_speed')
-        self.rud_speed = self.input.get('pedals_speed')
+        self.col_speed = self.input.get('thrust_speed')
+        self.rud_speed = self.input.get('rudder_speed')
+        self.col_increase = self.input.get('collective_increase')
+        self.col_decrease = self.input.get('collective_decrease')
+        self.rud_left = self.input.get('rudder_left')
+        self.rud_right = self.input.get('rudder_right')
         self.collective_accumulator = 0.0
         self.pedals_accumulator = 0.0
         self.min_interval = MIN_INTERVAL
@@ -63,33 +48,18 @@ class HelicopterController(BaseController):
             self.pedals_accumulator += state.dt
 
             while self.collective_accumulator >= self.min_interval:
-                if key.is_pressing('W'):
+                if key.is_pressing(self.col_increase):
                     axis.th += self.col_speed
-                elif key.is_pressing('S'):
+                elif key.is_pressing(self.col_decrease):
                     axis.th -= self.col_speed
                 self.collective_accumulator -= self.min_interval
 
             while self.pedals_accumulator >= self.min_interval:
-                if key.is_pressing('A'):
+                if key.is_pressing(self.rud_left):
                     axis.rd -= self.rud_speed
-                elif key.is_pressing('D'):
+                elif key.is_pressing(self.rud_right):
                     axis.rd += self.rud_speed
                 self.pedals_accumulator -= self.min_interval
 
             if key.is_pressed('X'):
-                axis.rd = 0
-            if key.is_pressed('Z'):
                 axis.th = AXIS_MIN
-
-
-HelicopterController.add_option(
-    id='collective_speed',
-    widget=OptionWidget.SpinBox,
-    default=125,
-    i18n='CollectiveSpeed',
-).add_option(
-    id='pedals_speed',
-    widget=OptionWidget.SpinBox,
-    default=125,
-    i18n='RudderSpeed',
-)

@@ -15,13 +15,41 @@ class FlightInput(ObjectStorage):
             'model': {'type': str, 'default': ''},
         },
         'Input': {
-            'flight_mode': {'type': int, 'allowed': [-1, 0, 1, 2], 'default': 0},
-            'camera_fov': {'type': int, 'min': 40, 'max': 160, 'default': 100},
-            'throttle_speed': {'type': int, 'min': 100, 'max': 1000, 'default': 500},
-            'collective_speed': {'type': int, 'min': 100, 'max': 1000, 'default': 140},
-            'pedals_speed': {'type': int, 'min': 100, 'max': 1000, 'default': 120},
-            'throttle_increase': {'type': str, 'default': 'x'},
-            'throttle_decrease': {'type': str, 'default': 'z'},
+            'flight_mode': {
+                'type': int,
+                'allowed': [-1, 0, 1, 2],
+                'default': 0,
+            },  # -1 has no definition. The only reason to use it is to avoid errors from spec validation.
+            'camera_fov': {
+                'type': int,
+                'min': 40,
+                'max': 160,
+                'default': 100,
+                'widget': 'SpinBox',
+                'i18n': 'CameraFov',
+            },
+            'thrust_speed': {
+                'type': int,
+                'min': 100,
+                'max': 1000,
+                'default': 500,
+                'widget': 'SpinBox',
+                'i18n': 'ThrustSpeed',
+            },
+            'rudder_speed': {
+                'type': int,
+                'min': 100,
+                'max': 1000,
+                'default': 120,
+                'widget': 'SpinBox',
+                'i18n': 'RudderSpeed',
+            },
+            'throttle_increase': {'type': str, 'default': 'X', 'widget': 'KeybindEdit', 'i18n': 'ThrustIncrease'},
+            'throttle_decrease': {'type': str, 'default': 'Z', 'widget': 'KeybindEdit', 'i18n': 'ThrustDecrease'},
+            'collective_increase': {'type': str, 'default': 'W', 'widget': 'LineEdit', 'i18n': 'ThrustIncrease'},
+            'collective_decrease': {'type': str, 'default': 'S', 'widget': 'LineEdit', 'i18n': 'ThrustDecrease'},
+            'rudder_left': {'type': str, 'default': 'A', 'widget': 'LineEdit', 'i18n': 'RudderLeft'},
+            'rudder_right': {'type': str, 'default': 'D', 'widget': 'LineEdit', 'i18n': 'RudderRight'},
         },
         'Axis': {
             axis_name: {

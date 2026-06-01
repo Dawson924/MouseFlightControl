@@ -1,7 +1,7 @@
 AutoConnect: Auto Connect
-BackToModules: 'BACK TO MODULES'
+BackToModules: BACK TO MODULES
 ButtonMapping: Mouse Button Mapping
-CameraFov: Freecam Field of View
+CameraFov: Field of View
 CenterControl: Center Control
 CollectiveSpeed: Collective speed
 ConfigLoadFailed: 'Configuration failed to load: '
@@ -36,7 +36,9 @@ NoControl: No Control
 None: None
 OptionsPage: OPTIONS
 PlaneController: Plane Mode
-RudderSpeed: Rudder speed
+RudderLeft: Rudder Left
+RudderRight: Rudder Right
+RudderSpeed: Rudder Speed
 RuntimeEnv: Environment
 Scale: Scale
 ScreenInfo: Screen info
@@ -54,9 +56,9 @@ Stop: STOP
 TaxiMode: Taxi Mode
 TaxiModeOff: 'Taxi mode: Off'
 TaxiModeOn: 'Taxi mode: On'
-ThrottleDecrease: Decrease speed
-ThrottleIncrease: Increase speed
-ThrottleSpeed: Throttle speed
+ThrustDecrease: Thrust Decrease
+ThrustIncrease: Thrust Increase
+ThrustSpeed: Thrust Speed
 Title: Mouse Flight %{version}
 ToggleEnabled: Toggle Control
 TunePage: AXIS

@@ -123,6 +123,7 @@ class KeybindEdit(QLineEdit):
         self.is_recording = False
         self.setText('Press key...')
         self.setReadOnly(True)
+        self._pressed_modifiers = []
 
     def keyPressEvent(self, event):
         if not self.is_recording:
@@ -131,6 +132,24 @@ class KeybindEdit(QLineEdit):
 
         key_event = event.key()
         key_name = self.keyToString(key_event)
+
+        special_keys = [Qt.Key_Control, Qt.Key_Shift, Qt.Key_Alt, Qt.Key_Meta]
+
+        if key_event in special_keys:
+            if key_event == Qt.Key_Control:
+                mod_name = 'Ctrl'
+            elif key_event == Qt.Key_Shift:
+                mod_name = 'Shift'
+            elif key_event == Qt.Key_Alt:
+                mod_name = 'Alt'
+            elif key_event == Qt.Key_Meta:
+                mod_name = 'Win'
+
+            if mod_name not in self._pressed_modifiers:
+                self._pressed_modifiers.append(mod_name)
+            event.accept()
+            return
+
         if key_name:
             key = key_name
         else:
@@ -148,6 +167,8 @@ class KeybindEdit(QLineEdit):
             modifiers.append('Shift')
         if event.modifiers() & Qt.AltModifier:
             modifiers.append('Alt')
+        if event.modifiers() & Qt.MetaModifier:
+            modifiers.append('Win')
 
         if key:
             if modifiers:
@@ -156,6 +177,33 @@ class KeybindEdit(QLineEdit):
                 keybind = key
             self.setText(keybind)
             self.is_recording = False
+            self._pressed_modifiers = []
+        event.accept()
+
+    def keyReleaseEvent(self, event):
+        if not self.is_recording:
+            super().keyReleaseEvent(event)
+            return
+
+        key_event = event.key()
+
+        mod_name = None
+        if key_event == Qt.Key_Control:
+            mod_name = 'Ctrl'
+        elif key_event == Qt.Key_Shift:
+            mod_name = 'Shift'
+        elif key_event == Qt.Key_Alt:
+            mod_name = 'Alt'
+        elif key_event == Qt.Key_Meta:
+            mod_name = 'Win'
+
+        if mod_name and mod_name in self._pressed_modifiers:
+            self._pressed_modifiers.remove(mod_name)
+
+            if not self._pressed_modifiers:
+                self.setText(mod_name)
+                self.is_recording = False
+
         event.accept()
 
     def keyToString(self, key):
@@ -163,10 +211,14 @@ class KeybindEdit(QLineEdit):
 
     def mousePressEvent(self, event):
         self.is_recording = True
+        self._pressed_modifiers = []
         self.setText('Recording...')
 
     def event(self, event):
         if event.type() == event.KeyPress:
             self.keyPressEvent(event)
+            return True
+        elif event.type() == event.KeyRelease:
+            self.keyReleaseEvent(event)
             return True
         return super().event(event)

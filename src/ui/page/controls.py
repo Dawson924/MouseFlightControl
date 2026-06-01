@@ -27,7 +27,9 @@ class ControlsPage(AbstractPage):
         self._widgets = WidgetFactory.populate_from_spec(self.controlsLayout, controls_spec, self.set_config, self)
 
         for field_name in self._widgets:
-            self.ui_elements.update({field_name: [Config.SPEC['Controls'][field_name]['type']]})
+            self.ui_elements.update(
+                {field_name: [Config.SPEC['Controls'][field_name]['type']]}
+            )  # E.g. { 'camera_fov': [int] }
 
         self._setup_camera_fov()
 

@@ -10,9 +10,9 @@ class Config(HashStorage):
             'mouse_speed': {'type': int, 'min': 1, 'max': 20, 'default': 5, 'widget': 'Slider', 'i18n': 'Sensitive'},
             'key_toggle': {'type': str, 'default': '`', 'widget': 'KeybindEdit', 'i18n': 'ToggleEnabled'},
             'key_center': {'type': str, 'default': 'MMB', 'widget': 'KeybindEdit', 'i18n': 'CenterControl'},
-            'key_freecam': {'type': str, 'default': 'tab', 'widget': 'KeybindEdit', 'i18n': 'EnableFreecam'},
-            'key_view_center': {'type': str, 'default': 'capslock', 'widget': 'KeybindEdit', 'i18n': 'ViewCenter'},
-            'key_taxi': {'type': str, 'default': 'alt + `', 'widget': 'KeybindEdit', 'i18n': 'TaxiMode'},
+            'key_freecam': {'type': str, 'default': 'Tab', 'widget': 'KeybindEdit', 'i18n': 'EnableFreecam'},
+            'key_view_center': {'type': str, 'default': 'Capslock', 'widget': 'KeybindEdit', 'i18n': 'ViewCenter'},
+            'key_taxi': {'type': str, 'default': 'Alt+`', 'widget': 'KeybindEdit', 'i18n': 'TaxiMode'},
         },
         'Options': {
             'auto_connect': {'type': bool, 'default': False, 'widget': 'CheckBox', 'i18n': 'AutoConnect'},
@@ -22,7 +22,6 @@ class Config(HashStorage):
             'button_mapping': {'type': bool, 'default': True, 'widget': 'CheckBox', 'i18n': 'ButtonMapping'},
             'memorize_axis_pos': {'type': bool, 'default': True, 'widget': 'CheckBox', 'i18n': 'MemorizeAxisPos'},
             'freecam_auto_center': {'type': bool, 'default': False, 'widget': 'CheckBox', 'i18n': 'FreecamAutoCenter'},
-            'freecam_toggle': {'type': bool, 'default': False, 'widget': 'CheckBox', 'i18n': 'FreecamToggle'},
         },
         'Window': {
             'width': {'type': int, 'default': 0},

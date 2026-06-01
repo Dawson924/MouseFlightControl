@@ -1,5 +1,5 @@
 AutoConnect: Автоподключение
-BackToModules: 'В МОДУЛИ'
+BackToModules: В МОДУЛИ
 ButtonMapping: Назначение кнопок мыши
 CameraFov: Поле зрения свободной камеры
 CenterControl: Центрирование управления
@@ -36,6 +36,8 @@ NoControl: Без управления
 None: Нет
 OptionsPage: ОПЦИИ
 PlaneController: Режим самолета
+RudderLeft: Руль влево
+RudderRight: Руль вправо
 RudderSpeed: Скорость руля
 RuntimeEnv: Окружение
 Scale: Масштаб
@@ -54,9 +56,9 @@ Stop: СТОП
 TaxiMode: Режим таксировки
 TaxiModeOff: 'Режим таксировки: Выключен'
 TaxiModeOn: 'Режим таксировки: Включен'
-ThrottleDecrease: Уменьшить скорость
-ThrottleIncrease: Увеличить скорость
-ThrottleSpeed: Скорость дросселя
+ThrustDecrease: Уменьшить скорость
+ThrustIncrease: Увеличить скорость
+ThrustSpeed: Скорость дросселя
 Title: Mouse Flight %{version}
 ToggleEnabled: Переключить управление
 TunePage: ОСИ

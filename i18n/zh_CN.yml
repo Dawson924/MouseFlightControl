@@ -1,7 +1,7 @@
 AutoConnect: 自动连接
-BackToModules: '返回模组列表'
+BackToModules: 返回模组列表
 ButtonMapping: 鼠标按钮映射
-CameraFov: 自由视角视场角度
+CameraFov: 视场角度
 CenterControl: 操控回中
 CollectiveSpeed: 总距速度
 ConfigLoadFailed: 加载配置文件失败
@@ -35,7 +35,9 @@ NoControl: 无控制
 None: 未选择
 OptionsPage: 选项
 PlaneController: 固定翼模式
-RudderSpeed: 方向舵速度
+RudderLeft: 左舵
+RudderRight: 右舵
+RudderSpeed: 脚舵速度
 RuntimeEnv: 运行环境
 Scale: 缩放
 ScreenInfo: 屏幕信息
@@ -53,9 +55,9 @@ Stop: 停止
 TaxiMode: 地面滑行模式
 TaxiModeOff: 地面滑行模式：禁用
 TaxiModeOn: 地面滑行模式：启用
-ThrottleDecrease: 减少速度
-ThrottleIncrease: 增加速度
-ThrottleSpeed: 节流阀速度
+ThrustDecrease: 减少动力
+ThrustIncrease: 增加动力
+ThrustSpeed: 动力速度
 Title: 鼠标飞行 %{version}
 ToggleEnabled: 开关控制
 TunePage: 轴调整
