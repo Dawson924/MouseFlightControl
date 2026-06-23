@@ -1,9 +1,9 @@
 import yaml
 
-from data.store import HashStorage
+from data.store import YamlStorage
 
 
-class Config(HashStorage):
+class Config(YamlStorage):
     SPEC = {
         'General': {'language': {'type': str, 'allowed': ['en_US', 'zh_CN', 'ru_RU'], 'default': 'en_US'}},
         'Controls': {

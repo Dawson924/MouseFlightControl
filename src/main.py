@@ -17,20 +17,13 @@ from common.axis import (
     AXIS_LENGTH,
     AXIS_MAX,
     AXIS_MIN,
-    AXIS_RX,
-    AXIS_RY,
-    AXIS_RZ,
-    AXIS_SL,
-    AXIS_X,
-    AXIS_Y,
-    AXIS_Z,
     AxisPos,
 )
 from common.config import LANGUAGE_CONFIG
 from common.constants import APP_VERSION, SCRIPT_INI_PATH
-from connect.module import controllers, load_modules
-from connect.serial.dcs import DCSConnect
-from controller.base import BaseController
+from connect.controller import controllers
+from connect.flight import FlightConnect
+from connect.module import load_modules
 from input import InputStateMonitor
 from lib.axis import axis2fov, fov, set_axis
 from lib.config import load_all_data, save_all_data
@@ -91,13 +84,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.message_box = MessageBox(self)
 
-        self.main_thread = None
-        self.debug = False
-        self.running = False
-        self.process = psutil.Process(os.getpid())
-        self.original_mouse_speed = get_mouse_speed()
-        self.target_fps = 250
-        self.frame_interval = 1.0 / self.target_fps
+        self.main_thread: threading.Thread = None
+        self.connector: FlightConnect = None
+        self.debug: bool = False
+        self.running: bool = False
+        self.process: psutil.Process = psutil.Process(os.getpid())
+        self.original_mouse_speed: int = get_mouse_speed()
+        self.target_fps: int = 250
+        self.frame_interval: float = 1.0 / self.target_fps
 
         self.indicator_x = 30
         self.indicator_y = -30
@@ -110,24 +104,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.damping_h = 1.0
         self.damping_v = 1.0
 
-        self.config, self.flightdata = load_all_data()
+        self.config, self.flightinput = load_all_data()
 
         i18n.set('locale', self.config.get('language'))
 
         self.init_joystick()
-        self.init_connect()
         self.init_scripts()
 
+        self.modules = load_modules()
+        store.singleton('modules', self.modules)
+
         store.singleton('config', self.config)
-        store.singleton('flightdata', self.flightdata)
+        store.singleton('flightinput', self.flightinput)
         store.singleton('joystick', self.joystick)
-        store.singleton('connector', self.connector)
+        store.singleton('message_box', self.message_box)
 
         self.init_ui()
         self.create_menu()
 
         self.retranslate_ui()
         self.update_ui()
+
+        self.connector = store.get('connector')
+        if self.connector:
+            self.connector.on('model_changed', self.on_model_changed)
 
         self.ui.startButton.clicked.connect(self.on_startButton_clicked)
 
@@ -320,17 +320,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.init_pages()
 
     def init_pages(self):
-        self.modules = load_modules()
-        self.connect_page = ConnectPage(self.win, self.config, self.flightdata, self.modules)
+        self.connect_page = ConnectPage(self.win, self.config, self.flightinput, self.modules)
         self.ui.connectPageLayout.addWidget(self.connect_page)
 
-        self.controls_page = ControlsPage(self.win, self.config, self.flightdata)
+        self.controls_page = ControlsPage(self.win, self.config, self.flightinput)
         self.ui.controlsPageLayout.addWidget(self.controls_page)
 
-        self.options_page = OptionsPage(self.win, self.config, self.flightdata)
+        self.options_page = OptionsPage(self.win, self.config, self.flightinput)
         self.ui.optionsPageLayout.addWidget(self.options_page)
 
-        self.tune_page = TunePage(self.win, self.config, self.flightdata)
+        self.tune_page = TunePage(self.win, self.config, self.flightinput)
         self.ui.axisTunePageLayout.addWidget(self.tune_page)
 
         self.ui.tabWidget.currentChanged.connect(self.on_tab_changed)
@@ -348,19 +347,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_joystick(self):
         try:
-            self.axis = AxisPos(0, 0, AXIS_MIN, 0, 0, 0, fov(self.flightdata.get('camera_fov')))
+            self.axis = AxisPos(0, 0, AXIS_MIN, 0, 0, 0, fov(self.flightinput.get('camera_fov')))
             self.joystick = get_joystick_device(self.device, self.device_id)
         except RuntimeError as e:
             logger.error(str(e))
             self.message_box.error(i18n.t('Error'), i18n.t('DeviceNotFoundMessage'))
-
-    def init_connect(self):
-        try:
-            logger.info('Attempting to connect...')
-            self.connector = DCSConnect(timeout=0.16)
-            self.connector.connect()
-        except Exception as e:
-            logger.exception(str(e))
 
     def init_scripts(self):
         self.lua_globals = self.lua.globals()
@@ -527,10 +518,18 @@ class MainWindow(QtWidgets.QMainWindow):
         window = ScriptWindow(script, self.script_db.get(script.id), self)
         window.show()
 
+    def on_model_changed(self, model):
+        connector = self.connector
+        if connector:
+            if self.config.get('auto_connect'):
+                disabled = not model or model == 'Spectator'
+                self.ui.startButton.setDisabled(disabled)
+            else:
+                self.ui.startButton.setDisabled(False)
+
     def update_ui(self):
-        disabled = self.running
         self.ui.startButton.setText(i18n.t('Start') if not self.running else i18n.t('Stop'))
-        self.ui.statusLabel.setText(i18n.t('StatusWorking') if disabled else i18n.t('StatusStopped'))
+        self.ui.statusLabel.setText(i18n.t('StatusWorking') if self.running else i18n.t('StatusStopped'))
 
     def start_main_thread(self):
         global stop_thread, enabled
@@ -572,7 +571,7 @@ class MainWindow(QtWidgets.QMainWindow):
         size = self.size()
         self.config.set('width', size.width())
         self.config.set('height', size.height())
-        save_all_data((self.config, self.flightdata))
+        save_all_data((self.config, self.flightinput))
         save_data(SCRIPT_INI_PATH, self.script_db.to_dict())
         event.accept()
 
@@ -601,10 +600,11 @@ class MainWindow(QtWidgets.QMainWindow):
             if not input:
                 input = InputStateMonitor()
 
-            self.joystick.update_filters(self.flightdata.get_filters())
+            self.joystick.update_filters(self.flightinput.get_filters())
+            controllers.refresh_fields()
 
             config = self.config
-            flight = self.flightdata
+            flight = self.flightinput
 
             self.lua_globals.Control.mode = flight['Input']['flight_mode']
 
@@ -613,10 +613,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.lua_globals.Input.pressing = input.is_pressing
             self.lua_globals.Input.released = input.is_released
             self.lua_globals.Input.hotkey = input.is_hotkey_pressed
-            self.lua_globals.Input.alt = lambda: input.alt_ctrl_shift(alt=True)
-            self.lua_globals.Input.ctrl = lambda: input.alt_ctrl_shift(ctrl=True)
-            self.lua_globals.Input.shift = lambda: input.alt_ctrl_shift(shift=True)
-            self.lua_globals.Input.modkey = lambda: input.alt_ctrl_shift
+            self.lua_globals.Input.alt = lambda: input.modifiers(alt=True)
+            self.lua_globals.Input.ctrl = lambda: input.modifiers(ctrl=True)
+            self.lua_globals.Input.shift = lambda: input.modifiers(shift=True)
+            self.lua_globals.Input.modkey = lambda: input.modifiers
 
             def map_to_percentage(value, reverse=False):
                 clamped = max(AXIS_MIN, min(AXIS_MAX, value))
@@ -675,7 +675,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 if enabled and input.is_hotkey_pressed(config['key_taxi']):
                     ground_taxi = not ground_taxi
-                    self.axis.rd = 0
+                    self.axis.Rudder = 0
                     if ground_taxi:
                         if config['show_hint']:
                             self.showMessage.emit(i18n.t('TaxiModeOn'), 'green', 1000)
@@ -688,9 +688,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     jump = True
 
                 if enabled and input.is_hotkey_pressed(config['key_view_center']):
-                    self.axis.vz = fov(flight['Input']['camera_fov'])
+                    self.axis.ZoomView = fov(flight['Input']['camera_fov'])
                     if not freecam_on:
-                        self.axis.vx, self.axis.vy = 0, 0
+                        self.axis.CamX, self.axis.CamY = 0, 0
                         cam_pos[0], cam_pos[1] = self.center_x, self.center_y
 
                 if enabled and config['button_mapping'] and not freecam_on:
@@ -720,7 +720,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         freecam_on = True
                         stick_pos[0], stick_pos[1] = prev_x, prev_y
                         if config['freecam_auto_center']:
-                            self.axis.vx, self.axis.vy = 0, 0
+                            self.axis.CamX, self.axis.CamY = 0, 0
                             prev_x, prev_y = self.center_x, self.center_y
                             jump = True
                         else:
@@ -730,7 +730,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         freecam_on = False
                         cam_pos[0], cam_pos[1] = prev_x, prev_y
                         if config['freecam_auto_center']:
-                            self.axis.vx, self.axis.vy = 0, 0
+                            self.axis.CamX, self.axis.CamY = 0, 0
                         prev_x, prev_y = stick_pos[0], stick_pos[1]
                         jump = True
 
@@ -743,35 +743,32 @@ class MainWindow(QtWidgets.QMainWindow):
                     delta_y = curr_y - prev_y
 
                     if freecam_on:
-                        self.axis.vx += delta_x * self.axis_speed * self.damping_h
-                        self.axis.vy += delta_y * self.axis_speed * self.damping_v
+                        self.axis.CamX += delta_x * self.axis_speed * self.damping_h
+                        self.axis.CamY += delta_y * self.axis_speed * self.damping_v
 
-                        x_percent = self.axis.vx / AXIS_MAX
-                        y_percent = self.axis.vy / AXIS_MAX
+                        x_percent = self.axis.CamX / AXIS_MAX
+                        y_percent = self.axis.CamY / AXIS_MAX
                         screen_x = self.center_x + x_percent * (self.screen_width / 2)
                         screen_y = self.center_y + y_percent * (self.screen_height / 2)
                         prev_x, prev_y = screen_x, screen_y
 
-                        self.axis.vz += wheel_step(fov(10, abs=False), input.get_wheel_delta())
+                        self.axis.ZoomView += wheel_step(fov(10, abs=False), input.get_wheel_delta())
                     else:
-                        self.axis.x += delta_x * self.axis_speed * self.damping_h
-                        self.axis.y += delta_y * self.axis_speed * self.damping_v
+                        self.axis.Roll += delta_x * self.axis_speed * self.damping_h
+                        self.axis.Pitch += delta_y * self.axis_speed * self.damping_v
 
-                        x_percent = self.axis.x / AXIS_MAX
-                        y_percent = self.axis.y / AXIS_MAX
+                        x_percent = self.axis.Roll / AXIS_MAX
+                        y_percent = self.axis.Pitch / AXIS_MAX
                         screen_x = self.center_x + x_percent * (self.screen_width / 2)
                         screen_y = self.center_y + y_percent * (self.screen_height / 2)
                         prev_x, prev_y = screen_x, screen_y
 
-                        if ground_taxi:
-                            self.axis.rd = self.axis.x
-
-                self.controller = controllers.update(flight)
-                if self.controller and isinstance(self.controller, BaseController):
-                    self.controller.update(
+                controller = controllers.update(flight)
+                if controller:
+                    controller.update(
                         self.axis,
                         input,
-                        SimpleNamespace(enabled=enabled, dt=delta_time),
+                        SimpleNamespace(enabled=enabled, dt=delta_time, taxiing=ground_taxi),
                         self,
                     )
 
@@ -783,7 +780,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.lua_globals.Control['active'] = enabled and not freecam_on
                     self.lua_globals.Control['steering'] = enabled and not freecam_on and ground_taxi
                     self.lua_globals.Camera['active'] = enabled and freecam_on
-                    self.lua_globals.Camera['fov'] = axis2fov(self.axis.vz)
+                    self.lua_globals.Camera['fov'] = axis2fov(self.axis.ZoomView)
 
                 for i, func in enumerate(self.lua_funcs):
                     try:
@@ -793,26 +790,20 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.lua_funcs.pop(i)
 
                 if enabled:
-                    self.axis.x = check_overflow(self.axis.x, AXIS_MIN, AXIS_MAX)
-                    self.axis.y = check_overflow(self.axis.y, AXIS_MIN, AXIS_MAX)
-                    self.axis.th = check_overflow(self.axis.th, AXIS_MIN, AXIS_MAX)
-                    self.axis.rd = check_overflow(self.axis.rd, AXIS_MIN, AXIS_MAX)
-                    self.axis.vx = check_overflow(self.axis.vx, AXIS_MIN, AXIS_MAX)
-                    self.axis.vy = check_overflow(self.axis.vy, AXIS_MIN, AXIS_MAX)
-                    self.axis.vz = check_overflow(self.axis.vz, AXIS_MIN, AXIS_MAX)
-                    self.joystick.set_axis(AXIS_X, int(self.axis.x))
-                    self.joystick.set_axis(AXIS_Y, int(self.axis.y))
-                    self.joystick.set_axis(AXIS_Z, int(self.axis.th))
-                    self.joystick.set_axis(AXIS_RZ, int(self.axis.rd))
-                    self.joystick.set_axis(AXIS_RX, int(self.axis.vx))
-                    self.joystick.set_axis(AXIS_RY, int(self.axis.vy))
-                    self.joystick.set_axis(AXIS_SL, int(self.axis.vz))
+                    self.axis.Roll = check_overflow(self.axis.Roll, AXIS_MIN, AXIS_MAX)
+                    self.axis.Pitch = check_overflow(self.axis.Pitch, AXIS_MIN, AXIS_MAX)
+                    self.axis.Throttle = check_overflow(self.axis.Throttle, AXIS_MIN, AXIS_MAX)
+                    self.axis.Rudder = check_overflow(self.axis.Rudder, AXIS_MIN, AXIS_MAX)
+                    self.axis.CamX = check_overflow(self.axis.CamX, AXIS_MIN, AXIS_MAX)
+                    self.axis.CamY = check_overflow(self.axis.CamY, AXIS_MIN, AXIS_MAX)
+                    self.axis.ZoomView = check_overflow(self.axis.ZoomView, AXIS_MIN, AXIS_MAX)
+                    self.joystick.set_all(self.axis)
 
                 if config['show_indicator']:
-                    x_val = map_to_percentage(self.axis.x)
-                    y_val = map_to_percentage(self.axis.y)
-                    throttle_val = map_to_percentage(self.axis.th)
-                    rudder_val = map_to_percentage(self.axis.rd)
+                    x_val = map_to_percentage(self.axis.Roll)
+                    y_val = map_to_percentage(self.axis.Pitch)
+                    throttle_val = map_to_percentage(self.axis.Throttle)
+                    rudder_val = map_to_percentage(self.axis.Rudder)
                     self.update_indicator(x_val, y_val, throttle_val, rudder_val)
 
                 input.reset_wheel_delta()

@@ -5,6 +5,7 @@ from PySide2.QtWidgets import (
 )
 
 import i18n
+from common.axis import CONTROL_AXES, ControlAxis
 from data.config import Config
 from data.flight import FlightInput
 from lib.screen import ScreenGeometry
@@ -18,96 +19,38 @@ class TunePage(AbstractPage):
 
         self.tuneLayout = self.page_layout
 
-        # Create labels
-        self.x_label = QLabel()
-        self.y_label = QLabel()
-        self.z_label = QLabel()
-        self.rx_label = QLabel()
-        self.ry_label = QLabel()
-        self.rz_label = QLabel()
+        self._axis_labels = {}
+        self._axis_buttons = {}
 
-        # X Axis
-        x_axis_layout = QHBoxLayout()
-        x_axis_layout.setSpacing(10)
-        x_axis_layout.addWidget(self.x_label)
-        x_axis_layout.addStretch()
-        self.xAxisButton = QPushButton()
-        self.xAxisButton.clicked.connect(lambda: self.open_axis_window('x'))
-        x_axis_layout.addWidget(self.xAxisButton)
-        self.tuneLayout.addLayout(x_axis_layout)
+        for c_axis in CONTROL_AXES:
+            axis_layout = QHBoxLayout()
+            axis_layout.setSpacing(10)
 
-        # Y Axis
-        y_axis_layout = QHBoxLayout()
-        y_axis_layout.setSpacing(10)
-        y_axis_layout.addWidget(self.y_label)
-        y_axis_layout.addStretch()
-        self.yAxisButton = QPushButton()
-        self.yAxisButton.clicked.connect(lambda: self.open_axis_window('y'))
-        y_axis_layout.addWidget(self.yAxisButton)
-        self.tuneLayout.addLayout(y_axis_layout)
+            label = QLabel()
+            button = QPushButton()
+            button.clicked.connect(lambda *args, axis=c_axis: self.open_axis_window(axis))
 
-        # Z Axis
-        z_axis_layout = QHBoxLayout()
-        z_axis_layout.setSpacing(10)
-        z_axis_layout.addWidget(self.z_label)
-        z_axis_layout.addStretch()
-        self.zAxisButton = QPushButton()
-        self.zAxisButton.clicked.connect(lambda: self.open_axis_window('z'))
-        z_axis_layout.addWidget(self.zAxisButton)
-        self.tuneLayout.addLayout(z_axis_layout)
+            self._axis_labels[c_axis] = label
+            self._axis_buttons[c_axis] = button
 
-        # RX Axis
-        rx_axis_layout = QHBoxLayout()
-        rx_axis_layout.setSpacing(10)
-        rx_axis_layout.addWidget(self.rx_label)
-        rx_axis_layout.addStretch()
-        self.rxAxisButton = QPushButton()
-        self.rxAxisButton.clicked.connect(lambda: self.open_axis_window('rx'))
-        rx_axis_layout.addWidget(self.rxAxisButton)
-        self.tuneLayout.addLayout(rx_axis_layout)
+            axis_layout.addWidget(label)
+            axis_layout.addStretch()
+            axis_layout.addWidget(button)
 
-        # RY Axis
-        ry_axis_layout = QHBoxLayout()
-        ry_axis_layout.setSpacing(10)
-        ry_axis_layout.addWidget(self.ry_label)
-        ry_axis_layout.addStretch()
-        self.ryAxisButton = QPushButton()
-        self.ryAxisButton.clicked.connect(lambda: self.open_axis_window('ry'))
-        ry_axis_layout.addWidget(self.ryAxisButton)
-        self.tuneLayout.addLayout(ry_axis_layout)
+            self.tuneLayout.addLayout(axis_layout)
 
-        # RZ Axis
-        rz_axis_layout = QHBoxLayout()
-        rz_axis_layout.setSpacing(10)
-        rz_axis_layout.addWidget(self.rz_label)
-        rz_axis_layout.addStretch()
-        self.rzAxisButton = QPushButton()
-        self.rzAxisButton.clicked.connect(lambda: self.open_axis_window('rz'))
-        rz_axis_layout.addWidget(self.rzAxisButton)
-        self.tuneLayout.addLayout(rz_axis_layout)
-
-        # Initialize UI texts
         self.retranslate_ui()
 
         self.tuneLayout.addStretch()
 
     def retranslate_ui(self):
-        self.x_label.setText(i18n.t('JoyAxis', axis='X'))
-        self.y_label.setText(i18n.t('JoyAxis', axis='Y'))
-        self.z_label.setText(i18n.t('JoyAxis', axis='Z'))
-        self.rx_label.setText(i18n.t('JoyAxis', axis='RX'))
-        self.ry_label.setText(i18n.t('JoyAxis', axis='RY'))
-        self.rz_label.setText(i18n.t('JoyAxis', axis='RZ'))
-        self.xAxisButton.setText(i18n.t('Modify'))
-        self.yAxisButton.setText(i18n.t('Modify'))
-        self.zAxisButton.setText(i18n.t('Modify'))
-        self.rxAxisButton.setText(i18n.t('Modify'))
-        self.ryAxisButton.setText(i18n.t('Modify'))
-        self.rzAxisButton.setText(i18n.t('Modify'))
+        for axis_name in CONTROL_AXES:
+            self._axis_labels[axis_name].setText(i18n.t('JoyAxis', axis=axis_name))
+            self._axis_buttons[axis_name].setText(i18n.t('Modify'))
 
     def update_ui(self):
         pass
 
-    def open_axis_window(self, axis_name: str):
-        window = JoyAxisWindow(axis_name, self.flight, self)
+    def open_axis_window(self, axis: ControlAxis):
+        window = JoyAxisWindow(axis, self.flight, self)
         window.show()

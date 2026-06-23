@@ -1,5 +1,5 @@
 from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QComboBox, QLineEdit, QSpinBox
+from PySide2.QtWidgets import QComboBox, QLineEdit, QPushButton, QSlider, QSpinBox
 
 from common.win32 import KEYS
 
@@ -222,3 +222,70 @@ class KeybindEdit(QLineEdit):
             self.keyReleaseEvent(event)
             return True
         return super().event(event)
+
+
+class Slider(QSlider):
+    def __init__(self, orientation=Qt.Horizontal, parent=None):
+        super().__init__(orientation, parent)
+        self.setStyleSheet(
+            """
+            QSlider::groove:horizontal {
+                border: none;
+                height: 2px;
+                background: #a6a6a6;
+                border-radius: 1px;
+                margin: 0 6px;
+            }
+            QSlider::sub-page:horizontal {
+                background: #0078d7;
+                border-radius: 1px;
+                height: 2px;
+                margin: 0 6px;
+            }
+            QSlider::add-page:horizontal {
+                background: #a6a6a6;
+                border-radius: 1px;
+                height: 2px;
+                margin: 0 6px;
+            }
+            QSlider::handle:horizontal {
+                background: #0078d7;
+                border: none;
+                width: 12px;
+                height: 12px;
+                margin: -5px 0;
+                border-radius: 6px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #106ebe;
+            }
+            QSlider::handle:horizontal:pressed {
+                background: #005a9e;
+            }
+            """
+        )
+
+
+class Button(QPushButton):
+    def __init__(self, text='', parent=None):
+        super().__init__(text, parent)
+        self.setStyleSheet(
+            """
+            QPushButton {
+                border: 1px solid #e0e0e0;
+                border-radius: 6px;
+                padding: 6px 16px;
+                background: white;
+                font-size: 13px;
+                color: #333333;
+            }
+            QPushButton:hover {
+                border-color: #4a90e2;
+                background: #f5f9ff;
+            }
+            QPushButton:pressed {
+                border-color: #357abd;
+                background: #e8f0fc;
+            }
+            """
+        )

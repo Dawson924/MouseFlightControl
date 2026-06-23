@@ -8,6 +8,7 @@ from PySide2.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QMessageBox,
     QScrollArea,
     QSizePolicy,
     QVBoxLayout,
@@ -15,8 +16,11 @@ from PySide2.QtWidgets import (
 )
 
 import i18n
+from connect.DCS import DCSConnect
 from connect.flight import FlightConnect
+from connect.install import install, is_installed
 from connect.module import FlightModules, FlightSim
+from connect.MSFS import MSFSConnect
 from data.config import Config
 from data.flight import FlightInput
 from lib.container import store
@@ -191,13 +195,32 @@ class ImageCard(QFrame):
         """)
 
 
-JETPLANE_INPUTS = ['camera_fov', 'thrust_speed', 'throttle_increase', 'throttle_decrease']
+SIMULATORS = {
+    FlightSim.DCS: {'name': FlightSim.DCS.full_name, 'image_path': 'assets/Default.jpg'},
+    FlightSim.FS2020: {'name': FlightSim.FS2020.full_name, 'image_path': 'assets/Default.jpg'},
+}
+
+
+JET_PLANE_INPUTS = ['camera_fov', 'thrust_speed', 'throttle_increase', 'throttle_decrease']
+
 HELICOPTER_INPUTS = [
     'camera_fov',
     'thrust_speed',
+    'rudder_speed',
     'collective_increase',
     'collective_decrease',
-    'rudder_speed',
+    'rudder_left',
+    'rudder_right',
+    'rudder_center',
+    'collective_minimum',
+    'collective_maximum',
+]
+
+PISTON_PLANE_INPUTS = [
+    'camera_fov',
+    'thrust_speed',
+    'throttle_increase',
+    'throttle_decrease',
     'rudder_left',
     'rudder_right',
 ]
@@ -206,43 +229,48 @@ HELICOPTER_INPUTS = [
 class ConnectPage(AbstractPage):
     def __init__(self, win: ScreenGeometry, config: Config, flight: FlightInput, modules: FlightModules, parent=None):
         super().__init__(win, config, flight, parent)
-        self.flightsims = {
-            FlightSim.DCS: {'name': FlightSim.DCS.full_name, 'image_path': 'assets/Default.jpg'},
-            FlightSim.FS2020: {'name': FlightSim.FS2020.full_name, 'image_path': 'assets/Default.jpg'},
-        }
-        self.mod_data = {}
-        self.connector: FlightConnect = store.get('connector')
 
         self._image_cache = {}
         self._last_image_path = None
         self._no_data = False
+        self._in_spectator = False
+        self._current_page = 1
+        self._current_mode = 0
+        self._fields_per_page = 8
+        self._total_pages = 1
 
-        self.connection_timer = QTimer(self)
-        self.connection_timer.timeout.connect(self.update_connect)
-        self.connection_timer.start(1000)
+        self.mod_data: FlightModules = {}
+        self.connector: FlightConnect = store.get('connector')
+        self.msg_box = store.get('message_box')
 
-        self.connectLayout = self.page_layout
-        self.connectLayout.setSpacing(10)
-        self.connectLayout.setContentsMargins(0, 0, 0, 0)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_connect)
+        self.timer.start(300)
 
-        self.select_layout = QHBoxLayout()
-        self.select_layout.setSpacing(8)
-        self.flightSimLabel = QLabel()
-        self.flightSimLabel.setStyleSheet("""
+        self.pageLayout = self.page_layout
+        self.pageLayout.setSpacing(10)
+        self.pageLayout.setContentsMargins(0, 0, 0, 0)
+
+        # SIMULATOR DROPDOWN
+        self.headerLayout = QHBoxLayout()
+        self.headerLayout.setSpacing(8)
+        self.simulatorLabel = QLabel()
+        self.simulatorLabel.setStyleSheet("""
             QLabel {
                 font-size: 14px;
                 font-weight: 600;
             }
         """)
-        self.select_layout.addWidget(self.flightSimLabel)
-        self.flightSimSelect = ComboBox()
-        self.flightSimSelect.currentIndexChanged.connect(self.flightsim_changed)
-        self.select_layout.addWidget(self.flightSimSelect)
-        self.connectLayout.addLayout(self.select_layout)
+        self.headerLayout.addWidget(self.simulatorLabel)
+        self.simulatorDropdown = ComboBox()
+        self.simulatorDropdown.currentIndexChanged.connect(self.simulator_changed)
+        self.headerLayout.addWidget(self.simulatorDropdown)
+        self.pageLayout.addLayout(self.headerLayout)
 
-        self.scroll_area = QScrollArea(self)
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setStyleSheet("""
+        # MODULE LIST PANEL
+        self.module_list = QScrollArea(self)
+        self.module_list.setWidgetResizable(True)
+        self.module_list.setStyleSheet("""
             QScrollArea {
                 border: none;
                 background-color: transparent;
@@ -274,11 +302,12 @@ class ConnectPage(AbstractPage):
         self.list_layout.setContentsMargins(0, 0, 4, 0)
         self.list_layout.setAlignment(Qt.AlignTop)
 
-        self.panel_container = QWidget()
-        self.panel_layout = QVBoxLayout(self.panel_container)
-        self.panel_layout.setContentsMargins(0, 0, 4, 0)
-        self.panel_layout.setAlignment(Qt.AlignTop)
-        self.panel_layout.setSpacing(8)
+        # MODULE CONFIGURATION PANEL
+        self.module_panel = QWidget()
+        self.module_panel_layout = QVBoxLayout(self.module_panel)
+        self.module_panel_layout.setContentsMargins(0, 0, 4, 0)
+        self.module_panel_layout.setAlignment(Qt.AlignTop)
+        self.module_panel_layout.setSpacing(8)
 
         image_section = QWidget()
         image_layout = QGridLayout(image_section)
@@ -363,59 +392,85 @@ class ConnectPage(AbstractPage):
         self.returnLabel.setCursor(Qt.PointingHandCursor)
         self.returnLabel.mousePressEvent = self.label_clicked
 
-        self.panel_layout.addWidget(image_section)
-        self.panel_layout.addWidget(flight_panel, 1)
-        self.panel_layout.addWidget(self.returnLabel, 0, Qt.AlignCenter)
+        self.page_navigation = QWidget()
+        self.page_navigation.setStyleSheet('background-color: transparent;')
+        nav_layout = QHBoxLayout(self.page_navigation)
+        nav_layout.setContentsMargins(0, 0, 0, 0)
+        nav_layout.setSpacing(10)
+        self.prev_button = QLabel('<')
+        self.prev_button.setAlignment(Qt.AlignCenter)
+        self.prev_button.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                font-weight: 600;
+                color: #606266;
+                min-width: 24px;
+                padding: 4px 8px;
+            }
+            QLabel:hover {
+                color: #409EFF;
+                background-color: #e0e0e0;
+                border-radius: 4px;
+            }
+        """)
+        self.prev_button.setCursor(Qt.PointingHandCursor)
+        self.prev_button.mousePressEvent = self._prev_page
+        self.page_label = QLabel('1')
+        self.page_label.setAlignment(Qt.AlignCenter)
+        self.page_label.setStyleSheet("""
+            QLabel {
+                font-size: 12px;
+                color: #606266;
+                min-width: 30px;
+            }
+        """)
+        self.next_button = QLabel('>')
+        self.next_button.setAlignment(Qt.AlignCenter)
+        self.next_button.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                font-weight: 600;
+                color: #606266;
+                min-width: 24px;
+                padding: 4px 8px;
+            }
+            QLabel:hover {
+                color: #409EFF;
+                background-color: #e0e0e0;
+                border-radius: 4px;
+            }
+        """)
+        self.next_button.setCursor(Qt.PointingHandCursor)
+        self.next_button.mousePressEvent = self._next_page
+        nav_layout.addStretch()
+        nav_layout.addWidget(self.prev_button)
+        nav_layout.addWidget(self.page_label)
+        nav_layout.addWidget(self.next_button)
+        nav_layout.addStretch()
 
-        self.panel_container.hide()
+        self.module_panel_layout.addWidget(image_section)
+        self.module_panel_layout.addWidget(flight_panel, 1)
+        self.module_panel_layout.addWidget(self.page_navigation)
+        self.module_panel_layout.addWidget(self.returnLabel, 0, Qt.AlignCenter)
 
-        self.scroll_area.setWidget(self.list_container)
+        self.module_list.setWidget(self.list_container)
+        self.module_list.hide()
 
-        self.connectLayout.addWidget(self.scroll_area)
-        self.connectLayout.addWidget(self.panel_container)
+        self.pageLayout.addWidget(self.module_list)
+        self.pageLayout.addWidget(self.module_panel)
 
         self._module_list = {}
 
         self.init_modules(modules)
+        self.init_connect()
         self.init_ui()
         self.retranslate_ui()
 
-    def init_modules(self, mod_data: FlightModules):
-        self.mod_data = mod_data
-        self._model = self.flight['Connect']['model']
-        self._platform = self.get_platform(self._model)
-
-    def init_ui(self):
-        platforms = [(simid, detail['name']) for simid, detail in self.flightsims.items()]
-        self.render_flightsims(platforms)
-
-        if self._model and self._platform:
-            index = self.flightSimSelect.findData(self._platform)
-            if index >= 0:
-                self.flightSimSelect.setCurrentIndex(index)
-            self.scroll_area.hide()
-            self.render_modules(self._platform)
-            self.panel_container.show()
-        elif platforms:
-            self.flightSimSelect.setCurrentIndex(0)
-            self.panel_container.hide()
-            self.render_modules(platforms[0][0])
-            self.scroll_area.show()
-
-        self.update_ui()
-
-    def render_flightsims(self, platforms):
-        self.flightSimSelect.blockSignals(True)
-        self.flightSimSelect.clear()
-        for simid, name in platforms:
-            self.flightSimSelect.addItem(name, simid)
-        self.flightSimSelect.blockSignals(False)
-
-    def render_modules(self, platform):
+    def _create_module_cards(self, simulator):
         grouped_modules = {}
 
         for mod_id, module in self.mod_data.items():
-            if module['platform'] != platform:
+            if module['platform'] != simulator:
                 continue
 
             image_path = module['image_path']
@@ -443,17 +498,155 @@ class ConnectPage(AbstractPage):
                 card._model_ids = ids
             else:
                 card = self._module_list[primary_id]
+
+    def init_modules(self, mod_data: FlightModules):
+        self.mod_data = mod_data
+        self._model = self.flight['Connect']['model']
+        simulator = self.flight['Connect'].get('simulator')
+        if simulator:
+            self._simulator = FlightSim(simulator)
+        else:
+            self._simulator = self.get_platform(self._model)
+        self.check_dependencies()
+        for simulator in SIMULATORS.keys():
+            self._create_module_cards(simulator)
+
+    def init_ui(self):
+        sim_list = [(simid, detail['name']) for simid, detail in SIMULATORS.items()]
+        self.populate_simulators(sim_list)
+
+        if not self._simulator:
+            self._simulator = sim_list[0][0]
+            self.simulatorDropdown.setCurrentIndex(0)
+
+        if self.config['auto_connect'] and self._model:
+            self._set_model(None)
+
+        self.render_modules(self._simulator)
+        self.update_ui()
+
+    def init_connect(self):
+        try:
+            logger.info('Attempting to connect...')
+
+            simulator = self._simulator
+            if simulator == FlightSim.DCS:
+                self.connector = DCSConnect()
+            elif simulator == FlightSim.FS2020:
+                self.connector = MSFSConnect()
+            else:
+                return
+
+            store.set('connector', self.connector)
+            self.connector.connect()
+
+        except Exception as e:
+            logger.exception(str(e))
+
+    def populate_simulators(self, simulators):
+        self.simulatorDropdown.blockSignals(True)
+        self.simulatorDropdown.clear()
+        for simid, name in simulators:
+            self.simulatorDropdown.addItem(name, simid)
+        self.simulatorDropdown.blockSignals(False)
+
+    def render_modules(self, simulator):
+        grouped_modules = {}
+
+        for mod_id, module in self.mod_data.items():
+            if module['platform'] != simulator:
+                continue
+
+            image_path = module['image_path']
+            name = module['name']
+            key = (image_path, name)
+
+            if key not in grouped_modules:
+                grouped_modules[key] = {'ids': [], 'module': module}
+            grouped_modules[key]['ids'].append(mod_id)
+
+        visible_ids = set()
+        for (image_path, name), data in grouped_modules.items():
+            ids = data['ids']
+            module = data['module']
+
+            display_name = f'{name} ({len(ids)})' if len(ids) > 1 else name
+            primary_id = ids[0]
+            visible_ids.add(primary_id)
+
+            if primary_id in self._module_list:
+                card = self._module_list[primary_id]
                 card.text = display_name
                 card._model_ids = ids
                 card.name_label.setText(display_name)
 
         for card_id, card in self._module_list.items():
             module = self.mod_data.get(card_id)
-            card.setVisible(module is not None and module['platform'] == platform)
+            card.setVisible(card_id in visible_ids)
 
-        self._platform = platform
+        self._simulator = simulator
 
-    def _set_module_label(self, text, active=False):
+    def check_dependencies(self):
+        simulator = self._simulator
+
+        if simulator is None:
+            return
+
+        if simulator not in SIMULATORS:
+            logger.warning(f'Unknown simulator: {simulator}')
+            return
+
+        if is_installed(simulator):
+            logger.info(f'FlightConnect installed for {simulator.full_name}')
+            return
+
+        result = self.msg_box.question(
+            title=i18n.t('InstallationRequired'),
+            text=i18n.t('FlightConnectNotInstalled'),
+            detail=i18n.t('InstallFlightConnectPrompt', simulator=simulator.full_name),
+            buttons=QMessageBox.Yes | QMessageBox.No,
+            default_button=QMessageBox.Yes,
+        )
+
+        if result == QMessageBox.Yes:
+            installed_path = install(simulator)
+
+            if installed_path:
+                self.msg_box.info(
+                    title=i18n.t('InstallationComplete'),
+                    text=i18n.t('InstallationSuccess'),
+                    detail=f'{installed_path}',
+                )
+            else:
+                self.msg_box.error(
+                    title=i18n.t('InstallationFailed'),
+                    text=i18n.t('NoUserDataPathFound', simulator=simulator.full_name),
+                )
+
+    def _set_model(self, mod_id=None):
+        if not mod_id:
+            self.flight['Connect']['model'] = ''
+            self._model = None
+            logger.debug('MODEL: None')
+            return
+
+        module = self.mod_data.get(mod_id)
+        if not module:
+            logger.warning(f'{mod_id} NOT FOUND')
+            return
+
+        self.flight['Connect']['model'] = mod_id
+        self.flight['Connect']['simulator'] = module['platform'].value
+        self.flight['Input'] = {
+            k: module['data'][k] if k in module['data'] else v for k, v in self.flight['Input'].items()
+        }
+
+        self._model = mod_id
+        self._simulator = module['platform']
+
+        logger.debug(f'MODEL: {mod_id}')
+
+    def _set_model_label(self, text, active=False):
         if active:
             self.module_label.setText(text)
             self.module_label.setStyleSheet("""
@@ -475,7 +668,7 @@ class ConnectPage(AbstractPage):
                 }
             """)
 
-    def _set_image_label(self, image_path):
+    def _set_model_image(self, image_path):
         if not image_path or not os.path.exists(image_path):
             image_path = self._get_default_image()
 
@@ -515,14 +708,36 @@ class ConnectPage(AbstractPage):
         self.image_label.setPixmap(scaled_pixmap)
         self.image_label.setScaledContents(True)
 
+    def _set_module_content(self, mod_id, connecting=False):
+        if self._simulator:
+            self.sim_label.setText(SIMULATORS[self._simulator]['name'])
+
+        if connecting:
+            self._toggle_panel(True)
+            self._set_model_label('NO CONNECTION')
+            self._set_model_image(None)
+            self._render_options(0)
+            self.page_navigation.hide()
+            return
+
+        module = self.mod_data.get(mod_id)
+        if module:
+            display_name = module['name'] if not module['is_grouped'] else mod_id
+            self._set_model_label(display_name, True)
+            image_path = module.get('image_path')
+            self._set_model_image(image_path)
+            self._toggle_panel(True)
+        else:
+            self._toggle_panel(False)
+
     def _render_options(self, mode):
+        self._current_page = 1
+        self._current_mode = mode
         self._clear_options()
 
-        if mode == 1:
-            _fields = JETPLANE_INPUTS
-        elif mode == 2:
-            _fields = HELICOPTER_INPUTS
-        else:
+        _fields = self._get_flight_options(mode)
+
+        if not _fields:
             label = QLabel('NO MODULE SELECTED')
             label.setAlignment(Qt.AlignCenter)
             label.setStyleSheet("""
@@ -532,21 +747,27 @@ class ConnectPage(AbstractPage):
                     color: #888888;
                 }
             """)
-            self.flight_layout.addWidget(label)
+            self.flight_layout.insertWidget(0, label)
             return
 
-        spec_group = {}
         input_spec = FlightInput.SPEC['Input']
-
+        all_fields = []
         for field_name in _fields:
             if field_name not in input_spec:
                 continue
-
             field_spec = input_spec[field_name]
             if 'widget' not in field_spec:
                 continue
+            all_fields.append((field_name, field_spec))
 
-            spec_group[field_name] = field_spec
+        self._total_pages = max(1, (len(all_fields) + self._fields_per_page - 1) // self._fields_per_page)
+        self._update_pagination()
+
+        start_idx = (self._current_page - 1) * self._fields_per_page
+        end_idx = start_idx + self._fields_per_page
+        page_fields = all_fields[start_idx:end_idx]
+
+        spec_group = dict(page_fields)
 
         WidgetFactory.populate_from_spec(self.flight_layout, spec_group, self.set_flight_data, self)
 
@@ -556,10 +777,78 @@ class ConnectPage(AbstractPage):
         WidgetFactory.retranslate_from_spec(spec_group, self)
         WidgetFactory.add_stretch(self.flight_layout)
 
+    def _update_pagination(self):
+        self.page_label.setText(f'{self._current_page}/{self._total_pages}')
+        is_pagination_needed = self._total_pages > 1
+        self.page_navigation.setVisible(is_pagination_needed)
+        if is_pagination_needed:
+            self.prev_button.setEnabled(self._current_page > 1)
+            self.next_button.setEnabled(self._current_page < self._total_pages)
+
+    def _prev_page(self, event=None):
+        if self._current_page > 1:
+            self._current_page -= 1
+            self._render_current_page()
+
+    def _next_page(self, event=None):
+        if self._current_page < self._total_pages:
+            self._current_page += 1
+            self._render_current_page()
+
+    def _render_current_page(self):
+        mode = getattr(self, '_current_mode', 0)
+        _fields = self._get_flight_options(mode)
+
+        if not _fields:
+            return
+
+        input_spec = FlightInput.SPEC['Input']
+        all_fields = []
+        for field_name in _fields:
+            if field_name not in input_spec:
+                continue
+            field_spec = input_spec[field_name]
+            if 'widget' not in field_spec:
+                continue
+            all_fields.append((field_name, field_spec))
+
+        start_idx = (self._current_page - 1) * self._fields_per_page
+        end_idx = start_idx + self._fields_per_page
+        page_fields = all_fields[start_idx:end_idx]
+
+        self._clear_option_widgets()
+
+        spec_group = dict(page_fields)
+
+        WidgetFactory.populate_from_spec(self.flight_layout, spec_group, self.set_flight_data, self)
+
+        for field_name, field_spec in spec_group.items():
+            self.ui_elements.update({field_name: [field_spec['type']]})
+
+        WidgetFactory.retranslate_from_spec(spec_group, self)
+        WidgetFactory.add_stretch(self.flight_layout)
+
+        self._update_pagination()
+        self.update_states()
+
+    def _clear_option_widgets(self):
+        while self.flight_layout.count():
+            item = self.flight_layout.takeAt(0)
+            if item.widget():
+                if item.widget() == self.page_navigation:
+                    continue
+                item.widget().deleteLater()
+            elif item.layout():
+                self._delete_layout(item.layout())
+
+        self.ui_elements.clear()
+
     def _clear_options(self):
         while self.flight_layout.count():
             item = self.flight_layout.takeAt(0)
             if item.widget():
+                if item.widget() == self.page_navigation:
+                    continue
                 item.widget().deleteLater()
             elif item.layout():
                 self._delete_layout(item.layout())
@@ -580,17 +869,36 @@ class ConnectPage(AbstractPage):
         layout.deleteLater()
 
     def _get_default_image(self) -> str:
-        if self._platform:
-            return self.flightsims[self._platform]['image_path']
+        if self._simulator:
+            return SIMULATORS[self._simulator]['image_path']
         return 'assets/Default.jpg'
 
-    def _set_module_image(self, module_id):
-        mod = self.mod_data.get(module_id)
-        if mod:
-            name = mod.get('name', module_id)
-            self._set_module_label(name, True)
-            image_path = mod.get('image_path')
-            self._set_image_label(image_path)
+    def _get_flight_options(self, flight_mode):
+        if flight_mode == 1:
+            return JET_PLANE_INPUTS
+        elif flight_mode == 2:
+            return HELICOPTER_INPUTS
+        elif flight_mode == 3:
+            return PISTON_PLANE_INPUTS
+        return []
+
+    def _set_module(self, mod_id):
+        self._set_model(mod_id)
+        self._set_module_content(mod_id, self.config['auto_connect'] and mod_id is None)
+        if self.connector:
+            self.connector.emit('model_changed', mod_id)
+
+    def _toggle_panel(self, visible: bool = True):
+        if visible:
+            self.simulatorLabel.hide()
+            self.simulatorDropdown.hide()
+            self.module_list.hide()
+            self.module_panel.show()
+        else:
+            self.simulatorLabel.show()
+            self.simulatorDropdown.show()
+            self.module_list.show()
+            self.module_panel.hide()
 
     def update_connect(self):
         auto_connect = self.config['auto_connect']
@@ -602,79 +910,54 @@ class ConnectPage(AbstractPage):
             if self._no_data:
                 return
 
-            logger.debug('No data received from connector')
-            self.flightSimLabel.hide()
-            self.flightSimSelect.hide()
-            self.scroll_area.hide()
-            self.panel_container.show()
-            self.sim_label.setText(self.flightsims[self._platform]['name'])
-            self._set_module_label('NO CONNECTION')
-            self._set_image_label(None)
-            self._render_options(0)
+            logger.debug('FLIGHTCONNECT: No data received from connector')
+            self._set_module(None)
             self._no_data = True
             return
 
         elif data.model == 'Spectator':
-            pass
+            if self._in_spectator:
+                return
+
+            logger.debug('FLIGHTCONNECT: Player is in Spectator slot')
+            self._set_module(None)
+            self._in_spectator = True
+            return
 
         elif data.model != self._model:
-            self.change_module(data.model)
-            self.flightSimLabel.hide()
-            self.flightSimSelect.hide()
-            self.scroll_area.hide()
-            self.panel_container.show()
-            self.sim_label.setText(self.flightsims[self._platform]['name'])
-            self._set_module_image(data.model)
+            logger.debug(f'FLIGHTCONNECT: {data.model} received from {self._simulator}')
+            self._set_module(data.model)
+            self._toggle_panel(True)
+
             module = self.mod_data.get(data.model)
             if module:
-                self._render_options(module.get('control', 0))
+                self._render_options(module.get('aircraft_type', 0))
             else:
                 self._render_options(0)
 
             self.update_states()
-            pass
 
         self._no_data = False
+        self._in_spectator = False
 
-    def flightsim_changed(self):
-        platform = self.flightSimSelect.currentData()
-        if platform is not None:
-            self._platform = platform
-            self.render_modules(platform)
-            self.scroll_area.show()
-            self.panel_container.hide()
+    def simulator_changed(self):
+        simulator = self.simulatorDropdown.currentData()
+        if simulator is not None:
+            self._simulator = simulator
+            self.flight['Connect']['simulator'] = simulator
+            self.render_modules(simulator)
+            self._toggle_panel(False)
 
-    def module_clicked(self, module_id):
-        self.config['auto_connect'] = False
-        self.change_module(module_id)
+        logger.debug(f'SIMULATOR: {simulator}')
+
+    def module_clicked(self, mod_id):
+        self._set_module(mod_id)
         self.update_ui()
 
     def label_clicked(self, _):
         self.config['auto_connect'] = False
-        self.change_module(None)
-        self.update_ui()
-
-    def change_module(self, mod_id=None):
-        if not mod_id:
-            self.flight['Connect']['model'] = ''
-            self._model = None
-            return
-
-        module = self.mod_data.get(mod_id)
-
-        if not module:
-            logger.warning(f'{mod_id} not found')
-            return
-
-        self.flight['Connect']['model'] = mod_id
-        self.flight['Input'] = {
-            k: module['data'][k] if k in module['data'] else v for k, v in self.flight['Input'].items()
-        }
-
-        self._model = mod_id
-        self._platform = module['platform']
-
-        logger.debug(f'{mod_id} connected successfully')
+        self._no_data = False
+        self._set_module(None)
 
     def get_platform(self, module_id) -> FlightSim:
         module = self.mod_data.get(module_id)
@@ -682,57 +965,49 @@ class ConnectPage(AbstractPage):
 
     def update_ui(self):
         model = self._model
-        platform = self._platform
-
-        self.flightSimSelect.blockSignals(True)
-        if platform:
-            index = self.flightSimSelect.findData(FlightSim(platform))
-            if index >= 0:
-                self.flightSimSelect.setCurrentIndex(index)
-        self.flightSimSelect.blockSignals(False)
+        simulator = self._simulator
 
         if self.config['auto_connect']:
-            pass
+            self._toggle_panel(True)
 
-        elif model and platform:
-            self.flightSimLabel.hide()
-            self.flightSimSelect.hide()
-            self.scroll_area.hide()
-            self.panel_container.show()
-            self.sim_label.setText(self.flightsims[platform]['name'])
-            self._set_module_image(model)
+        elif model:
+            if not simulator:
+                simulator = self.get_platform(model)
+
+            self._set_module_content(model)
             module = self.mod_data.get(model)
             if module:
-                self._render_options(module.get('control', 0))
+                self._render_options(module.get('aircraft_type', 0))
             else:
                 self._render_options(0)
 
             self.update_states()
 
         else:
-            self.flightSimLabel.show()
-            self.flightSimSelect.show()
-            self.scroll_area.show()
-            self.panel_container.hide()
+            self._toggle_panel(False)
+
+        self.simulatorDropdown.blockSignals(True)
+        if simulator:
+            index = self.simulatorDropdown.findData(FlightSim(simulator))
+            if index >= 0:
+                self.simulatorDropdown.setCurrentIndex(index)
+        self.simulatorDropdown.blockSignals(False)
 
     def retranslate_ui(self):
-        self.flightSimLabel.setText(i18n.t('FlightSim'))
+        self.simulatorLabel.setText(i18n.t('FlightSim'))
         self.returnLabel.setText(i18n.t('BackToModules'))
 
         flight_mode = self.flight.get('flight_mode', 0)
+        option_fields = self._get_flight_options(flight_mode)
 
-        if flight_mode == 1:
-            target_fields = JETPLANE_INPUTS
-        elif flight_mode == 2:
-            target_fields = HELICOPTER_INPUTS
-        else:
+        if not option_fields:
             return
 
         spec_group = {}
         input_spec = FlightInput.SPEC['Input']
 
-        for field_name in target_fields:
-            if field_name in input_spec and 'i18n' in input_spec[field_name]:
-                spec_group[field_name] = {'i18n': input_spec[field_name]['i18n']}
+        for option_name in option_fields:
+            if option_name in input_spec and 'i18n' in input_spec[option_name]:
+                spec_group[option_name] = {'i18n': input_spec[option_name]['i18n']}
 
         WidgetFactory.retranslate_from_spec(spec_group, self)

@@ -1,19 +1,19 @@
 from PySide2.QtCore import QPointF, Qt, Slot
 from PySide2.QtGui import QBrush, QColor, QPainter, QPen
 from PySide2.QtWidgets import (
+    QCheckBox,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
-    QPushButton,
-    QSlider,
     QVBoxLayout,
     QWidget,
 )
 
-from common.axis import AxisName
+from common.axis import JOYSTICK_AXES, ControlAxis
 from data.flight import FlightInput
 from type.filter import Filter
+from ui.widgets import Button, ComboBox, Slider
 
 
 class JoyAxisChart(QWidget):
@@ -143,9 +143,9 @@ class JoyAxisChart(QWidget):
 
 
 class JoyAxisWindow(QMainWindow):
-    def __init__(self, axis: AxisName, flightinput: FlightInput, parent=None):
+    def __init__(self, axis: ControlAxis, flightinput: FlightInput, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f'Configure - Axis {axis.upper()}')
+        self.setWindowTitle(f'Configure - {axis} Axis')
         self.setFixedSize(750, 465)
         self.axis = axis
         self.flightinput = flightinput
@@ -159,23 +159,41 @@ class JoyAxisWindow(QMainWindow):
         # Top layout
         top_layout = QHBoxLayout()
         top_layout.addWidget(self.curve)
-        top_layout.addWidget(self._create_parameter_panel())
+        top_layout.addWidget(self._create_panel())
         main_layout.addLayout(top_layout)
 
         # Button layout
         button_layout = self._create_button_bar()
         main_layout.addLayout(button_layout)
 
-    def _create_parameter_panel(self):
-        panel = QGroupBox('Parameter Adjustment')
-        layout = QVBoxLayout(panel)
+    def _create_panel(self):
+        tune_panel = QGroupBox('Axis Tune')
+        layout = QVBoxLayout(tune_panel)
+
+        # Invert toggle
+        invert_group = QVBoxLayout()
+        self.invert_checkbox = QCheckBox('Invert Axis')
+        self.invert_checkbox.setChecked(self.filter.invert)
+        self.invert_checkbox.toggled.connect(self.on_invert_toggled)
+        invert_group.addWidget(self.invert_checkbox)
+
+        # Joystick axis selection
+        axis_select_group = QVBoxLayout()
+        self.axis_select_label = QLabel('Joystick Axis')
+        self.axis_select_combo = ComboBox()
+        self.axis_select_combo.addItems(JOYSTICK_AXES)
+        self.axis_select_combo.setCurrentText(self.filter.axis)
+        self.axis_select_combo.currentTextChanged.connect(self.on_joyaxis_changed)
+
+        axis_select_group.addWidget(self.axis_select_label)
+        axis_select_group.addWidget(self.axis_select_combo)
 
         # Curvature control
         curvature_group = QVBoxLayout()
         self.curvature_label = QLabel(f'Curvature: {self.curve.curvature:.0%}')
-        self.curvature_slider = QSlider(Qt.Horizontal)
+        self.curvature_slider = Slider(Qt.Horizontal)
         self.curvature_slider.setRange(-100, 100)
-        self.curvature_slider.setValue(self.filter.curvature)
+        self.curvature_slider.setValue(int(self.filter.curvature * 100))
         self.curvature_slider.valueChanged.connect(self.on_curvature_changed)
 
         curvature_group.addWidget(self.curvature_label)
@@ -184,9 +202,9 @@ class JoyAxisWindow(QMainWindow):
         # Dead zone control
         deadzone_group = QVBoxLayout()
         self.deadzone_label = QLabel(f'Dead Zone: {self.curve.dead_zone:.0%}')
-        self.deadzone_slider = QSlider(Qt.Horizontal)
+        self.deadzone_slider = Slider(Qt.Horizontal)
         self.deadzone_slider.setRange(0, 100)
-        self.deadzone_slider.setValue(self.filter.deadzone)
+        self.deadzone_slider.setValue(int(self.filter.deadzone))
         self.deadzone_slider.valueChanged.connect(self.on_deadzone_changed)
 
         deadzone_group.addWidget(self.deadzone_label)
@@ -195,7 +213,7 @@ class JoyAxisWindow(QMainWindow):
         # Axis boundary control
         boundary_group = QVBoxLayout()
         self.boundary_label = QLabel(f'Axis Boundary: {self.curve.axis_boundary:.2f}')
-        self.boundary_slider = QSlider(Qt.Horizontal)
+        self.boundary_slider = Slider(Qt.Horizontal)
         self.boundary_slider.setRange(10, 100)
         self.boundary_slider.setValue(100)
         self.boundary_slider.valueChanged.connect(self.on_boundary_changed)
@@ -203,24 +221,26 @@ class JoyAxisWindow(QMainWindow):
         boundary_group.addWidget(self.boundary_label)
         boundary_group.addWidget(self.boundary_slider)
 
+        layout.addLayout(invert_group)
         layout.addLayout(curvature_group)
         layout.addLayout(deadzone_group)
         layout.addLayout(boundary_group)
         layout.addStretch()
+        layout.addLayout(axis_select_group)
 
-        return panel
+        return tune_panel
 
     def _create_button_bar(self):
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignRight)
 
-        cancel_btn = QPushButton('Cancel')
+        cancel_btn = Button('Cancel')
         cancel_btn.clicked.connect(self.close)
 
-        reset_btn = QPushButton('Reset')
+        reset_btn = Button('Reset')
         reset_btn.clicked.connect(self.on_reset_clicked)
 
-        save_btn = QPushButton('Save')
+        save_btn = Button('Save')
         save_btn.clicked.connect(self.on_save_clicked)
 
         layout.addWidget(cancel_btn)
@@ -246,17 +266,38 @@ class JoyAxisWindow(QMainWindow):
         self.curve.set_axis_boundary(value)
         self.boundary_label.setText(f'Axis Boundary: {self.curve.axis_boundary:.2f}')
 
+    @Slot(bool)
+    def on_invert_toggled(self, checked):
+        self.filter.invert = checked
+
+    @Slot(str)
+    def on_joyaxis_changed(self, axis_name):
+        self.filter.axis = axis_name
+        self.axis_select_label.setText(f'Joystick Axis: {axis_name}')
+
     @Slot()
     def on_reset_clicked(self):
         self.curve.reset_parameters()
+        self.invert_checkbox.setChecked(False)
         self.curvature_slider.setValue(0)
         self.deadzone_slider.setValue(0)
         self.boundary_slider.setValue(100)
-        self.curvature_label.setText(f'Curvature: {self.curve.curvature:.2f}')
+        self.curvature_label.setText(f'Curvature: {self.curve.curvature:.0%}')
         self.deadzone_label.setText(f'Dead Zone: {self.curve.dead_zone:.0%}')
         self.boundary_label.setText(f'Axis Boundary: {self.curve.axis_boundary:.2f}')
+        self.filter.invert = False
+        self.filter.curvature = 0.0
+        self.filter.deadzone = 0
 
     @Slot()
     def on_save_clicked(self):
-        self.flightinput.set_filter(self.axis, Filter(False, self.curve.curvature, self.curve.dead_zone))
+        self.flightinput.set_filter(
+            self.axis,
+            Filter(
+                invert=self.filter.invert,
+                curvature=self.curve.curvature,
+                deadzone=int(self.curve.dead_zone * 100),
+                axis=self.filter.axis,
+            ),
+        )
         self.close()

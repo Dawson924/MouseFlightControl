@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "MouseFlight"
-version = "0.17.4"
+version = "0.17.5"
 description = "Mouse flight control for DCS World"
 authors = ["Dawson <bendawson0924@gmail.com>"]
 classifiers = [
@@ -49,6 +49,7 @@ vgamepad = "^0.1.0"
 loguru = "^0.7.3"
 python-i18n = {extras = ["yaml"], version = "^0.3.9"}
 configobj = "^5.0.9"
+simconnect = "^0.4.26"
 
 [tool.poetry.build]
 generate-setup-file = false

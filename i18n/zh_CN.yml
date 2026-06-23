@@ -18,13 +18,20 @@ DeviceNotFoundMessage: 找不到可用的vJoy设备，请前往软件帮助页�
 Disconnected: 未连接
 EnableFreecam: 启用自由视角
 Error: 错误
+FlightConnectNotInstalled: FlightConnect 未安装。
 FlightSim: 模拟飞行
 FreecamAutoCenter: 自由视角自动回中
 General: 通用
 HelicopterController: 直升机模式
 HintOverlay: 提示覆盖
 ImportPreset: 导入...
+InstallFlightConnectPrompt: 是否要将 FlightConnect 安装到您的 %{simulator} 游戏目录？
+InstallationComplete: 安装完成
+InstallationFailed: 安装失败
+InstallationRequired: 需要安装
+InstallationSuccess: FlightConnect 已成功安装。
 Installed: 已安装
+JetPlaneController: 喷气机模式
 JoyAxis: '%{axis} 轴'
 Language: 语言
 LogFile: 日志文件
@@ -32,9 +39,10 @@ MemorizeAxisPos: 维持摇杆位置
 Modules: 模块
 MouseFlight: 鼠标飞行
 NoControl: 无控制
+NoUserDataPathFound: 未找到 %{simulator} UserData 路径或安装失败。
 None: 未选择
 OptionsPage: 选项
-PlaneController: 固定翼模式
+PistonPlaneController: 螺旋桨飞机模式
 RudderLeft: 左舵
 RudderRight: 右舵
 RudderSpeed: 脚舵速度

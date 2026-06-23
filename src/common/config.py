@@ -1,5 +1,5 @@
 CONFIG_FILE = 'config.yml'
-FLIGHT_FILE = 'flight.yml'
+FLIGHT_FILE = 'flightinput.yml'
 
 CONFIGURABLE = {
     'target_fps': (int, 60, 500),

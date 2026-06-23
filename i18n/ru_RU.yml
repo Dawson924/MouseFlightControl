@@ -19,13 +19,20 @@ DeviceNotFoundMessage: Не найдено доступных устройств
 Disconnected: Отключено
 EnableFreecam: Включить свободную камеру
 Error: Ошибка выполнения
+FlightConnectNotInstalled: FlightConnect не установлен.
 FlightSim: Симулятор полетов
 FreecamAutoCenter: Автоцентрирование свободной камеры
 General: Общие
 HelicopterController: Режим вертолета
 HintOverlay: Подсказки
 ImportPreset: Импорт...
+InstallFlightConnectPrompt: Хотите установить скрипт FlightConnect в директорию %{simulator}?
+InstallationComplete: Установка завершена
+InstallationFailed: Ошибка установки
+InstallationRequired: Требуется установка
+InstallationSuccess: FlightConnect успешно установлен.
 Installed: Установлено
+JetPlaneController: Режим самолета
 JoyAxis: Ось %{axis}
 Language: Язык
 LogFile: Лог-файл
@@ -33,9 +40,11 @@ MemorizeAxisPos: Сохранение позиции осей
 Modules: Модули
 MouseFlight: MouseFlight
 NoControl: Без управления
+NoUserDataPathFound: Директория UserData %{simulator} не найдена или установка не
+  удалась.
 None: Нет
 OptionsPage: ОПЦИИ
-PlaneController: Режим самолета
+PistonPlaneController: Режим винтового самолета
 RudderLeft: Руль влево
 RudderRight: Руль вправо
 RudderSpeed: Скорость руля

@@ -15,8 +15,8 @@ function te.update(dt)
         if Input.hotkey(config.afterburner_detent) then
             DETENT_ON = not DETENT_ON
         end
-        if DETENT_ON and Axis.th > detent then
-            SetAxis('th', detent)
+        if DETENT_ON and Axis.Throttle > detent then
+            SetAxis('Throttle', detent)
         end
     end
 end

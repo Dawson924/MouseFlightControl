@@ -19,13 +19,21 @@ DeviceNotFoundMessage: No available vJoy devices were found. Please visit the so
 Disconnected: Disconnected
 EnableFreecam: Enable Freecam
 Error: Runtime Error
+FlightConnectNotInstalled: FlightConnect is not installed.
 FlightSim: Flight Simulator
 FreecamAutoCenter: Freecam Auto Center
 General: General
 HelicopterController: Helicopter Mode
 HintOverlay: Hint Overlay
 ImportPreset: Import...
+InstallFlightConnectPrompt: Do you want to install FlightConnect to your %{simulator}
+  directory?
+InstallationComplete: Installation Complete
+InstallationFailed: Installation Failed
+InstallationRequired: Installation Required
+InstallationSuccess: FlightConnect has been installed successfully.
 Installed: Installed
+JetPlaneController: Jetplane Control
 JoyAxis: Joy %{axis}
 Language: Language
 LogFile: Log file
@@ -33,9 +41,10 @@ MemorizeAxisPos: Maintain Axis Position
 Modules: Modules
 MouseFlight: MouseFlight
 NoControl: No Control
+NoUserDataPathFound: No %{simulator} UserData path found or installation failed.
 None: None
 OptionsPage: OPTIONS
-PlaneController: Plane Mode
+PistonPlaneController: Piston Plane Control
 RudderLeft: Rudder Left
 RudderRight: Rudder Right
 RudderSpeed: Rudder Speed

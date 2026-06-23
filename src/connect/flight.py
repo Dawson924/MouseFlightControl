@@ -1,8 +1,9 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Type, TypeVar
+from typing import Callable, Dict, Optional, Type, TypeVar
 
 from connect.module import FlightSim
+from lib.event import EventEmitter
 
 T = TypeVar('T', bound='FlightData')
 
@@ -38,6 +39,13 @@ class FlightConnect(ABC):
     def __init__(self, platform: FlightSim):
         self.platform = platform
         self.connected = False
+        self.event = EventEmitter()
+
+    def on(self, name: str, callback: Callable):
+        self.event.on(name, callback)
+
+    def emit(self, name: str, *args, **kwargs):
+        self.event.emit(name, *args, **kwargs)
 
     def _create_data(self, raw_data: Dict) -> FlightData:
         return FlightData(raw_data)
@@ -57,3 +65,7 @@ class FlightConnect(ABC):
     @abstractmethod
     def is_connected(self) -> bool:
         return self.connected
+
+    @abstractmethod
+    def get_data(self) -> Optional[FlightData]:
+        pass

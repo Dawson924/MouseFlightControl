@@ -1,23 +1,20 @@
-from typing import Any, Dict
-
 import yaml
 
-from common.axis import AxisName
-from data.store import ObjectStorage
-from type.filter import Filter
-
-AXIS_NAMES = ['x', 'y', 'z', 'rx', 'ry', 'rz', 'sl', 'sl2']
+from common.axis import CONTROL_AXES, JOYSTICK_AXES, ControlAxis
+from data.store import YamlStorage
+from type.filter import Filter, Filters
 
 
-class FlightInput(ObjectStorage):
+class FlightInput(YamlStorage):
     SPEC = {
         'Connect': {
             'model': {'type': str, 'default': ''},
+            'simulator': {'type': str, 'default': ''},
         },
         'Input': {
             'flight_mode': {
                 'type': int,
-                'allowed': [-1, 0, 1, 2],
+                'allowed': [-1, 0, 1, 2, 3],
                 'default': 0,
             },  # -1 has no definition. The only reason to use it is to avoid errors from spec validation.
             'camera_fov': {
@@ -46,26 +43,31 @@ class FlightInput(ObjectStorage):
             },
             'throttle_increase': {'type': str, 'default': 'X', 'widget': 'KeybindEdit', 'i18n': 'ThrustIncrease'},
             'throttle_decrease': {'type': str, 'default': 'Z', 'widget': 'KeybindEdit', 'i18n': 'ThrustDecrease'},
-            'collective_increase': {'type': str, 'default': 'W', 'widget': 'LineEdit', 'i18n': 'ThrustIncrease'},
-            'collective_decrease': {'type': str, 'default': 'S', 'widget': 'LineEdit', 'i18n': 'ThrustDecrease'},
-            'rudder_left': {'type': str, 'default': 'A', 'widget': 'LineEdit', 'i18n': 'RudderLeft'},
-            'rudder_right': {'type': str, 'default': 'D', 'widget': 'LineEdit', 'i18n': 'RudderRight'},
+            'collective_increase': {'type': str, 'default': 'W', 'widget': 'KeybindEdit', 'i18n': 'ThrustIncrease'},
+            'collective_decrease': {'type': str, 'default': 'S', 'widget': 'KeybindEdit', 'i18n': 'ThrustDecrease'},
+            'collective_maximum': {'type': str, 'default': '', 'widget': 'KeybindEdit', 'i18n': 'CollectiveMaximum'},
+            'collective_minimum': {'type': str, 'default': 'Z', 'widget': 'KeybindEdit', 'i18n': 'CollectiveMinimum'},
+            'rudder_left': {'type': str, 'default': 'A', 'widget': 'KeybindEdit', 'i18n': 'RudderLeft'},
+            'rudder_right': {'type': str, 'default': 'D', 'widget': 'KeybindEdit', 'i18n': 'RudderRight'},
+            'rudder_center': {'type': str, 'default': 'X', 'widget': 'KeybindEdit', 'i18n': 'RudderCenter'},
         },
-        'Axis': {
-            axis_name: {
+        'Joystick': {
+            axis: {
                 'type': dict,
                 'default': {
-                    'invert': axis_name in ['z', 'sl'],
+                    'axis': JOYSTICK_AXES[i],
+                    'invert': axis in ['Throttle', 'ZoomView'],
                     'curvature': 0.0,
                     'deadzone': 0.0,
                 },
                 'fields': {
+                    'axis': {'type': str},
                     'invert': {'type': bool},
                     'curvature': {'type': float, 'min': -1.0, 'max': 1.0},
                     'deadzone': {'type': float, 'min': 0.0, 'max': 1.0},
                 },
             }
-            for axis_name in AXIS_NAMES
+            for i, axis in enumerate(CONTROL_AXES)
         },
     }
     DEFAULT_GROUP = 'Input'
@@ -73,26 +75,14 @@ class FlightInput(ObjectStorage):
     def has(self, field: str) -> bool:
         return field in self.SPEC[self.DEFAULT_GROUP]
 
-    def set(self, field: str, value: Any) -> None:
-        self._set(self.DEFAULT_GROUP, field, value)
+    def get_filters(self) -> Filters:
+        return {k: Filter.from_dict(v) for k, v in self._data['Joystick'].items()}
 
-    def get(self, field: str, default: Any = None) -> Any:
-        return self._get(self.DEFAULT_GROUP, field, default)
+    def get_filter(self, axis: ControlAxis) -> Filter:
+        return Filter.from_dict(self._data['Joystick'][axis])
 
-    def get_filters(self) -> Dict[str, Filter]:
-        return {k: Filter.from_dict(v) for k, v in self._data['Axis'].items()}
-
-    def get_filter(self, axis_id: AxisName) -> Filter:
-        return Filter.from_dict(self._data['Axis'][axis_id])
-
-    def set_filter(self, axis_id: AxisName, filter: Filter) -> None:
-        self._data['Axis'][axis_id] = filter.to_dict()
-
-    def __getitem__(self, key: str) -> Any:
-        return self._data.get(key)
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        self._data[key] = value
+    def set_filter(self, axis: ControlAxis, filter: Filter) -> None:
+        self._data['Joystick'][axis] = filter.to_dict()
 
 
 def flight_config_representer(dumper: yaml.Dumper, config: FlightInput) -> yaml.Node:

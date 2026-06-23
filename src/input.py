@@ -203,7 +203,7 @@ class InputStateMonitor:
     def is_released(self, name):
         return self.is_key_released(name) or self.is_mouse_released(name)
 
-    def alt_ctrl_shift(self, alt: bool = False, ctrl: bool = False, shift: bool = False):
+    def modifiers(self, alt: bool = False, ctrl: bool = False, shift: bool = False):
         return (
             self.is_key_pressing('alt') == alt
             and self.is_key_pressing('ctrl') == ctrl

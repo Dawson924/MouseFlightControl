@@ -15,6 +15,8 @@ from common.axis import (
     AXIS_X,
     AXIS_Y,
     AXIS_Z,
+    CONTROL_AXES,
+    ControlAxis,
 )
 from type.filter import Filters
 
@@ -38,6 +40,13 @@ class JoystickDevice(ABC):
 
         self.axis_mapping = self.get_axis_mapping()
         self.button_mapping = self.get_button_mapping()
+
+    def set_all(self, axis_pos) -> None:
+        for control_axis in CONTROL_AXES:
+            value = getattr(axis_pos, control_axis, None)
+            if value is None:
+                continue
+            self.set_axis(control_axis, int(value))
 
     @abstractmethod
     def get_axis_mapping(self) -> Dict[int, Any]:
@@ -70,42 +79,32 @@ class JoystickDevice(ABC):
     def update_filters(self, filters: Filters) -> None:
         self.filters = filters
 
-    def set_axis(self, axis_id: int, raw_value: int) -> bool:
-        if axis_id not in self.axis_mapping:
+    def set_axis(self, control_axis: ControlAxis, raw_value: int) -> bool:
+        filter = self.filters.get(control_axis)
+        mapped_key = None
+        if filter and filter.axis:
+            target = filter.axis.lower()
+            for key in self.axis_mapping:
+                if key.lower() == target:
+                    mapped_key = key
+                    break
+
+        if mapped_key is None:
             return False
 
-        filter = self.filters.get(axis_id)
         value = raw_value
 
-        if not filter:
+        if not filter or (not filter.invert and not filter.curvature):
             value = max(AXIS_MIN, min(AXIS_MAX, value))
-            self._apply_axis(axis_id, value)
+            self._apply_axis(mapped_key, value)
             return True
 
-        self._apply_curve(axis_id, value)
+        self._apply_filter(mapped_key, value, filter)
         return True
 
-    def _apply_curve(self, axis_id, value) -> bool:
-        filter = self.filters.get(axis_id)
-        # current = self._curves[axis_id]
-
+    def _apply_filter(self, axis_id, value, filter) -> bool:
         if filter.invert:
             value = -value
-
-        # if filter.preset == 'linear':
-        #     smooth_speed = filter.smooth or DEFAULT_SMOOTH_SPEED
-        #     smooth_speed = max(1, smooth_speed)
-
-        #     if current < value:
-        #         new_val = min(current + smooth_speed, value)
-        #     elif current > value:
-        #         new_val = max(current - smooth_speed, value)
-        #     else:
-        #         new_val = value
-
-        #     self._apply_axis(axis_id, new_val)
-        #     self._curves[axis_id] = new_val
-        #     return
 
         if filter.curvature and filter.curvature != 0:
             if value == AXIS_MIN:

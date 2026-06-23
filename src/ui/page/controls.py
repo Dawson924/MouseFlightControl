@@ -87,3 +87,9 @@ class ControlsPage(AbstractPage):
 
     def update_ui(self):
         self.update_states()
+        connect_model = self.flight['Connect']['model']
+        auto_connect = self.config['auto_connect']
+        if not auto_connect:
+            self.camera_fov.setEnabled(connect_model in ('', None))
+        else:
+            self.camera_fov.setDisabled(True)

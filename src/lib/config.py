@@ -19,7 +19,7 @@ def load_all_data() -> ConfigList:
         flight = FlightInput.from_yaml(file_path=FLIGHT_FILE)
         return (config, flight)
     except Exception as e:
-        logger.exception(f'{i18n.t("ConfigLoadFailed")}: {e}')
+        logger.exception(f'{i18n.t("ConfigLoadFailed")} {e}')
         return Config(), FlightInput()
 
 
