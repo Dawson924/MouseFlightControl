@@ -19,6 +19,7 @@ DeviceNotFoundMessage: No available vJoy devices were found. Please visit the so
 Disconnected: Disconnected
 EnableFreecam: Enable Freecam
 Error: Runtime Error
+Extensions: Extensions
 FlightConnectNotInstalled: FlightConnect is not installed.
 FlightSim: Flight Simulator
 FreecamAutoCenter: Freecam Auto Center
@@ -51,6 +52,7 @@ RudderSpeed: Rudder Speed
 RuntimeEnv: Environment
 Scale: Scale
 ScreenInfo: Screen info
+SelectExtension: Select an extension to configure
 Script: Script
 Sensitive: Sensitive
 ShowCaptions: Captions

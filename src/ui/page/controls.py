@@ -8,16 +8,14 @@ from PySide2.QtWidgets import (
 
 import i18n
 from data.config import Config
-from data.flight import FlightInput
-from lib.screen import ScreenGeometry
 from ui.factory import WidgetFactory
 from ui.page import AbstractPage
 from ui.widgets import SpinBox
 
 
 class ControlsPage(AbstractPage):
-    def __init__(self, win: ScreenGeometry, config: Config, flight: FlightInput, parent=None):
-        super().__init__(win, config, flight, parent)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self.controlsLayout = self.page_layout
 

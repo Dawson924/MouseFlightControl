@@ -234,13 +234,10 @@ class MessageBox:
         msg_box.setStandardButtons(buttons)
         msg_box.setDefaultButton(default_button)
 
-        if self.parent:
-            parent_geo = self.parent.geometry()
-            msg_geo = msg_box.frameGeometry()
-            msg_geo.moveCenter(parent_geo.center())
-            msg_box.move(msg_geo.topLeft())
-        else:
-            msg_box.move(msg_box.screen().availableGeometry().center() - msg_box.rect().center())
+        screen = msg_box.screen().availableGeometry()
+        msg_w = msg_box.sizeHint().width()
+        msg_h = msg_box.sizeHint().height()
+        msg_box.move(screen.center().x() - msg_w // 2, screen.center().y() - msg_h // 2)
 
         result = msg_box.exec_()
         return result

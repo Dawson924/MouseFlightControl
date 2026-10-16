@@ -9,27 +9,27 @@ from validate import Validator
 from common.constants import MODULES_PATH
 
 
-class FlightSim(str, Enum):
+class Simulator(str, Enum):
     DCS = 'DCS'
     FS2020 = 'MSFS2020'
 
     @property
     def full_name(self):
-        names = {FlightSim.DCS: 'DCS World', FlightSim.FS2020: 'MSFS 2020'}
+        names = {Simulator.DCS: 'DCS World', Simulator.FS2020: 'MSFS 2020'}
         return names[self]
 
 
-class FlightModule(TypedDict):
+class Module(TypedDict):
     id: str
     name: str
     data: Dict[str, Any]
-    platform: FlightSim
+    platform: Simulator
     aircraft_type: int
     is_grouped: bool
     image_path: str
 
 
-FlightModules = Dict[str, FlightModule]
+LocalModules = Dict[str, Module]
 
 
 MANIFEST_SPEC = {
@@ -37,7 +37,7 @@ MANIFEST_SPEC = {
         'model': 'string(default=None)',
         'models': 'list(default=None)',
         'title': 'string',
-        'platform': f'option({FlightSim.DCS.value}, {FlightSim.FS2020.value})',
+        'platform': f'option({Simulator.DCS.value}, {Simulator.FS2020.value})',
     },
     'Data': {
         'flight_mode': 'integer(default=1, min=-1, max=3)',
@@ -48,7 +48,7 @@ MANIFEST_SPEC = {
 }
 
 
-def load_modules(base_dir: str = MODULES_PATH) -> FlightModules:
+def load_modules(base_dir: str = MODULES_PATH) -> LocalModules:
     registry = {}
 
     if not os.path.isdir(base_dir):
@@ -103,15 +103,17 @@ def load_modules(base_dir: str = MODULES_PATH) -> FlightModules:
                         sim_id = manifest['Module']['platform']
                         name = manifest['Module']['title']
 
-                        module: FlightModule = {
+                        module: Module = {
                             'id': mod_id,
                             'name': name,
                             'data': manifest['Data'],
-                            'platform': FlightSim(sim_id),
+                            'platform': Simulator(sim_id),
                             'aircraft_type': manifest['Data']['flight_mode'],
                             'is_grouped': is_sub,
                             'module_path': dir,
-                            'entry_path': os.path.join(dir, 'main.py') if os.path.isfile(os.path.join(dir, 'main.py')) else None,
+                            'entry_path': os.path.join(dir, 'main.py')
+                            if os.path.isfile(os.path.join(dir, 'main.py'))
+                            else None,
                             'image_path': os.path.join(dir, 'bg_image.jpg'),
                         }
                         registry[mod_id] = module

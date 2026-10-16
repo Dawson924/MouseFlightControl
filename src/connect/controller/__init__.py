@@ -33,15 +33,15 @@ class FlightControllers:
         if self._controller is not None:
             self._controller._load_fields()
 
-    def update(self, flightinput):
-        model = flightinput['Connect']['model']
-        flight_mode = flightinput['Input']['flight_mode']
+    def update(self, flightdata):
+        model = flightdata['Connect']['model']
+        flight_mode = flightdata['Input']['flight_mode']
         if model != self._model or flight_mode != self._flight_mode:
             self._model = model
             self._flight_mode = flight_mode
             Class = self.get_class(flight_mode)
             if Class:
-                self._controller = Class(flightinput)
+                self._controller = Class(flightdata)
             else:
                 self._controller = None
 

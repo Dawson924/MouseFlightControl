@@ -3,10 +3,8 @@ import sys
 import threading
 import time
 from types import SimpleNamespace
-from typing import Dict
 
 import psutil
-from lupa import LuaRuntime
 from PySide2 import QtCore, QtWidgets
 from PySide2.QtCore import QCoreApplication, QMetaObject, QSize, Qt, Slot
 from PySide2.QtGui import QFont, QIcon
@@ -20,34 +18,30 @@ from common.axis import (
     AxisPos,
 )
 from common.config import LANGUAGE_CONFIG
-from common.constants import APP_VERSION, SCRIPT_INI_PATH
+from common.constants import APP_VERSION, EXTENSIONS_PATH
 from connect.controller import controllers
 from connect.flight import FlightConnect
-from connect.module import load_modules
-from input import InputStateMonitor
-from lib.axis import axis2fov, fov, set_axis
+from connect.platform import load_modules
+from input import InputDevices
+from lib.axis import axis2fov, fov
 from lib.config import load_all_data, save_all_data
-from lib.container import store
-from lib.event import EventEmitter
-from lib.fs import open_directory
+from lib.data import registry
+from lib.event import events
 from lib.joystick import get_joystick_device
-from lib.log import get_logger, init_logger, logger
+from lib.log import init_logger, logger
 from lib.screen import ScreenGeometry
-from lib.script import get_default, load_data, save_data, validate_config
 from lib.win32 import (
     MessageBox,
     get_mouse_speed,
     set_mouse_speed,
 )
-from script_engine.database import ScriptDatabase
-from script_engine.runtime import load_lua_scripts
-from type.script import ScriptModule
+from plugin import extension_loader
 from ui.MainWindow import Ui_MainWindow
 from ui.page import ConnectPage, ControlsPage, OptionsPage, TunePage
 from ui.screen.CursorGraph import CursorGraph
 from ui.screen.HintLabel import HintLabel
 from ui.screen.IndicatorWindow import IndicatorWindow
-from ui.window.script import ScriptWindow
+from ui.window.extension import ExtensionWindow
 from utils import check_overflow, wheel_step
 
 input = None
@@ -62,7 +56,6 @@ delta_y = 0
 class MainWindow(QtWidgets.QMainWindow):
     showCursor = QtCore.Signal(bool)
     showMessage = QtCore.Signal(str, str, int)
-    lua = LuaRuntime(encoding='utf-8', unpack_returned_tuples=True)
 
     def __init__(self):
         super().__init__()
@@ -82,7 +75,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.apply_stylesheet()
 
         self.ui = Ui_MainWindow()
-        self.message_box = MessageBox(self)
 
         self.main_thread: threading.Thread = None
         self.connector: FlightConnect = None
@@ -104,37 +96,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.damping_h = 1.0
         self.damping_v = 1.0
 
-        self.config, self.flightinput = load_all_data()
+        self.config, self.flightdata = load_all_data()
+        registry.singleton('config', self.config)
+        registry.singleton('flightdata', self.flightdata)
 
         i18n.set('locale', self.config.get('language'))
 
         self.init_joystick()
-        self.init_scripts()
 
-        self.modules = load_modules()
-        store.singleton('modules', self.modules)
-
-        store.singleton('config', self.config)
-        store.singleton('flightinput', self.flightinput)
-        store.singleton('joystick', self.joystick)
-        store.singleton('message_box', self.message_box)
-
-        self.init_ui()
-        self.create_menu()
-
-        self.retranslate_ui()
-        self.update_ui()
-
-        self.connector = store.get('connector')
-        if self.connector:
-            self.connector.on('model_changed', self.on_model_changed)
-
-        self.ui.startButton.clicked.connect(self.on_startButton_clicked)
-
-        self.hintLabel = HintLabel(self)
-        self.showMessage.connect(self.hintLabel.show_message)
-        self.cursorGraph = CursorGraph(self)
-        self.showCursor.connect(self.cursorGraph.show_cursor)
         self.indicator = IndicatorWindow(
             None,
             self.indicator_x,
@@ -144,6 +113,26 @@ class MainWindow(QtWidgets.QMainWindow):
             self.indicator_size,
             self.scale,
         )
+
+        self.init_extensions()
+
+        self.modules = load_modules()
+        registry.singleton('modules', self.modules)
+
+        self.init_ui()
+        self.create_menu()
+
+        self.retranslate_ui()
+        self.update_ui()
+
+        events.on('model_changed', self.on_model_changed)
+
+        self.ui.startButton.clicked.connect(self.on_startButton_clicked)
+
+        self.hintLabel = HintLabel(self)
+        self.showMessage.connect(self.hintLabel.show_message)
+        self.cursorGraph = CursorGraph(self)
+        self.showCursor.connect(self.cursorGraph.show_cursor)
 
         self.show()
         self.resize(QSize(self.config.get('width'), self.config.get('height')))
@@ -302,9 +291,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_ui(self):
         self.ui.setupUi(self)
+
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
         self.setMinimumWidth(self.min_w_size)
         self.setMaximumWidth(self.max_w_size)
+        QMetaObject.connectSlotsByName(self)
 
         if self.config.get('width') == 0:
             self.config.set('width', self.win.px(350))
@@ -316,20 +307,23 @@ class MainWindow(QtWidgets.QMainWindow):
         font.setPointSize(10)
         font.setWeight(QFont.Normal)
         QtWidgets.QApplication.instance().setFont(font)
-        QMetaObject.connectSlotsByName(self)
+
+        self.message_box = MessageBox(self)
+        registry.singleton('message_box', self.message_box)
+
         self.init_pages()
 
     def init_pages(self):
-        self.connect_page = ConnectPage(self.win, self.config, self.flightinput, self.modules)
+        self.connect_page = ConnectPage()
         self.ui.connectPageLayout.addWidget(self.connect_page)
 
-        self.controls_page = ControlsPage(self.win, self.config, self.flightinput)
+        self.controls_page = ControlsPage()
         self.ui.controlsPageLayout.addWidget(self.controls_page)
 
-        self.options_page = OptionsPage(self.win, self.config, self.flightinput)
+        self.options_page = OptionsPage()
         self.ui.optionsPageLayout.addWidget(self.options_page)
 
-        self.tune_page = TunePage(self.win, self.config, self.flightinput)
+        self.tune_page = TunePage()
         self.ui.axisTunePageLayout.addWidget(self.tune_page)
 
         self.ui.tabWidget.currentChanged.connect(self.on_tab_changed)
@@ -341,114 +335,35 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tune_page,
         ]
 
-    def on_tab_changed(self, index):
-        if 0 <= index < len(self._pages):
-            self._pages[index].update_ui()
-
     def init_joystick(self):
         try:
-            self.axis = AxisPos(0, 0, AXIS_MIN, 0, 0, 0, fov(self.flightinput.get('camera_fov')))
+            self.axis = AxisPos(0, 0, AXIS_MIN, 0, 0, 0, fov(self.flightdata.get('camera_fov')))
             self.joystick = get_joystick_device(self.device, self.device_id)
+            registry.singleton('joystick', self.joystick)
         except RuntimeError as e:
             logger.error(str(e))
             self.message_box.error(i18n.t('Error'), i18n.t('DeviceNotFoundMessage'))
 
-    def init_scripts(self):
-        self.lua_globals = self.lua.globals()
-        self.lua_lock = threading.Lock()
-        self.lua_event = EventEmitter()
-        self.lua_globals.SetAttribute = self._set_attr_value
-        self.lua_globals.GetAttribute = self._get_attr_value
-        self.lua_globals.GetLogger = get_logger
-        self.lua_globals.GetMouseSpeed = get_mouse_speed
-        self.lua_globals.SetMouseSpeed = set_mouse_speed
-        self.lua_globals.AddEventHandler = lambda event, handler: self.lua_event.on(event, handler)
-        self.lua_globals.RemoveEventHandler = lambda event: self.lua_event.off(event)
-        self.lua.execute("""
-            Axis = {x=0, y=0, th=0, rd=0, vx=0, vy=0, vz=0}
-            Mouse = {speed=0, pos={0,0}, deltaX=0, deltaY=0}
-            Input = {}
-            Control = {active=false, steering=false}
-            Camera = {active=false, fov=0}
-            Screen = {}
-        """)
-        self.lua_globals.Axis = self.axis
-        self.lua_globals.AXIS_MIN = AXIS_MIN
-        self.lua_globals.AXIS_MAX = AXIS_MAX
-        self.lua_globals.AXIS_LEN = AXIS_LENGTH
-        self.lua_globals.SetAxis = lambda axis, value: set_axis(self.axis, axis, value)
-        self.lua_globals.Screen.renderMessage = lambda text, color, duration: self.showMessage.emit(
-            text, color, duration
-        )
-        self.lua_globals.Mouse.speed = self.config.get('mouse_speed')
-        self.scripts = load_lua_scripts(self.lua, 'scripts', self.config.get('language'))
-        self.script_db = ScriptDatabase()
-        for script in self.scripts:
-            if hasattr(script, 'options'):
-                config = load_data(SCRIPT_INI_PATH, script.id, get_default(script.options))
-                self.script_db.add(script.id, config)
+    def init_extensions(self):
+        registry.singleton('main_window', self)
+        registry.singleton('axis', self.axis)
+        registry.singleton('indicator', self.indicator)
 
-        self.lua_globals.GetConfig = lambda id: self.script_db.get(id)
-        self.lua_funcs = []
-        for script in self.scripts:
-            script_config = self.script_db.get(script.id)
-            if script_config:
-                for k, v in validate_config(script_config, True).items():
-                    self._set_attr_value(k, v)
-            if script.data:
-                try:
-                    validate_config(script.data)
-                    for k, v in script.data.items():
-                        self._set_attr_value(k, v)
-                except (TypeError, ValueError) as e:
-                    logger.exception(str(e))
-            if script.init:
-                try:
-                    script.init(self.script_db)
-                except:
-                    logger.exception(f"Script '{script.id}' has occured critical error")
-            if script.update:
-                self.lua_funcs.append(script.update)
+        extension_loader.load(EXTENSIONS_PATH)
+        extension_loader.start_all()
 
-    def get_script(self, id: str):
-        arr = [scripts for scripts in self.scripts if scripts.id == id]
-        i = len(arr)
-        if i == 1:
-            return arr[0]
-        elif i >= 2:
-            raise RuntimeError(f'Duplicate namespace: {id}')
-        else:
-            raise RuntimeError(f"'{id}' not found")
-
-    def _get_attr_value(self, attr_path):
-        parts = attr_path.split('.')
-        obj = self
-        for part in parts:
-            if hasattr(obj, part):
-                obj = getattr(obj, part)
-            else:
-                return None
-        return obj
-
-    def _set_attr_value(self, attr_path, value):
-        parts = attr_path.split('.')
-        obj = self
-        for part in parts[:-1]:
-            if hasattr(obj, part):
-                obj = getattr(obj, part)
-            else:
-                return
-        last_part = parts[-1]
-        if hasattr(obj, last_part):
-            setattr(obj, last_part, value)
+        logger.info(f'Extension system initialized. Loaded {len(extension_loader.extensions)} extensions')
 
     def create_menu(self):
         self.general_menu = self.menuBar().addMenu('')
         self.language_menu = self.menuBar().addMenu('')
-        self.script_menu = self.menuBar().addMenu('')
 
         self.import_action = QtWidgets.QAction('', self)
         self.general_menu.addAction(self.import_action)
+
+        self.extension_action = QtWidgets.QAction('', self)
+        self.extension_action.triggered.connect(self.open_extension_window)
+        self.general_menu.addAction(self.extension_action)
 
         self.language_group = QtWidgets.QActionGroup(self)
         self.language_group.setExclusive(True)
@@ -462,38 +377,26 @@ class MainWindow(QtWidgets.QMainWindow):
             action.setChecked(self.config.get('language') == lang['code'])
             self.language_actions[lang['code']] = action
 
-        self.script_action = QtWidgets.QAction('', self)
-        self.script_action.triggered.connect(lambda: open_directory('scripts'))
-        self.script_menu.addAction(self.script_action)
-        self.script_menu.addSeparator()
-        self._script_actions: Dict[str, QtWidgets.QAction] = {}
-        for script in self.scripts:
-            self._script_actions[script.id] = QtWidgets.QAction(script.name, self)
-            self._script_actions[script.id].triggered.connect(lambda *_, s=script: self.on_scriptButton_clicked(s))
-            self.script_menu.addAction(self._script_actions[script.id])
-
     def change_language(self, language_code):
         self.config.set('language', language_code)
         i18n.set('locale', language_code)
         self.retranslate_ui()
 
+    def open_extension_window(self):
+        self.extension_window = ExtensionWindow(self)
+        self.extension_window.show()
+
     def retranslate_ui(self):
         self.setWindowTitle(i18n.t('Title', version=f'{APP_VERSION}'))
         self.general_menu.setTitle(i18n.t('General'))
         self.import_action.setText(i18n.t('ImportPreset'))
+        self.extension_action.setText(i18n.t('Extensions'))
         self.language_menu.setTitle(i18n.t('Language'))
-        self.script_menu.setTitle(i18n.t('Script'))
-        self.script_action.setText(i18n.t('Installed') + f' ({self.scripts.__len__()})')
 
         self.connect_page.retranslate_ui()
         self.controls_page.retranslate_ui()
         self.options_page.retranslate_ui()
         self.tune_page.retranslate_ui()
-
-        for id, action in self._script_actions.items():
-            script = self.get_script(id)
-            script.set_language(self.config.get('language'))
-            action.setText(script.name)
 
         self.ui.startButton.setText(i18n.t('Start') if not self.running else i18n.t('Stop'))
         self.ui.tabWidget.setTabText(0, i18n.t('ConnectPage'))
@@ -514,18 +417,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.update_ui()
 
-    def on_scriptButton_clicked(self, script: ScriptModule):
-        window = ScriptWindow(script, self.script_db.get(script.id), self)
-        window.show()
+    def on_tab_changed(self, index):
+        if 0 <= index < len(self._pages):
+            self._pages[index].update_ui()
 
     def on_model_changed(self, model):
         connector = self.connector
         if connector:
-            if self.config.get('auto_connect'):
+            if self.config.get('auto_connect') and not self.running:
                 disabled = not model or model == 'Spectator'
                 self.ui.startButton.setDisabled(disabled)
             else:
                 self.ui.startButton.setDisabled(False)
+
+        modules = registry.get('modules')
+        extension_loader.on_model_changed(model, modules)
 
     def update_ui(self):
         self.ui.startButton.setText(i18n.t('Start') if not self.running else i18n.t('Stop'))
@@ -568,11 +474,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if input:
             input.stop_wheel_listener()
 
+        extension_loader.stop_all()
+
         size = self.size()
         self.config.set('width', size.width())
         self.config.set('height', size.height())
-        save_all_data((self.config, self.flightinput))
-        save_data(SCRIPT_INI_PATH, self.script_db.to_dict())
+        save_all_data((self.config, self.flightdata))
         event.accept()
 
     def toggle_enabled(self, flag):
@@ -598,25 +505,15 @@ class MainWindow(QtWidgets.QMainWindow):
         global delta_x, delta_y, enabled, input
         try:
             if not input:
-                input = InputStateMonitor()
+                input = InputDevices()
 
-            self.joystick.update_filters(self.flightinput.get_filters())
+            self.joystick.update_filters(self.flightdata.get_filters())
             controllers.refresh_fields()
 
             config = self.config
-            flight = self.flightinput
-
-            self.lua_globals.Control.mode = flight['Input']['flight_mode']
+            flight = self.flightdata
 
             input.set_mouse_position(self.center_x, self.center_y)
-            self.lua_globals.Input.pressed = input.is_pressed
-            self.lua_globals.Input.pressing = input.is_pressing
-            self.lua_globals.Input.released = input.is_released
-            self.lua_globals.Input.hotkey = input.is_hotkey_pressed
-            self.lua_globals.Input.alt = lambda: input.modifiers(alt=True)
-            self.lua_globals.Input.ctrl = lambda: input.modifiers(ctrl=True)
-            self.lua_globals.Input.shift = lambda: input.modifiers(shift=True)
-            self.lua_globals.Input.modkey = lambda: input.modifiers
 
             def map_to_percentage(value, reverse=False):
                 clamped = max(AXIS_MIN, min(AXIS_MAX, value))
@@ -769,25 +666,18 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.axis,
                         input,
                         SimpleNamespace(enabled=enabled, dt=delta_time, taxiing=ground_taxi),
-                        self,
                     )
 
-                with self.lua_lock:
-                    self.lua_globals.Mouse.pos[1] = prev_x
-                    self.lua_globals.Mouse.pos[2] = prev_y
-                    self.lua_globals.Mouse.deltaX = curr_x - prev_x
-                    self.lua_globals.Mouse.deltaY = curr_y - prev_y
-                    self.lua_globals.Control['active'] = enabled and not freecam_on
-                    self.lua_globals.Control['steering'] = enabled and not freecam_on and ground_taxi
-                    self.lua_globals.Camera['active'] = enabled and freecam_on
-                    self.lua_globals.Camera['fov'] = axis2fov(self.axis.ZoomView)
+                ctx = extension_loader.current_context
+                if ctx:
+                    ctx.set('mouse_pos', (prev_x, prev_y))
+                    ctx.set('mouse_delta', (delta_x, delta_y))
+                    ctx.set('control_active', enabled and not freecam_on)
+                    ctx.set('control_steering', enabled and not freecam_on and ground_taxi)
+                    ctx.set('camera_active', enabled and freecam_on)
+                    ctx.set('camera_fov', axis2fov(self.axis.ZoomView))
 
-                for i, func in enumerate(self.lua_funcs):
-                    try:
-                        func(delta_time)
-                    except Exception as e:
-                        logger.error(f'Lua script error: \n{e}')
-                        self.lua_funcs.pop(i)
+                extension_loader.tick(delta_time)
 
                 if enabled:
                     self.axis.Roll = check_overflow(self.axis.Roll, AXIS_MIN, AXIS_MAX)

@@ -10,7 +10,7 @@ build/
 dist/
 out/
 config.yml
-flightinput.yml
+data.yml
 script.ini
 *.egg-info/
 *.pyc

@@ -1,15 +1,16 @@
 import yaml
 
 from common.axis import CONTROL_AXES, JOYSTICK_AXES, ControlAxis
-from data.store import YamlStorage
+from connect.platform import Simulator
+from data import YamlStorage
 from type.filter import Filter, Filters
 
 
-class FlightInput(YamlStorage):
+class FlightData(YamlStorage):
     SPEC = {
         'Connect': {
             'model': {'type': str, 'default': ''},
-            'simulator': {'type': str, 'default': ''},
+            'simulator': {'type': str, 'default': Simulator.DCS},
         },
         'Input': {
             'flight_mode': {
@@ -85,14 +86,14 @@ class FlightInput(YamlStorage):
         self._data['Joystick'][axis] = filter.to_dict()
 
 
-def flight_config_representer(dumper: yaml.Dumper, config: FlightInput) -> yaml.Node:
+def flight_config_representer(dumper: yaml.Dumper, config: FlightData) -> yaml.Node:
     return dumper.represent_mapping('tag:yaml.org,2002:map', config.to_dict())
 
 
-def flight_config_constructor(loader: yaml.Loader, node: yaml.Node) -> FlightInput:
+def flight_config_constructor(loader: yaml.Loader, node: yaml.Node) -> FlightData:
     data = loader.construct_mapping(node, deep=True)
-    return FlightInput.from_dict(data)
+    return FlightData.from_dict(data)
 
 
-yaml.add_representer(FlightInput, flight_config_representer)
+yaml.add_representer(FlightData, flight_config_representer)
 yaml.add_constructor('!FlightConfig', flight_config_constructor)

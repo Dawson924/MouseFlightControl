@@ -1,6 +1,6 @@
 import yaml
 
-from data.store import YamlStorage
+from data import YamlStorage
 
 
 class Config(YamlStorage):

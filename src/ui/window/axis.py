@@ -11,7 +11,7 @@ from PySide2.QtWidgets import (
 )
 
 from common.axis import JOYSTICK_AXES, ControlAxis
-from data.flight import FlightInput
+from data.flight import FlightData
 from type.filter import Filter
 from ui.widgets import Button, ComboBox, Slider
 
@@ -143,13 +143,13 @@ class JoyAxisChart(QWidget):
 
 
 class JoyAxisWindow(QMainWindow):
-    def __init__(self, axis: ControlAxis, flightinput: FlightInput, parent=None):
+    def __init__(self, axis: ControlAxis, flightdata: FlightData, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f'Configure - {axis} Axis')
         self.setFixedSize(750, 465)
         self.axis = axis
-        self.flightinput = flightinput
-        self.filter = flightinput.get_filter(axis)
+        self.flightdata = flightdata
+        self.filter = flightdata.get_filter(axis)
         self.curve = JoyAxisChart(self.filter)
 
         central_widget = QWidget()
@@ -291,7 +291,7 @@ class JoyAxisWindow(QMainWindow):
 
     @Slot()
     def on_save_clicked(self):
-        self.flightinput.set_filter(
+        self.flightdata.set_filter(
             self.axis,
             Filter(
                 invert=self.filter.invert,

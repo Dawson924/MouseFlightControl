@@ -2,8 +2,8 @@ import threading
 from typing import Any, Optional
 
 
-class DataStore:
-    _instance: Optional['DataStore'] = None
+class Registry:
+    _instance: Optional['Registry'] = None
     _lock = threading.RLock()
 
     def __new__(cls):
@@ -57,4 +57,4 @@ class DataStore:
             return list(self._data.items())
 
 
-store = DataStore()
+registry = Registry()

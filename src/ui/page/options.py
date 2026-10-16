@@ -1,15 +1,13 @@
 from PySide2.QtWidgets import QVBoxLayout
 
 from data.config import Config
-from data.flight import FlightInput
-from lib.screen import ScreenGeometry
 from ui.factory import WidgetFactory
 from ui.page import AbstractPage
 
 
 class OptionsPage(AbstractPage):
-    def __init__(self, win: ScreenGeometry, config: Config, flight: FlightInput, parent=None):
-        super().__init__(win, config, flight, parent)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self.options_layout = QVBoxLayout()
         self.options_layout.setSpacing(8)

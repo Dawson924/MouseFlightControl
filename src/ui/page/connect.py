@@ -19,12 +19,12 @@ import i18n
 from connect.DCS import DCSConnect
 from connect.flight import FlightConnect
 from connect.install import install, is_installed
-from connect.module import FlightModules, FlightSim
 from connect.MSFS import MSFSConnect
-from data.config import Config
-from data.flight import FlightInput
-from lib.container import store
-from lib.screen import ScreenGeometry
+from connect.platform import LocalModules, Simulator
+from data.flight import FlightData
+from lib.data import registry
+from lib.event import events
+from plugin import extension_loader
 from ui.factory import WidgetFactory
 from ui.widgets import ComboBox
 
@@ -195,9 +195,9 @@ class ImageCard(QFrame):
         """)
 
 
-SIMULATORS = {
-    FlightSim.DCS: {'name': FlightSim.DCS.full_name, 'image_path': 'assets/Default.jpg'},
-    FlightSim.FS2020: {'name': FlightSim.FS2020.full_name, 'image_path': 'assets/Default.jpg'},
+SIM_APPS = {
+    Simulator.DCS: {'name': Simulator.DCS.full_name, 'image_path': 'assets/Default.jpg'},
+    Simulator.FS2020: {'name': Simulator.FS2020.full_name, 'image_path': 'assets/Default.jpg'},
 }
 
 
@@ -227,8 +227,8 @@ PISTON_PLANE_INPUTS = [
 
 
 class ConnectPage(AbstractPage):
-    def __init__(self, win: ScreenGeometry, config: Config, flight: FlightInput, modules: FlightModules, parent=None):
-        super().__init__(win, config, flight, parent)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self._image_cache = {}
         self._last_image_path = None
@@ -239,9 +239,9 @@ class ConnectPage(AbstractPage):
         self._fields_per_page = 8
         self._total_pages = 1
 
-        self.mod_data: FlightModules = {}
-        self.connector: FlightConnect = store.get('connector')
-        self.msg_box = store.get('message_box')
+        self.modules: LocalModules = registry.get('modules')
+        self.connector: FlightConnect = registry.get('connector')
+        self.msg_box = registry.get('message_box')
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_connect)
@@ -461,7 +461,7 @@ class ConnectPage(AbstractPage):
 
         self._module_list = {}
 
-        self.init_modules(modules)
+        self.init()
         self.init_connect()
         self.init_ui()
         self.retranslate_ui()
@@ -469,7 +469,7 @@ class ConnectPage(AbstractPage):
     def _create_module_cards(self, simulator):
         grouped_modules = {}
 
-        for mod_id, module in self.mod_data.items():
+        for mod_id, module in self.modules.items():
             if module['platform'] != simulator:
                 continue
 
@@ -499,61 +499,66 @@ class ConnectPage(AbstractPage):
             else:
                 card = self._module_list[primary_id]
 
-    def init_modules(self, mod_data: FlightModules):
-        self.mod_data = mod_data
-        self._model = self.flight['Connect']['model']
-        simulator = self.flight['Connect'].get('simulator')
-        if simulator:
-            self._simulator = FlightSim(simulator)
+    def init(self):
+        self.model = self.flight['Connect']['model']
+        self.simulator = None
+
+        # Determine the simulator based on the model if not explicitly set
+        _sim = self.flight['Connect'].get('simulator')
+        if _sim:
+            self.simulator = Simulator(_sim)
+        elif self.model:
+            self.simulator = self.get_platform(self.model)
         else:
-            self._simulator = self.get_platform(self._model)
+            self.simulator = Simulator.DCS
+
         self.check_dependencies()
-        for simulator in SIMULATORS.keys():
-            self._create_module_cards(simulator)
-
-    def init_ui(self):
-        sim_list = [(simid, detail['name']) for simid, detail in SIMULATORS.items()]
-        self.populate_simulators(sim_list)
-
-        if not self._simulator:
-            self._simulator = sim_list[0][0]
-            self.simulatorDropdown.setCurrentIndex(0)
-
-        if self.config['auto_connect'] and self._model:
-            self._set_model(None)
-
-        self.render_modules(self._simulator)
-        self.update_ui()
+        for _sim in SIM_APPS.keys():
+            self._create_module_cards(_sim)
 
     def init_connect(self):
         try:
             logger.info('Attempting to connect...')
 
-            simulator = self._simulator
-            if simulator == FlightSim.DCS:
+            if self.connector:
+                self.connector.disconnect()
+                self.connector = None
+
+            _sim = self.simulator
+            if _sim == Simulator.DCS:
                 self.connector = DCSConnect()
-            elif simulator == FlightSim.FS2020:
+            elif _sim == Simulator.FS2020:
                 self.connector = MSFSConnect()
             else:
                 return
 
-            store.set('connector', self.connector)
+            registry.set('connector', self.connector)
             self.connector.connect()
 
         except Exception as e:
             logger.exception(str(e))
 
-    def populate_simulators(self, simulators):
+    def init_ui(self):
+        self.ui_simulators()
+
+        if self.config['auto_connect'] and self.model:
+            self._set_model(None)
+
+        self.ui_modules(self.simulator)
+        self.update_ui()
+
+    def ui_simulators(self):
         self.simulatorDropdown.blockSignals(True)
         self.simulatorDropdown.clear()
-        for simid, name in simulators:
+        _sims = [(simid, detail['name']) for simid, detail in SIM_APPS.items()]
+        for simid, name in _sims:
             self.simulatorDropdown.addItem(name, simid)
         self.simulatorDropdown.blockSignals(False)
 
-    def render_modules(self, simulator):
+    def ui_modules(self, simulator):
         grouped_modules = {}
 
-        for mod_id, module in self.mod_data.items():
+        for mod_id, module in self.modules.items():
             if module['platform'] != simulator:
                 continue
 
@@ -581,18 +586,18 @@ class ConnectPage(AbstractPage):
                 card.name_label.setText(display_name)
 
         for card_id, card in self._module_list.items():
-            module = self.mod_data.get(card_id)
+            module = self.modules.get(card_id)
             card.setVisible(card_id in visible_ids)
 
-        self._simulator = simulator
+        self.simulator = simulator
 
     def check_dependencies(self):
-        simulator = self._simulator
+        simulator = self.simulator
 
         if simulator is None:
             return
 
-        if simulator not in SIMULATORS:
+        if simulator not in SIM_APPS:
             logger.warning(f'Unknown simulator: {simulator}')
             return
 
@@ -626,11 +631,11 @@ class ConnectPage(AbstractPage):
     def _set_model(self, mod_id=None):
         if not mod_id:
             self.flight['Connect']['model'] = ''
-            self._model = None
+            self.model = None
             logger.debug('MODEL: None')
             return
 
-        module = self.mod_data.get(mod_id)
+        module = self.modules.get(mod_id)
         if not module:
             logger.warning(f'{mod_id} NOT FOUND')
             return
@@ -641,8 +646,8 @@ class ConnectPage(AbstractPage):
             k: module['data'][k] if k in module['data'] else v for k, v in self.flight['Input'].items()
         }
 
-        self._model = mod_id
-        self._simulator = module['platform']
+        self.model = mod_id
+        self.simulator = module['platform']
 
         logger.debug(f'MODEL: {mod_id}')
 
@@ -709,8 +714,8 @@ class ConnectPage(AbstractPage):
         self.image_label.setScaledContents(True)
 
     def _set_module_content(self, mod_id, connecting=False):
-        if self._simulator:
-            self.sim_label.setText(SIMULATORS[self._simulator]['name'])
+        if self.simulator:
+            self.sim_label.setText(SIM_APPS[self.simulator]['name'])
 
         if connecting:
             self._toggle_panel(True)
@@ -720,7 +725,7 @@ class ConnectPage(AbstractPage):
             self.page_navigation.hide()
             return
 
-        module = self.mod_data.get(mod_id)
+        module = self.modules.get(mod_id)
         if module:
             display_name = module['name'] if not module['is_grouped'] else mod_id
             self._set_model_label(display_name, True)
@@ -750,7 +755,7 @@ class ConnectPage(AbstractPage):
             self.flight_layout.insertWidget(0, label)
             return
 
-        input_spec = FlightInput.SPEC['Input']
+        input_spec = FlightData.SPEC['Input']
         all_fields = []
         for field_name in _fields:
             if field_name not in input_spec:
@@ -802,7 +807,7 @@ class ConnectPage(AbstractPage):
         if not _fields:
             return
 
-        input_spec = FlightInput.SPEC['Input']
+        input_spec = FlightData.SPEC['Input']
         all_fields = []
         for field_name in _fields:
             if field_name not in input_spec:
@@ -869,8 +874,8 @@ class ConnectPage(AbstractPage):
         layout.deleteLater()
 
     def _get_default_image(self) -> str:
-        if self._simulator:
-            return SIMULATORS[self._simulator]['image_path']
+        if self.simulator:
+            return SIM_APPS[self.simulator]['image_path']
         return 'assets/Default.jpg'
 
     def _get_flight_options(self, flight_mode):
@@ -885,8 +890,7 @@ class ConnectPage(AbstractPage):
     def _set_module(self, mod_id):
         self._set_model(mod_id)
         self._set_module_content(mod_id, self.config['auto_connect'] and mod_id is None)
-        if self.connector:
-            self.connector.emit('model_changed', mod_id)
+        events.emit('model_changed', mod_id)
 
     def _toggle_panel(self, visible: bool = True):
         if visible:
@@ -901,8 +905,7 @@ class ConnectPage(AbstractPage):
             self.module_panel.hide()
 
     def update_connect(self):
-        auto_connect = self.config['auto_connect']
-        if not auto_connect:
+        if not self.config['auto_connect'] or self.connector is None:
             return
 
         data = self.connector.get_data()
@@ -919,17 +922,16 @@ class ConnectPage(AbstractPage):
             if self._in_spectator:
                 return
 
-            logger.debug('FLIGHTCONNECT: Player is in Spectator slot')
             self._set_module(None)
             self._in_spectator = True
             return
 
-        elif data.model != self._model:
-            logger.debug(f'FLIGHTCONNECT: {data.model} received from {self._simulator}')
+        elif data.model != self.model:
+            logger.debug(f'FLIGHTCONNECT: {data.model} received from {self.simulator}')
             self._set_module(data.model)
             self._toggle_panel(True)
 
-            module = self.mod_data.get(data.model)
+            module = self.modules.get(data.model)
             if module:
                 self._render_options(module.get('aircraft_type', 0))
             else:
@@ -943,9 +945,11 @@ class ConnectPage(AbstractPage):
     def simulator_changed(self):
         simulator = self.simulatorDropdown.currentData()
         if simulator is not None:
-            self._simulator = simulator
+            self.simulator = simulator
             self.flight['Connect']['simulator'] = simulator
-            self.render_modules(simulator)
+            extension_loader.emit_event('simulator_changed', simulator)
+            self.init_connect()
+            self.ui_modules(simulator)
             self._toggle_panel(False)
 
         logger.debug(f'SIMULATOR: {simulator}')
@@ -959,13 +963,13 @@ class ConnectPage(AbstractPage):
         self._no_data = False
         self._set_module(None)
 
-    def get_platform(self, module_id) -> FlightSim:
-        module = self.mod_data.get(module_id)
+    def get_platform(self, module_id) -> Simulator:
+        module = self.modules.get(module_id)
         return module['platform'] if module else None
 
     def update_ui(self):
-        model = self._model
-        simulator = self._simulator
+        model = self.model
+        simulator = self.simulator
 
         if self.config['auto_connect']:
             self._toggle_panel(True)
@@ -975,7 +979,7 @@ class ConnectPage(AbstractPage):
                 simulator = self.get_platform(model)
 
             self._set_module_content(model)
-            module = self.mod_data.get(model)
+            module = self.modules.get(model)
             if module:
                 self._render_options(module.get('aircraft_type', 0))
             else:
@@ -988,7 +992,7 @@ class ConnectPage(AbstractPage):
 
         self.simulatorDropdown.blockSignals(True)
         if simulator:
-            index = self.simulatorDropdown.findData(FlightSim(simulator))
+            index = self.simulatorDropdown.findData(Simulator(simulator))
             if index >= 0:
                 self.simulatorDropdown.setCurrentIndex(index)
         self.simulatorDropdown.blockSignals(False)
@@ -1004,7 +1008,7 @@ class ConnectPage(AbstractPage):
             return
 
         spec_group = {}
-        input_spec = FlightInput.SPEC['Input']
+        input_spec = FlightData.SPEC['Input']
 
         for option_name in option_fields:
             if option_name in input_spec and 'i18n' in input_spec[option_name]:

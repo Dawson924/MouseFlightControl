@@ -5,7 +5,29 @@ from typing import List, Optional
 
 from loguru import logger
 
-from connect.module import FlightSim
+from connect.platform import Simulator
+
+try:
+    import ctypes
+    from ctypes import wintypes
+
+    _has_ctypes = True
+
+    class GUID(ctypes.Structure):
+        _fields_ = [
+            ('Data1', wintypes.DWORD),
+            ('Data2', wintypes.WORD),
+            ('Data3', wintypes.WORD),
+            ('Data4', wintypes.BYTE * 8),
+        ]
+
+    FOLDERID_SavedGames = GUID(0xC5BBABE5, 0x78BF, 0x4206, (0x9C, 0x98, 0x67, 0x1E, 0x8C, 0x23, 0x3A, 0x07))
+
+    HRESULT = ctypes.c_long
+except ImportError:
+    _has_ctypes = False
+    GUID = None
+    FOLDERID_SavedGames = None
 
 DCS_FOLDERS = ['DCS', 'DCS.openbeta', 'DCS World', 'DCS World OpenBeta']
 EXPORT_DIRECTORY = 'FlightConnect'
@@ -13,8 +35,31 @@ CONNECT_SCRIPT = 'connect.lua'
 EXPORT_LUA = 'Export.lua'
 
 
+def _get_saved_games_path_ctypes() -> Optional[str]:
+    if not _has_ctypes or FOLDERID_SavedGames is None:
+        return None
+    try:
+        shell32 = ctypes.WinDLL('shell32.dll', use_last_error=True)
+        SHGetKnownFolderPath = shell32.SHGetKnownFolderPath
+        SHGetKnownFolderPath.argtypes = [
+            ctypes.POINTER(GUID),
+            wintypes.DWORD,
+            wintypes.HANDLE,
+            ctypes.POINTER(ctypes.c_wchar_p),
+        ]
+        SHGetKnownFolderPath.restype = HRESULT
+
+        path_ptr = ctypes.c_wchar_p()
+        hr = SHGetKnownFolderPath(ctypes.byref(FOLDERID_SavedGames), 0, None, ctypes.byref(path_ptr))
+        if hr == 0 and path_ptr.value:
+            return path_ptr.value
+    except Exception as e:
+        logger.error(f'Failed to get Saved Games path via Windows API: {e}')
+    return None
+
+
 class AbstractInstaller(ABC):
-    def __init__(self, platform: FlightSim):
+    def __init__(self, platform: Simulator):
         self.platform = platform
 
     @abstractmethod
@@ -32,7 +77,7 @@ class AbstractInstaller(ABC):
 
 class DCSInstaller(AbstractInstaller):
     def __init__(self):
-        super().__init__(FlightSim.DCS)
+        super().__init__(Simulator.DCS)
 
     def get_paths(self) -> List[str]:
         saved_games = self._get_saved_games_path()
@@ -48,6 +93,10 @@ class DCSInstaller(AbstractInstaller):
         return paths
 
     def _get_saved_games_path(self) -> Optional[str]:
+        saved_games = _get_saved_games_path_ctypes()
+        if saved_games and os.path.isdir(saved_games):
+            return saved_games
+
         user_dir = os.path.expanduser('~')
         if not user_dir:
             return None
@@ -56,7 +105,7 @@ class DCSInstaller(AbstractInstaller):
         if os.path.isdir(saved_games):
             return saved_games
 
-        logger.warning(f'Saved Games folder not found at {saved_games}')
+        logger.warning('Saved Games folder not found')
         return None
 
     def _get_connect_lua_template(self) -> str:
@@ -160,7 +209,7 @@ class MSFSInstaller(AbstractInstaller):
     ]
 
     def __init__(self):
-        super().__init__(FlightSim.FS2020)
+        super().__init__(Simulator.FS2020)
 
     def get_paths(self) -> List[str]:
         paths = []
@@ -188,10 +237,10 @@ class MSFSInstaller(AbstractInstaller):
         return True
 
 
-def get_installer(platform: FlightSim) -> AbstractInstaller:
+def get_installer(platform: Simulator) -> AbstractInstaller:
     installers = {
-        FlightSim.DCS: DCSInstaller,
-        FlightSim.FS2020: MSFSInstaller,
+        Simulator.DCS: DCSInstaller,
+        Simulator.FS2020: MSFSInstaller,
     }
 
     installer_class = installers.get(platform)
@@ -201,7 +250,7 @@ def get_installer(platform: FlightSim) -> AbstractInstaller:
     return installer_class()
 
 
-def is_installed(platform: FlightSim) -> bool:
+def is_installed(platform: Simulator) -> bool:
     installer = get_installer(platform)
     paths = installer.get_paths()
 
@@ -212,7 +261,7 @@ def is_installed(platform: FlightSim) -> bool:
     return False
 
 
-def install(platform: FlightSim) -> Optional[str]:
+def install(platform: Simulator) -> Optional[str]:
     installer = get_installer(platform)
     paths = installer.get_paths()
 
@@ -227,6 +276,6 @@ def install(platform: FlightSim) -> Optional[str]:
     return None
 
 
-def get_install_paths(platform: FlightSim) -> List[str]:
+def get_install_paths(platform: Simulator) -> List[str]:
     installer = get_installer(platform)
     return installer.get_paths()

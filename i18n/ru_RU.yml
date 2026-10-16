@@ -19,6 +19,7 @@ DeviceNotFoundMessage: Не найдено доступных устройств
 Disconnected: Отключено
 EnableFreecam: Включить свободную камеру
 Error: Ошибка выполнения
+Extensions: Расширения
 FlightConnectNotInstalled: FlightConnect не установлен.
 FlightSim: Симулятор полетов
 FreecamAutoCenter: Автоцентрирование свободной камеры
@@ -51,6 +52,7 @@ RudderSpeed: Скорость руля
 RuntimeEnv: Окружение
 Scale: Масштаб
 ScreenInfo: Информация о экране
+SelectExtension: Выберите расширение для настройки
 Script: Скрипт
 Sensitive: Чувствительность
 ShowCaptions: Подписи

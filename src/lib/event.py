@@ -48,3 +48,6 @@ class EventEmitter:
     def get_handlers(self, event_name):
         with self.lock:
             return self.events.get(event_name, [])
+
+
+events = EventEmitter()

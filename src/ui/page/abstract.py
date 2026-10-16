@@ -4,20 +4,18 @@ from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QVBoxLayout, QWidget
 
 from data.config import Config
-from data.flight import FlightInput
-from lib.screen import ScreenGeometry
+from data.flight import FlightData
+from lib.data import registry
 
 
 class AbstractPage(QWidget):
     state_changed = Signal()
 
-    def __init__(self, win: ScreenGeometry, config: Config, flight: FlightInput, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.win = win
-
-        self.config = config
-        self.flight = flight
+        self.config: Config = registry.get('config')
+        self.flight: FlightData = registry.get('flightdata')
 
         # Initialize UI elements dictionary
         self.ui_elements: Dict[str, Any] = {}

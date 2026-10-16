@@ -1,8 +1,8 @@
-from connect.flight import FlightData
+from connect.flight import FlightParams
 from lib.num import radians_to_degrees
 
 
-def on_data_received(data: FlightData):
+def on_data_received(data: FlightParams):
     print('Received from DCS:')
     print(f'Model: {data.model}')
     print(f'Heading: {radians_to_degrees(data.heading)}°')

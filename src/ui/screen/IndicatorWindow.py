@@ -71,11 +71,17 @@ class IndicatorWindow(QWidget):
         self.target_y = max(0.0, min(1.0, y_value))
 
     def set_position(self, x, y):
-        self.bg_square_x = x
-        self.bg_square_y = y
+        if x < 0:
+            self.bg_square_x = self.screen_rect.width() - self.bg_square_size - abs(x)
+        else:
+            self.bg_square_x = x
+        if y < 0:
+            self.bg_square_y = self.screen_rect.height() - self.bg_square_size - abs(y)
+        else:
+            self.bg_square_y = y
         self.update()
 
-    def set_bg_size(self, size):
+    def set_size(self, size):
         self.bg_square_size = size
         self.base_line = 0.006 * self.bg_square_size
         self.shifted_line = 0.019 * self.bg_square_size

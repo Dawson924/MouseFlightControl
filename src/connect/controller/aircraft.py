@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Callable, Optional
 
 from common.axis import AxisPos
-from data.flight import FlightInput
-from input import InputStateMonitor
+from data.flight import FlightData
+from input import InputDevices
 from lib.joystick import AXIS_MIN
 
 MIN_INTERVAL = 1 / 60
@@ -13,13 +13,13 @@ class Controller(ABC):
     _name: str = ''
     FIELDS: list = []
 
-    def __init__(self, flightinput: FlightInput):
-        self.flightinput = flightinput
+    def __init__(self, flightdata: FlightData):
+        self.flightdata = flightdata
         self._load_fields()
 
     def _load_fields(self):
         for field in self.FIELDS:
-            setattr(self, field, self.flightinput.get(field))
+            setattr(self, field, self.flightdata.get(field))
 
     @classmethod
     def get_name(cls, translator: Optional[Callable[[str], str]] = None) -> str:
@@ -30,7 +30,7 @@ class Controller(ABC):
         return cls._name
 
     @abstractmethod
-    def update(self, axis: AxisPos, key: InputStateMonitor, state, context):
+    def update(self, axis: AxisPos, key: InputDevices, state):
         pass
 
 
@@ -38,12 +38,12 @@ class JetPlaneController(Controller):
     _name = 'JetPlaneController'
     FIELDS = ['thrust_speed', 'throttle_increase', 'throttle_decrease']
 
-    def __init__(self, flightinput):
-        super().__init__(flightinput)
+    def __init__(self, flightdata):
+        super().__init__(flightdata)
         self.throttle_accumulator = 0.0
         self.min_interval = MIN_INTERVAL
 
-    def update(self, axis, key, state, _):
+    def update(self, axis, key, state):
         if not state.enabled:
             return
 
@@ -73,13 +73,13 @@ class HelicopterController(Controller):
         'rudder_center',
     ]
 
-    def __init__(self, flightinput):
-        super().__init__(flightinput)
+    def __init__(self, flightdata):
+        super().__init__(flightdata)
         self.collective_accumulator = 0.0
         self.rudder_accumulator = 0.0
         self.min_interval = MIN_INTERVAL
 
-    def update(self, axis, key, state, _):
+    def update(self, axis, key, state):
         if not state.enabled:
             return
 
@@ -119,13 +119,13 @@ class PistonPlaneController(Controller):
         'rudder_center',
     ]
 
-    def __init__(self, flightinput):
-        super().__init__(flightinput)
+    def __init__(self, flightdata):
+        super().__init__(flightdata)
         self.throttle_accumulator = 0.0
         self.rudder_accumulator = 0.0
         self.min_interval = MIN_INTERVAL
 
-    def update(self, axis, key, state, _):
+    def update(self, axis, key, state):
         if not state.enabled:
             return
 

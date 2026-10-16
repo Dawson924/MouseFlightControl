@@ -10,7 +10,7 @@ from pynput import mouse
 from lib.axis import pos
 
 
-class InputStateMonitor:
+class InputDevices:
     def __init__(self, pause=0.016, retry=2):
         self.pause = pause
         self.retry = retry

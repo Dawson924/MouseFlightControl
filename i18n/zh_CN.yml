@@ -18,6 +18,7 @@ DeviceNotFoundMessage: 找不到可用的vJoy设备，请前往软件帮助页�
 Disconnected: 未连接
 EnableFreecam: 启用自由视角
 Error: 错误
+Extensions: 插件
 FlightConnectNotInstalled: FlightConnect 未安装。
 FlightSim: 模拟飞行
 FreecamAutoCenter: 自由视角自动回中
@@ -49,6 +50,7 @@ RudderSpeed: 脚舵速度
 RuntimeEnv: 运行环境
 Scale: 缩放
 ScreenInfo: 屏幕信息
+SelectExtension: 选择一个插件进行配置
 Script: 脚本
 Sensitive: 鼠标灵敏度
 ShowCaptions: 展示提示

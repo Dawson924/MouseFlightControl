@@ -7,13 +7,13 @@ from typing import Optional
 
 from loguru import logger
 
-from connect.flight import FlightConnect, FlightData
-from connect.module import FlightSim
+from connect.flight import FlightConnect, FlightParams
+from connect.platform import Simulator
 
 
 class DCSConnect(FlightConnect):
     def __init__(self, tcp_host='127.0.0.1', tcp_port=20070, udp_host='127.0.0.1', udp_port=20069, timeout=None):
-        super().__init__(FlightSim.DCS)
+        super().__init__(Simulator.DCS)
         self.tcp_host = tcp_host
         self.tcp_port = tcp_port
         self.udp_host = udp_host
@@ -23,6 +23,7 @@ class DCSConnect(FlightConnect):
         self.udp_socket = None
         self.udp_listener = None
         self.data_queue = Queue()
+        self._should_stop = False
         self._create_sockets()
 
     def _create_sockets(self):
@@ -34,7 +35,7 @@ class DCSConnect(FlightConnect):
 
     def _create_data(self, raw_data):
         if raw_data:
-            return FlightData.from_json(raw_data)
+            return FlightParams.from_json(raw_data)
         return None
 
     def _send_tcp_data(self, data):
@@ -64,8 +65,9 @@ class DCSConnect(FlightConnect):
 
     def disconnect(self):
         self.connected = False
+        self._should_stop = True
         if self.udp_listener and self.udp_listener.is_alive():
-            self.udp_listener.join(timeout=1.0)
+            self.udp_listener.join(timeout=0.1)
         if self.tcp_socket:
             self.tcp_socket.close()
             self.tcp_socket = None
@@ -76,7 +78,7 @@ class DCSConnect(FlightConnect):
     def is_connected(self):
         return self.connected
 
-    def get_data(self, timeout=None) -> Optional[FlightData]:
+    def get_data(self, timeout=None) -> Optional[FlightParams]:
         if not self.connected:
             return None
 
@@ -100,7 +102,7 @@ class DCSConnect(FlightConnect):
         self.udp_listener.start()
 
     def _udp_listener(self):
-        while self.connected:
+        while self.connected and not getattr(self, '_should_stop', False):
             try:
                 buffer, _ = self.udp_socket.recvfrom(4096)
                 if buffer:
@@ -115,76 +117,9 @@ class DCSConnect(FlightConnect):
                     try:
                         self.udp_socket.close()
                         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        self.udp_socket.settimeout(self.timeout)
+                        self.udp_socket.settimeout(0.1)
                         self.udp_socket.bind((self.udp_host, self.udp_port))
                     except Exception as re:
                         logger.error(f'Failed to recreate UDP socket: {re}')
-                        self.connected = False
-                        break
-
-
-# RUN TEST
-if __name__ == '__main__':
-    import datetime
-    import time
-
-    dcs_connect = DCSConnect()
-
-    print('Connecting to DCS...')
-    connected = dcs_connect.connect()
-    print(f'Connection status: {connected}')
-
-    if connected:
-        print('\nTesting get_data... (press Ctrl+C to exit)')
-        print('UDP validation enabled: checking data timestamps and consistency')
-
-        last_data_time = None
-        last_model = None
-        consecutive_no_data = 0
-        data_count = 0
-        start_time = time.time()
-
-        try:
-            while True:
-                current_time = time.time()
-                timestamp = datetime.datetime.now().strftime('%H:%M:%S.%f')
-
-                data = dcs_connect.get_data()
-
-                if data:
-                    data_count += 1
-                    consecutive_no_data = 0
-
-                    if data.model != last_model:
-                        print(f'[{timestamp}] Model changed: {last_model} -> {data.model}')
-                        last_model = data.model
-
-                    if last_data_time:
-                        interval = current_time - last_data_time
-                        print(f'[{timestamp}] Data received: model={data.model}, interval={interval:.3f}s')
-                    else:
-                        print(f'[{timestamp}] First data received: model={data.model}')
-
-                    last_data_time = current_time
-                else:
-                    consecutive_no_data += 1
-                    if consecutive_no_data % 5 == 0:
-                        print(f'[{timestamp}] No data received for {consecutive_no_data} consecutive attempts')
-
-                if int(current_time - start_time) % 10 == 0 and int(current_time) != int(start_time):
-                    elapsed = current_time - start_time
-                    rate = data_count / elapsed if elapsed > 0 else 0
-                    print(
-                        f'\n[{timestamp}] Stats: {data_count} packets received in {elapsed:.1f}s ({rate:.2f} packets/s)'
-                    )
-
-                time.sleep(0.16)
-        except KeyboardInterrupt:
-            print('\nTesting is_connected...')
-            print(f'Is connected: {dcs_connect.is_connected()}')
-
-            print('\nDisconnecting...')
-            dcs_connect.disconnect()
-            print(f'Is connected after disconnect: {dcs_connect.is_connected()}')
-    else:
-        print('Failed to connect to DCS')
+                    self.connected = False
+                    break

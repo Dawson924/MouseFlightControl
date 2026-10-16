@@ -6,9 +6,9 @@ from loguru import logger
 import i18n
 from common.config import CONFIG_FILE, FLIGHT_FILE
 from data.config import Config
-from data.flight import FlightInput
+from data.flight import FlightData
 
-ConfigList = Tuple[Config, FlightInput]
+ConfigList = Tuple[Config, FlightData]
 
 
 def load_all_data() -> ConfigList:
@@ -16,11 +16,11 @@ def load_all_data() -> ConfigList:
         if not os.path.exists(CONFIG_FILE) or not os.path.exists(FLIGHT_FILE):
             raise FileExistsError()
         config = Config.from_yaml(file_path=CONFIG_FILE)
-        flight = FlightInput.from_yaml(file_path=FLIGHT_FILE)
+        flight = FlightData.from_yaml(file_path=FLIGHT_FILE)
         return (config, flight)
     except Exception as e:
         logger.exception(f'{i18n.t("ConfigLoadFailed")} {e}')
-        return Config(), FlightInput()
+        return Config(), FlightData()
 
 
 def save_all_data(configs: ConfigList) -> None:
